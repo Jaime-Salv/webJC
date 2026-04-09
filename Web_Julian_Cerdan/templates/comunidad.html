@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Comunidad - Julián Cerdán</title>
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { max-width: 100vw; overflow-x: hidden; margin: 0; padding: 0; background-color: #050505; color: white; font-family: 'Montserrat', sans-serif; }
+        body { padding-top: 100px; }
+        :root { --color-oro: #d4af37; --color-negro: #050505; --color-azul: #3498db; --color-rojo: #e74c3c; }
+
+        /* HEADER */
+        .main-header-pro { position: fixed; top: 0; left: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(212, 175, 55, 0.3); z-index: 1000; }
+        .header-logo-side img { height: 45px; width: auto; }
+        .header-title-side h2 { font-size: 0.8rem; text-transform: uppercase; text-align: center; margin: 0; letter-spacing: 1px; color: var(--color-oro); }
+        .btn-volver-pro { border: 1px solid var(--color-oro); color: var(--color-oro); padding: 8px 12px; border-radius: 4px; font-weight: 700; font-size: 0.65rem; text-transform: uppercase; text-decoration: none; }
+
+        /* MODIFICACIÓN: GRID DE COMUNIDAD */
+        .global-container { 
+            width: 100%; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px 15px 80px 15px; 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 25px; 
+        }
+
+        @media (min-width: 1024px) {
+            .global-container { grid-template-columns: 300px 1fr; align-items: start; }
+            .sidebar-perfil { position: sticky; top: 120px; }
+        }
+
+        /* TARJETA DE PERFIL IZQUIERDA */
+        .card-perfil { background: rgba(18, 18, 18, 0.9); border: 1px solid #222; border-radius: 12px; padding: 20px; text-align: center; }
+        .avatar-user { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--color-oro); object-fit: cover; margin-bottom: 15px; background: #000; }
+        
+        .stats-user { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin: 20px 0; border-top: 1px solid #222; padding-top: 15px; }
+        .stat-u-item span { display: block; font-size: 0.5rem; color: #666; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-u-item strong { color: var(--color-oro); font-size: 1rem; }
+
+        /* FEED CONTAINER */
+        #feed-contenedor { display: flex; flex-direction: column; gap: 20px; }
+        
+        /* TARJETAS DE REPERTORIO (FEED) */
+        .post-card { background: rgba(18, 18, 18, 0.9); border: 1px solid #222; border-radius: 12px; padding: 25px; transition: transform 0.2s, box-shadow 0.2s; border-left: 4px solid transparent; }
+        .post-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); border-left-color: var(--color-oro); }
+        
+        .post-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .autor-info strong { display: block; font-size: 0.9rem; color: white; font-weight: 700; }
+        .autor-info span { font-size: 0.65rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .post-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; background: #0a0a0a; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #1a1a1a; }
+        .stat-item { text-align: center; }
+        .stat-item strong { display: block; font-size: 1.2rem; color: var(--color-oro); font-weight: 900; }
+        .stat-item span { font-size: 0.55rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; display: block; }
+
+        /* BOTONES ACCIÓN */
+        .btn-ver-cruceta { width: 100%; background: var(--color-oro); color: black; border: none; padding: 15px; border-radius: 6px; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: background 0.2s; letter-spacing: 1px; }
+        .btn-ver-cruceta:hover { background: white; }
+        
+        .btn-like { background: none; border: 1px solid #333; color: #888; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s ease; display: flex; align-items: center; gap: 7px; font-weight: 700; }
+        .btn-like.liked { color: var(--color-rojo); border-color: var(--color-rojo); background: rgba(231, 76, 60, 0.1); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(10px); }
+        .modal-content { background: #121212; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 16px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 40px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #222; padding-bottom: 20px; }
+        .modal-header h3 { margin: 0; color: var(--color-oro); font-size: 1.4rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-cerrar-modal { background: none; border: none; color: #555; font-size: 2rem; cursor:pointer; line-height: 1; transition: color 0.2s; padding: 0; margin-left: 20px; }
+        .btn-cerrar-modal:hover { color: white; }
+
+        .item-marcha { background: rgba(255,255,255,0.03); padding: 18px; border-radius: 8px; border-left: 4px solid var(--color-oro); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .comentario-item { font-size: 0.85rem; background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-bottom: 1px solid #222; line-height: 1.5; }
+        .input-comentario { width: 100%; padding: 15px; background: #0a0a0a; border: 1px solid #333; color: white; border-radius: 8px; font-family: 'Montserrat'; font-size: 0.9rem; }
+
+        @media (min-width: 1024px) {
+            .main-header-pro { padding: 0 50px; height: 100px; }
+            body { padding-top: 120px; }
+            .modal-content { padding: 50px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header-pro">
+        <div class="header-logo-side">
+            <a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a>
+        </div>
+        <div class="header-title-side">
+            <h2>Comunidad y Debate Musical</h2>
+        </div>
+        <div class="header-action-side">
+            <a href="simulacion.html" class="btn-volver-pro">+ Crear</a>
+        </div>
+    </header>
+
+    <main class="global-container">
+        
+        <aside class="sidebar-perfil">
+            <div class="card-perfil">
+                <img id="user-avatar" src="../img/escudo.png" class="avatar-user" alt="Mi Foto">
+                <h4 id="user-name" style="margin:0; font-size: 0.9rem; color: var(--color-oro); text-transform: uppercase;">Invitado</h4>
+                <p id="user-bio" style="font-size: 0.65rem; color: #777; margin: 10px 0; line-height: 1.4;">Únete a la conversación para proponer tus crucetas.</p>
+                
+                <div class="stats-user">
+                    <div class="stat-u-item"><span>Proyectos</span><strong id="stat-proyectos">0</strong></div>
+                    <div class="stat-u-item"><span>Mejoras</span><strong id="stat-mejoras">0</strong></div>
+                    <div class="stat-u-item"><span>Debates</span><strong id="stat-debates">0</strong></div>
+                </div>
+
+                <div style="text-align: left; margin-bottom: 20px;">
+                    <span style="font-size: 0.5rem; color: #555; text-transform: uppercase;">Marcha Favorita</span>
+                    <strong id="user-fav" style="display: block; font-size: 0.75rem; color: #ccc;">---</strong>
+                </div>
+
+                <a href="perfil.html" class="btn-ver-cruceta" style="padding: 10px; font-size: 0.6rem; background: #111; border: 1px solid #333; color: #888; text-decoration: none; display: block;">Editar Perfil</a>
+            </div>
+        </aside>
+
+        <div id="feed-contenedor">
+            <p style="text-align: center; color: #666; padding: 100px; font-size: 0.9rem;">Sincronizando con la base de datos de Supabase...</p>
+        </div>
+        
+    </main>
+
+    <div class="modal-overlay" id="modal-cruceta" onclick="if(event.target === this) cerrarModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-titulo"></h3>
+                <button onclick="cerrarModal()" class="btn-cerrar-modal">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="modal-lista-marchas"></div>
+                
+                <button id="btn-mejorar" class="btn-ver-cruceta" style="background: var(--color-azul); color: white; margin: 30px 0; padding: 18px;">
+                    🛠️ PROPONER MEJORA TÉCNICA
+                </button>
+
+                <div id="contenedor-hilo-mejoras"></div>
+
+                <h4 style="color:var(--color-oro); font-size:0.75rem; text-transform:uppercase; margin: 40px 0 15px 0; border-bottom: 1px solid #222; padding-bottom: 10px; letter-spacing: 1px;">Debate y Notas Técnicas</h4>
+                <div id="contenedor-comentarios" style="margin-bottom: 25px;"></div>
+                
+                <div style="display:flex; gap:12px; align-items: center;">
+                    <input type="text" id="input-comentario" class="input-comentario" placeholder="Escribe tu opinión experta...">
+                    <button onclick="enviarComentario()" style="background:var(--color-oro); border:none; padding:0; border-radius:8px; width:50px; height:50px; cursor:pointer; font-weight:bold; color: black; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; flex-shrink: 0;">></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-auth-invitation" style="display:none; z-index: 3000;">
+        <div class="modal-content" style="max-width: 450px; text-align: center; padding: 50px;">
+            <img src="../img/escudo.png" style="height: 80px; margin-bottom:20px;">
+            <h3 style="color:var(--color-oro); font-size: 1.3rem;">¿Quieres ser miembro?</h3>
+            <p style="font-size:0.9rem; color:#ccc; line-height: 1.6; margin: 15px 0 25px 0;">Para proponer mejoras técnicas y valorar proyectos necesitas formar parte de la familia de Julián Cerdán.</p>
+            <a href="login.html" class="btn-ver-cruceta" style="text-decoration:none; display:block; text-align:center;">Unirme / Iniciar Sesión</a>
+            <button onclick="cerrarInvitacion()" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer; font-size: 0.8rem;">Cerrar</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/comunidad.js"></script>
+
+</body>
+</html>

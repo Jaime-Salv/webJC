@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Catálogo Histórico - Julián Cerdán</title>
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+             RESET Y SEGURIDAD MÓVIL
+         ========================================= */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+            margin: 0; padding: 0;
+            background-color: #050505;
+            font-family: 'Montserrat', sans-serif;
+            color: white;
+        }
+
+        body { 
+            padding-top: 100px; 
+            background-image: linear-gradient(to bottom, rgba(10,10,10,0.85) 0%, rgba(5,5,5,0.95) 100%), url('../img/catalogo.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+        }
+
+        /* =========================================
+             CABECERA SMART (OPTIMIZADA)
+         ========================================= */
+        .main-header-pro { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 80px;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; z-index: 1000;
+        }
+
+        .header-logo-side img { height: 50px; width: auto; }
+        .header-title-side h2 { font-size: 0.8rem; letter-spacing: 2px; text-align: center; margin: 0; text-transform: uppercase; color: white; font-weight: 900;}
+        .header-title-side h2 span { font-size: 0.6rem; letter-spacing: 1px; display: block; color: var(--color-oro); font-weight: 400;}
+
+        .btn-volver-pro { 
+            border: 1px solid var(--color-oro); color: var(--color-oro);
+            padding: 8px 12px; border-radius: 4px; font-weight: 700; font-size: 0.65rem;
+            text-transform: uppercase; text-decoration: none;
+        }
+
+        /* =========================================
+             LAYOUT CONTENIDO
+         ========================================= */
+        .header-catalogo-title { padding: 20px; text-align: center; display: flex; flex-direction: column; gap: 15px; align-items: center;}
+        .header-catalogo-title h1 { color: var(--color-oro); font-size: 1.4rem; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
+
+        .btn-send {
+            background: var(--color-oro); color: black; padding: 10px 15px; border: none; border-radius: 4px;
+            font-weight: 900; text-transform: uppercase; cursor: pointer; transition: 0.3s; width: 100%;
+        }
+
+        /* KPIs en Vertical para Móvil */
+        .kpi-bar { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* 2 por fila en móvil */
+            gap: 10px; padding: 0 15px; margin-bottom: 20px; 
+        }
+        .kpi-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 6px; text-align: center; }
+        .kpi-box span { font-size: 0.6rem; color: var(--color-oro); font-weight: 800; text-transform: uppercase;}
+        .kpi-box strong { font-size: 1.2rem; display: block; margin-top: 4px; color: white;}
+
+        .btn-analisis-pro {
+            grid-column: 1 / -1; 
+            background: linear-gradient(135deg, var(--color-oro) 0%, #b5952f 100%); 
+            color: black; padding: 15px; border-radius: 6px;
+            font-weight: 900; text-transform: uppercase; border: none; font-size: 0.85rem;
+        }
+
+        /* Filtros en una sola columna */
+        .filtros-bar { 
+            display: flex; flex-direction: column; 
+            gap: 10px; padding: 0 15px; margin-bottom: 25px; 
+        }
+        .input-filtro { 
+            width: 100%; padding: 14px; 
+            background: rgba(0, 0, 0, 0.7); border: 1px solid #333; 
+            color: white; border-radius: 6px; font-size: 16px; font-family: 'Montserrat';
+        }
+
+        /* =========================================
+             TABLA BLINDADA (STRUCTURAL SELECTORS)
+         ========================================= */
+        .tabla-contenedor { padding: 0 10px 60px 10px; width: 100%; }
+        
+        .tabla-catalogo { 
+            width: 100%; border-collapse: collapse; 
+            table-layout: fixed; /* Fuerza los anchos asignados */
+            background: rgba(0, 0, 0, 0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tabla-catalogo th, .tabla-catalogo td {
+            padding: 12px 8px; text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            word-wrap: break-word; overflow-wrap: break-word;
+        }
+
+        .tabla-catalogo th { background: rgba(212,175,55,0.1); color: var(--color-oro); font-size: 0.65rem; text-transform: uppercase; border-bottom: 2px solid var(--color-oro);}
+        .tabla-catalogo td { font-size: 0.8rem; color: #ccc; vertical-align: middle; }
+
+        /* MAGIA NEGRA PARA MÓVILES: Oculta dinámicamente las columnas 1(ID), 4(Año) y 5(Estilo) de TODO el DOM */
+        .tabla-catalogo th:nth-child(1), .tabla-catalogo td:nth-child(1),
+        .tabla-catalogo th:nth-child(4), .tabla-catalogo td:nth-child(4),
+        .tabla-catalogo th:nth-child(5), .tabla-catalogo td:nth-child(5) {
+            display: none;
+        }
+
+        /* Asignación estricta de espacio en móvil para 2(Título), 3(Autor) y 6(Dur) */
+        .tabla-catalogo th:nth-child(2), .tabla-catalogo td:nth-child(2) { width: 50%; color: white; font-weight: 700; font-size: 0.85rem;}
+        .tabla-catalogo th:nth-child(3), .tabla-catalogo td:nth-child(3) { width: 35%; font-size: 0.7rem; }
+        .tabla-catalogo th:nth-child(6), .tabla-catalogo td:nth-child(6) { width: 15%; text-align: right; font-size: 0.75rem; }
+
+        /* =========================================
+             REAPARICIÓN DE COLUMNAS EN ESCRITORIO
+         ========================================= */
+        @media (min-width: 1024px) {
+            body { padding-top: 130px; }
+            .main-header-pro { height: 100px; padding: 0 50px; }
+            .header-logo-side img { height: 70px; }
+            .header-title-side h2 { font-size: 1.4rem; }
+            .btn-volver-pro { padding: 12px 24px; font-size: 0.85rem; }
+
+            .global-container { max-width: 1400px; margin: 0 auto; }
+            .header-catalogo-title { flex-direction: row; justify-content: space-between; padding: 20px 50px; }
+            .header-catalogo-title h1 { margin-bottom: 0; }
+            .header-catalogo-title .btn-send { width: auto; background: #111; color: var(--color-oro); border: 1px solid var(--color-oro); }
+
+            .kpi-bar { grid-template-columns: repeat(3, 1fr) 200px; padding: 0 50px; }
+            .filtros-bar { flex-direction: row; padding: 0 50px; }
+            .tabla-contenedor { padding: 0 50px 60px 50px; }
+
+            /* Restaurar la matriz completa */
+            .tabla-catalogo th:nth-child(1), .tabla-catalogo td:nth-child(1),
+            .tabla-catalogo th:nth-child(4), .tabla-catalogo td:nth-child(4),
+            .tabla-catalogo th:nth-child(5), .tabla-catalogo td:nth-child(5) {
+                display: table-cell;
+            }
+
+            /* Reseteo de anchos para 6 columnas */
+            .tabla-catalogo th:nth-child(1) { width: 60px; }
+            .tabla-catalogo th:nth-child(4) { width: 80px; }
+            .tabla-catalogo th:nth-child(5) { width: 130px; }
+            .tabla-catalogo th:nth-child(6) { width: 80px; text-align: left; }
+            .tabla-catalogo th:nth-child(2), .tabla-catalogo td:nth-child(2),
+            .tabla-catalogo th:nth-child(3), .tabla-catalogo td:nth-child(3) { width: auto; font-size: 0.9rem; font-weight: normal; color: #ccc;}
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header-pro">
+        <div class="header-logo-side">
+            <a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a>
+        </div>
+        <div class="header-title-side">
+            <h2>ARCHIVO MUSICAL<span>JULIÁN CERDÁN</span></h2>
+        </div>
+        <div class="header-action-side">
+            <a href="../index.html" class="btn-volver-pro">← Hub</a>
+        </div>
+    </header>
+
+    <main class="global-container">
+        
+        <div class="header-catalogo-title">
+            <h1>Base de Datos</h1>
+            <button id="btn-exportar-catalogo" class="btn-send">Exportar CSV</button>
+        </div>
+
+        <div class="kpi-bar">
+            <div class="kpi-box"><span>Muestra (N)</span><strong id="kpi-muestra">0</strong></div>
+            <div class="kpi-box"><span>Media</span><strong id="kpi-duracion">0:00</strong></div>
+            <div class="kpi-box"><span>Cornetas</span><strong id="kpi-cornetas">0%</strong></div>
+            <a href="bigdata.html" class="btn-analisis-pro" style="display: flex; align-items: center; justify-content: center; text-decoration: none; text-align: center;">Análisis Big Data</a>
+        </div>
+
+        <div class="filtros-bar">
+            <input type="text" id="filtro-texto" class="input-filtro" placeholder="Buscar título...">
+            <select id="filtro-autor" class="input-filtro">
+                <option value="TODOS">Todos los Autores</option>
+            </select>
+            <select id="filtro-estilo" class="input-filtro">
+                <option value="TODOS">Todos los Estilos</option>
+                <option value="CORNETAS">Con Cornetas</option>
+                <option value="SIN_CORNETAS">Sin Cornetas</option>
+            </select>
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <input type="number" id="filtro-ano-min" class="input-filtro" placeholder="Min Año">
+                <input type="number" id="filtro-ano-max" class="input-filtro" placeholder="Max Año">
+            </div>
+        </div>
+
+        <div class="tabla-contenedor">
+            <table class="tabla-catalogo">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Autor</th>
+                        <th>Año</th>
+                        <th>Estilo</th>
+                        <th>Dur.</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-catalogo-body">
+                    <tr><td colspan="6" style="text-align:center; padding: 40px; color:#666;">Sincronizando matriz...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/catalogo.js"></script>
+</body>
+</html>
