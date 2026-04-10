@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulador Cronométrico - Julián Cerdán</title>
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        
+        html, body { 
+            max-width: 100vw; 
+            overflow-x: hidden; 
+            margin: 0; 
+            padding: 0; 
+            color: white; 
+            font-family: 'Montserrat', sans-serif; 
+            background: linear-gradient(rgba(5, 5, 5, 0.9), rgba(5, 5, 5, 0.95)), url('../img/simulacion.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        body { padding-top: 100px; }
+        :root { --color-oro: #d4af37; --color-negro: #050505; --color-azul: #3498db; }
+
+        /* HEADER */
+        .main-header-pro { position: fixed; top: 0; left: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(212, 175, 55, 0.3); z-index: 1000; }
+        .header-logo-side img { height: 45px; width: auto; }
+        .header-title-side h2 { font-size: 0.8rem; text-transform: uppercase; text-align: center; margin: 0; letter-spacing: 1px; color: var(--color-oro); }
+        .btn-volver-pro { border: 1px solid var(--color-oro); color: var(--color-oro); padding: 10px 18px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; text-decoration: none; transition: 0.3s; }
+        .btn-volver-pro:hover { background: var(--color-oro); color: black; }
+
+        /* CONTENEDOR PRINCIPAL */
+        .global-container { width: 100%; max-width: 1300px; margin: 0 auto; padding: 20px 20px 100px 20px; display: flex; flex-direction: column; gap: 30px; }
+
+        /* TARJETAS (CARDS) */
+        .card-sim { background: rgba(18, 18, 18, 0.9); border: 1px solid rgba(255, 255, 255, 0.05); padding: 30px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
+        .card-sim h3 { color: var(--color-oro); margin: 0 0 25px 0; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #222; padding-bottom: 15px; font-weight: 900; }
+
+        /* FORMULARIOS */
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 0.65rem; color: #666; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px; }
+        .input-sim { width: 100%; padding: 15px; background: #0a0a0a; border: 1px solid #222; color: white; border-radius: 8px; font-family: 'Montserrat'; font-size: 0.95rem; transition: border-color 0.3s; }
+        .input-sim:focus { outline: none; border-color: var(--color-oro); }
+        textarea.input-sim { min-height: 100px; resize: vertical; line-height: 1.5; }
+
+        /* BOTONES */
+        .btn-accion { width: 100%; background: var(--color-oro); color: black; font-weight: 900; padding: 18px; border: none; border-radius: 8px; text-transform: uppercase; cursor: pointer; transition: 0.3s; letter-spacing: 1px; font-size: 0.8rem; }
+        .btn-accion:hover { background: white; transform: translateY(-2px); }
+        .btn-accion:active { transform: translateY(0); }
+
+        /* LISTA DE MARCHAS */
+        .itinerario-lista { display: flex; flex-direction: column; gap: 15px; }
+        .item-marcha { background: #141414; border-radius: 10px; padding: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #1a1a1a; transition: 0.3s; }
+        .item-marcha:hover { border-color: var(--color-oro); background: #1a1a1a; }
+        .item-info strong { display: block; font-size: 1rem; color: white; margin-bottom: 4px; }
+        .item-info span { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn-eliminar { background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; padding: 8px 12px; border-radius: 6px; font-weight: 900; cursor: pointer; font-size: 0.6rem; transition: 0.3s; }
+        .btn-eliminar:hover { background: #e74c3c; color: white; }
+
+        /* AUDITORÍA (KPIs) */
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .kpi-box { background: #0a0a0a; padding: 20px; border-radius: 10px; border: 1px solid #1a1a1a; text-align: center; }
+        .kpi-box span { display: block; font-size: 0.55rem; color: #555; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        .kpi-box strong { display: block; font-size: 1.3rem; color: var(--color-oro); font-weight: 900; }
+
+        /* MODAL DE INVITACIÓN (A juego con Comunidad) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; display: none; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(10px); }
+        .modal-content { background: #121212; border: 1px solid var(--color-oro); border-radius: 16px; padding: 45px; max-width: 450px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.8); }
+
+        @media (min-width: 1024px) {
+            .global-container { display: grid; grid-template-columns: 450px 1fr; align-items: start; }
+            .panel-derecho { display: flex; flex-direction: column; gap: 30px; }
+            .main-header-pro { padding: 0 50px; height: 100px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header-pro">
+        <div class="header-logo-side"><a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a></div>
+        <div class="header-title-side"><h2>Simulador Cronométrico</h2></div>
+        <div class="header-action-side"><a href="comunidad.html" class="btn-volver-pro">Comunidad</a></div>
+    </header>
+
+    <main class="global-container">
+        
+        <div class="panel-izquierdo">
+            <div class="card-sim">
+                <h3>Parámetros</h3>
+                <div class="input-group">
+                    <label>Hermandad / Paso</label>
+                    <input type="text" id="sim-nombre" class="input-sim" placeholder="Ej. El Rocío - Sanlúcar">
+                </div>
+                <div class="input-group">
+                    <label>Horas de Recorrido</label>
+                    <input type="number" id="sim-horas" class="input-sim" value="6" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>Argumentación Técnica</label>
+                    <textarea id="sim-descripcion" class="input-sim" placeholder="Describe el estilo musical o motivos del diseño..."></textarea>
+                </div>
+            </div>
+
+            <div class="card-sim" style="margin-top:30px;">
+                <h3>Añadir Marcha</h3>
+                <div class="input-group">
+                    <label>Seleccionar Obra</label>
+                    <input list="lista-marchas" id="sim-buscador-marcha" class="input-sim" placeholder="Busca título o autor...">
+                    <datalist id="lista-marchas"></datalist>
+                </div>
+                <div class="input-group">
+                    <label>Ubicación / Calle</label>
+                    <input type="text" id="sim-calle" class="input-sim" placeholder="Ej. Calle Ancha">
+                </div>
+                <button id="btn-agregar-marcha" onclick="procesarMarcha()" class="btn-accion">Insertar en Cruceta</button>
+            </div>
+        </div>
+
+        <div class="panel-derecho">
+            
+            <div class="card-sim">
+                <h3>Panel de Auditoría</h3>
+                <div class="kpi-grid">
+                    <div class="kpi-box"><span>Nº Marchas</span><strong id="aud-n">0</strong></div>
+                    <div class="kpi-box"><span>Tiempo Musical</span><strong id="aud-tiempo">0:00</strong></div>
+                    <div class="kpi-box"><span>Densidad (%)</span><strong id="aud-ratio">0%</strong></div>
+                </div>
+            </div>
+
+            <div class="card-sim">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; border-bottom:1px solid #222; padding-bottom:15px;">
+                    <h3 style="margin:0; border:0; padding:0;">Diseño de Cruceta</h3>
+                    <button class="btn-accion" style="width:auto; padding:12px 25px; margin:0;" onclick="prepararParaComunidad()">Publicar en Foro</button>
+                </div>
+                
+                <div id="contenedor-itinerario" class="itinerario-lista">
+                    <p style="color: #444; font-size: 0.9rem; text-align: center; padding: 40px; border: 2px dashed #1a1a1a; border-radius: 12px;">Comienza a añadir marchas para generar la simulación</p>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <div class="modal-overlay" id="modal-auth-invitation" onclick="if(event.target===this) cerrarInvitacion()">
+        <div class="modal-content">
+            <img src="../img/escudo.png" style="height: 80px; margin-bottom:25px;">
+            <h3 style="color:var(--color-oro); margin-bottom:15px;">Acceso Restringido</h3>
+            <p style="font-size:0.9rem; color:#888; line-height:1.6; margin-bottom:30px;">Para publicar tus diseños y participar en el foro de debate, debes formar parte de la familia de <strong>Julián Cerdán</strong>.</p>
+            <a href="login.html" class="btn-accion" style="text-decoration:none; display:block;">Unirme / Iniciar Sesión</a>
+            <button onclick="cerrarInvitacion()" style="background:none; border:none; color:#444; margin-top:20px; cursor:pointer; font-weight:700; text-transform:uppercase; font-size:0.7rem; letter-spacing:1px;">Volver al simulador</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/simulacion.js"></script>
+</body>
+</html>

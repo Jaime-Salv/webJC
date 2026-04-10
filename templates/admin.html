@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Consola de Administración - Julián Cerdán</title>
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+              RESET Y CONTENCIÓN MÓVIL
+          ========================================= */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --color-oro: #d4af37;
+            --color-negro: #050505;
+            --border-gold: rgba(212, 175, 55, 0.4);
+        }
+
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+            margin: 0; padding: 0;
+            background-color: var(--color-negro);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body { padding-top: 100px; }
+
+        .global-container { 
+            width: 100%;
+            padding: 0 15px 40px 15px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* =========================================
+              CABECERA ADAPTATIVA
+          ========================================= */
+        .main-header {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 80px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            z-index: 1000;
+        }
+
+        .logo-side img { height: 45px; width: auto; }
+        .header-center h2 { font-size: 0.8rem; text-transform: uppercase; text-align: center; margin: 0; letter-spacing: 1px; }
+
+        /* =========================================
+              TARJETAS Y FORMULARIOS
+          ========================================= */
+        .card-admin { 
+            width: 100%;
+            background: rgba(18, 18, 18, 0.9); 
+            border: 1px solid var(--border-gold); 
+            padding: 20px; 
+            border-radius: 8px; 
+        }
+
+        .card-admin h3 { 
+            color: var(--color-oro); font-size: 1rem; text-transform: uppercase; 
+            margin-bottom: 20px; border-bottom: 1px solid rgba(212, 175, 55, 0.1); 
+            padding-bottom: 10px; letter-spacing: 1px;
+        }
+
+        .input-admin { 
+            width: 100%; display: block; padding: 12px; margin-bottom: 15px; 
+            background: #0a0a0a; border: 1px solid #333; color: white; 
+            border-radius: 4px; font-size: 16px; font-family: 'Montserrat';
+        }
+
+        .input-file-container {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed #444;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .input-file-container label {
+            display: block; font-size: 0.65rem; color: #888; 
+            text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;
+        }
+
+        input[type="file"] { width: 100%; color: #aaa; font-size: 0.8rem; }
+
+        .btn-send { 
+            width: 100%; background: var(--color-oro); color: black; 
+            font-weight: 900; padding: 16px; border: none; 
+            border-radius: 4px; text-transform: uppercase; cursor: pointer;
+            transition: 0.3s;
+        }
+
+        /* =========================================
+              TABLA DE HISTORIAL BLINDADA (FIX FINAL)
+          ========================================= */
+        .table-wrapper {
+            width: 100%;
+            margin-top: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .tabla-historial {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .tabla-historial th, .tabla-historial td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .tabla-historial th {
+            background: #000;
+            color: var(--color-oro);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .col-num { width: 40px; text-align: center !important; }
+        .col-marcha { width: auto; }
+        .col-fase { width: 80px; text-align: center !important; }
+
+        .tabla-historial td {
+            font-size: 0.75rem;
+            color: #ccc;
+            vertical-align: middle;
+        }
+
+        /* Escritorio */
+        @media (min-width: 1024px) {
+            .global-container { display: grid; grid-template-columns: 1fr 2fr; align-items: start; gap: 30px; padding: 0 50px 40px 50px; }
+            .injection-row { flex-direction: row; align-items: flex-end; display: flex; gap: 15px; background: rgba(212, 175, 55, 0.03); padding: 15px; border-radius: 8px; border: 1px solid rgba(212, 175, 55, 0.2); }
+            .header-center h2 { font-size: 1.2rem; }
+        }
+
+        @media (max-width: 600px) {
+            .injection-row { display: flex; flex-direction: column; gap: 15px; background: rgba(212, 175, 55, 0.03); padding: 15px; border-radius: 8px; border: 1px solid rgba(212, 175, 55, 0.2); }
+            .col-fase { width: 70px; }
+            .tabla-historial th, .tabla-historial td { padding: 10px 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo-side"><a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a></div>
+        <div class="header-center"><h2>Consola Admin</h2></div>
+        <div class="auth-side">
+            <button id="btn-finalizar-evento" class="btn-send" style="background:#ff3b3b; width:auto; padding:8px 12px; font-size:0.6rem; display:none;">Cerrar</button>
+        </div>
+    </header>
+
+    <main class="global-container">
+        
+        <div class="card-admin" id="panel-configuracion">
+            <h3>1. Iniciar Señal</h3>
+            
+            <div id="info-procesion-activa" style="display: none; margin-bottom: 20px; padding: 15px; background: rgba(39, 174, 96, 0.1); border-radius: 4px; border: 1px solid #27ae60;">
+                <p id="txt-hermandad-activa" style="font-weight: 900; color: #27ae60; margin: 0;"></p>
+                <p id="txt-lugar-activa" style="font-size: 0.8rem; color: #ccc; margin: 5px 0 0 0;"></p>
+            </div>
+
+            <div id="form-nueva-procesion">
+                <input type="text" id="adm-hermandad" class="input-admin" placeholder="Hermandad...">
+                <input type="text" id="adm-localidad" class="input-admin" placeholder="Localidad...">
+                <input type="date" id="adm-fecha" class="input-admin">
+                
+                <select id="adm-tipo" class="input-admin" onchange="actualizarSelectSubfases()">
+                    <option value="Semana Santa">Semana Santa</option>
+                    <option value="Gloria">Gloria</option>
+                    <option value="Extraordinaria">Extraordinaria</option>
+                </select>
+
+                <div class="input-file-container">
+                    <label>Imagen de Portada (Opcional)</label>
+                    <input type="file" id="adm-foto-archivo" accept="image/*">
+                </div>
+                
+                <button onclick="iniciarNuevaProcesion()" class="btn-send">Activar Directo</button>
+            </div>
+        </div>
+
+        <div class="card-admin" id="panel-inyeccion">
+            <h3>2. Inyección Live</h3>
+            <div class="injection-row">
+                <div style="width: 100%;">
+                    <label style="font-size:0.6rem; color:#888; display:block; margin-bottom:5px;">ID</label>
+                    <input type="number" id="inp-id-marcha" class="input-admin" placeholder="ID" style="margin-bottom:0;">
+                </div>
+                <div style="width: 100%;">
+                    <label style="font-size:0.6rem; color:#888; display:block; margin-bottom:5px;">TÍTULO</label>
+                    <input type="text" id="inp-titulo-marcha" class="input-admin" readonly placeholder="Esperando..." style="background: #000; margin-bottom:0; color: var(--color-oro);">
+                </div>
+                <div style="width: 100%;">
+                    <label style="font-size:0.6rem; color:#888; display:block; margin-bottom:5px;">ESTRATO</label>
+                    <select id="inp-fase-marcha" class="input-admin" style="margin-bottom:0;">
+                        <option value="Ida">Ida</option>
+                        <option value="CO">CO</option>
+                        <option value="Vuelta">Vuelta</option>
+                    </select>
+                </div>
+                <button onclick="inyectarMarcha()" class="btn-send" style="padding: 12px; width: 100%; min-width: 100px;">Añadir</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="tabla-historial">
+                    <thead>
+                        <tr>
+                            <th class="col-num">Nº</th>
+                            <th class="col-marcha">Marcha</th>
+                            <th class="col-fase">Fase</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-historial-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/admin.js"></script>
+
+    <script>
+        // Lógica reactiva para el administrador
+        function actualizarSelectSubfases() {
+            const tipo = document.getElementById('adm-tipo').value;
+            const selectFase = document.getElementById('inp-fase-marcha');
+            
+            // Limpiar opciones
+            selectFase.innerHTML = "";
+
+            if (tipo === "Semana Santa") {
+                const opciones = [
+                    { val: "Ida", text: "Ida" },
+                    { val: "CO", text: "CO" },
+                    { val: "Vuelta", text: "Vuelta" }
+                ];
+                opciones.forEach(opt => {
+                    selectFase.innerHTML += `<option value="${opt.val}">${opt.text}</option>`;
+                });
+            } else {
+                // Para Gloria o Extraordinaria
+                const opciones = [
+                    { val: "Día", text: "Día" },
+                    { val: "Noche", text: "Noche" }
+                ];
+                opciones.forEach(opt => {
+                    selectFase.innerHTML += `<option value="${opt.val}">${opt.text}</option>`;
+                });
+            }
+        }
+    </script>
+</body>
+</html>

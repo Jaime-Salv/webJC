@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Laboratorio Big Data - Julián Cerdán</title>
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+             RESET Y CONTENCIÓN MÓVIL ESTRICTA
+         ========================================= */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            max-width: 100vw; overflow-x: hidden;
+            margin: 0; padding: 0; background-color: #050505; color: white;
+            font-family: 'Montserrat', sans-serif;
+        }
+        body { padding-top: 100px; }
+
+        :root {
+            --color-oro: #d4af37;
+            --color-negro: #050505;
+        }
+
+        /* =========================================
+             CABECERA ADAPTATIVA SMART
+         ========================================= */
+        .main-header-pro {
+            position: fixed; top: 0; left: 0; width: 100%; height: 80px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px; background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(15px); border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            z-index: 1000;
+        }
+        .header-logo-side img { height: 45px; width: auto; }
+        .header-title-side h2 { font-size: 0.8rem; text-transform: uppercase; text-align: center; margin: 0; letter-spacing: 1px; color: var(--color-oro); }
+        .header-title-side h2 span { font-size: 0.6rem; color: #ccc; display: block; }
+        .btn-volver-pro { 
+            border: 1px solid var(--color-oro); color: var(--color-oro);
+            padding: 8px 12px; border-radius: 4px; font-weight: 700; font-size: 0.65rem;
+            text-transform: uppercase; text-decoration: none;
+        }
+
+        /* =========================================
+             LAYOUT Y TARJETAS (MÓVIL TOTAL)
+         ========================================= */
+        .global-container { width: 100%; padding: 20px 15px 60px 15px; display: flex; flex-direction: column; gap: 20px; }
+
+        .titulo-seccion { color: white; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; border-left: 3px solid var(--color-oro); padding-left: 10px; margin-bottom: 15px; }
+
+        /* KPIs Rigurosos en 2x2 */
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .kpi-card { background: rgba(18, 18, 18, 0.9); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; }
+        .kpi-label { color: #888; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 5px; }
+        .kpi-value { color: var(--color-oro); font-size: 1.5rem; font-weight: 900; display: block; }
+        .kpi-sub { color: #aaa; font-size: 0.7rem; margin-top: 5px; font-style: italic; }
+
+        /* Gráficos en Fila (Mobile) */
+        .charts-grid { display: flex; flex-direction: column; gap: 20px; }
+        .chart-wrapper { background: rgba(18, 18, 18, 0.9); border: 1px solid rgba(212, 175, 55, 0.1); padding: 15px; border-radius: 8px; position: relative; width: 100%; }
+        .chart-canvas-container { height: 350px; width: 100%; position: relative; }
+        .chart-wrapper h4 { color: white; margin: 0 0 15px 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+        canvas { width: 100% !important; height: 100% !important; }
+
+        /* Tablas Blindadas (A/B Testing y Heatmap) */
+        .ab-table-wrapper { width: 100%; overflow-x: auto; border-radius: 8px; border: 1px solid #333; }
+        .ab-table { width: 100%; min-width: 450px; border-collapse: collapse; background: rgba(0,0,0,0.4); }
+        .ab-table th, .ab-table td { padding: 12px; text-align: center; font-size: 0.8rem; border-bottom: 1px solid #222; }
+        .ab-table th { background: rgba(212, 175, 55, 0.1); color: var(--color-oro); font-size: 0.7rem; text-transform: uppercase; }
+
+        /* Matriz de calor específica */
+        .heatmap-table { min-width: 600px; }
+        .heatmap-table th { background: #000; position: sticky; top: 0; z-index: 2; font-size: 0.65rem; }
+        .heatmap-table td.sticky-col { position: sticky; left: 0; z-index: 1; background: #0a0a0a; border-right: 1px solid #333; font-weight: bold; color: white; text-align: left; }
+
+        /* Escritorio: Layout Avanzado */
+        @media (min-width: 1024px) {
+            body { padding-top: 120px; }
+            .main-header-pro { height: 100px; padding: 0 50px; }
+            .header-logo-side img { height: 60px; }
+            .header-title-side h2 { font-size: 1.2rem; }
+            .global-container { max-width: 1400px; margin: 0 auto; padding: 0 50px 60px 50px; }
+            .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+            .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header-pro">
+        <div class="header-logo-side"><a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a></div>
+        <div class="header-title-side"><h2>LABORATORIO BIG DATA<span>Estudio Profundo del ADN Musical</span></h2></div>
+        <div class="header-action-side"><a href="catalogo.html" class="btn-volver-pro">← Catálogo</a></div>
+    </header>
+
+    <main class="global-container">
+        
+        <h3 class="titulo-seccion">Estadística Descriptiva Poblacional</h3>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <span class="kpi-label">Población Total (N)</span>
+                <span class="kpi-value" id="bd-n">0</span>
+                <div class="kpi-sub">Marchas registradas válidas</div>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">Año Mediano (Robust)</span>
+                <span class="kpi-value" id="bd-ano-mediana">0</span>
+                <div class="kpi-sub">Tendencia central histórica</div>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">Duración Media (μ)</span>
+                <span class="kpi-value" id="bd-duracion-media">0:00</span>
+                <div class="kpi-sub" id="bd-duracion-sub">Desviación (σ): ±0s</div>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">Índice Autores Únicos</span>
+                <span class="kpi-value" id="bd-indice-autores">0</span>
+                <div class="kpi-sub">Concentración de obras (Pareto)</div>
+            </div>
+        </div>
+
+        <h3 class="titulo-seccion" style="margin-top: 30px;">Machine Learning: Tendencias y Clustering</h3>
+        <div class="charts-grid">
+            <div class="chart-wrapper">
+                <h4>Histograma Poblacional (Décadas)</h4>
+                <div class="chart-canvas-container">
+                    <canvas id="chartDecadas"></canvas>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <h4>Dispersión y Segmentación K-Means</h4>
+                <div class="chart-canvas-container">
+                    <canvas id="chartDispersion"></canvas>
+                </div>
+                <div style="margin-top: 15px; font-size: 0.7rem; color: #aaa; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 4px; border-left: 2px solid var(--color-oro);">
+                    <strong>A.I. Insights:</strong> El modelo divide el archivo en 3 clústeres. La línea roja traza la Regresión Lineal indicando la tendencia evolutiva de la duración musical.
+                </div>
+            </div>
+        </div>
+
+        <h3 class="titulo-seccion" style="margin-top: 30px;">Geografía Musical: Matriz de Calor</h3>
+        <div class="chart-wrapper">
+            <h4>Densidad de Compositores por Localidad</h4>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 15px; font-size: 0.7rem; color: #aaa;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background: rgba(212,175,55,1); border-radius: 2px;"></span> Fuerte Vinculación
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="display: inline-block; width: 12px; height: 12px; background: rgba(212,175,55,0.15); border-radius: 2px;"></span> Vinculación Leve
+                </div>
+            </div>
+
+            <div class="ab-table-wrapper" style="max-height: 500px;">
+                <table class="ab-table heatmap-table">
+                    <thead id="heatmap-head"></thead>
+                    <tbody id="heatmap-body"></tbody>
+                </table>
+            </div>
+            <p style="font-size: 0.7rem; color: #666; text-align: center; margin-top: 10px;">
+                Desliza la tabla para ver todos los autores y localidades.
+            </p>
+        </div>
+
+        <h3 class="titulo-seccion" style="margin-top: 30px;">Estudio A/B: Cornetas vs. Plantilla Completa</h3>
+        <div class="ab-table-wrapper">
+            <table class="ab-table">
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Métrica Inferencial</th>
+                        <th>Con Cornetas (CC)</th>
+                        <th>Sin Cornetas (SC)</th>
+                        <th>Varianza (Δ)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="text-align: left; font-weight: bold; color: white;">Frecuencia Poblacional</td>
+                        <td id="ab-freq-cc">0%</td>
+                        <td id="ab-freq-sc">0%</td>
+                        <td id="ab-freq-delta" style="color: var(--color-oro);">0 p.p.</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left; font-weight: bold; color: white;">Año Mediano Robust</td>
+                        <td id="ab-ano-cc">0</td>
+                        <td id="ab-ano-sc">0</td>
+                        <td id="ab-ano-delta" style="color: var(--color-oro);">0 años</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left; font-weight: bold; color: white;">Duración Media (μ)</td>
+                        <td id="ab-dur-cc">0:00</td>
+                        <td id="ab-dur-sc">0:00</td>
+                        <td id="ab-dur-delta" style="color: var(--color-oro);">0s</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="titulo-seccion" style="margin-top: 30px;">Concentración Autoral y Curva de Pareto</h3>
+        <div class="chart-wrapper">
+            <h4>Top 10 Compositores del Archivo</h4>
+            <div class="chart-canvas-container">
+                <canvas id="chartPareto"></canvas>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/bigdata.js"></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+/* =========================================
+   SISTEMA DE DISEÑO - JULIÁN CERDÁN
+   Paleta: Institucional (Negro y Oro)
+========================================= */
+
+:root {
+    --color-oro: #d4af37;
+    --color-oro-hover: #b5952f;
+    --color-negro: #050505;
+    --color-panel: #121212;
+    --color-texto: #f4f4f4;
+    --borde-radio: 4px;
+    --font-main: 'Montserrat', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--color-negro);
+    color: var(--color-texto);
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
+/* HEADER FIJO */
+.main-header {
+    position: fixed;
+    top: 0; left: 0; width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; 
+    align-items: center;
+    padding: 15px 60px;
+    background: rgba(5, 5, 5, 0.92);
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    z-index: 1000;
+}
+
+.logo-side img { height: 65px; width: auto; transition: 0.3s; }
+.header-center h2 {
+    color: var(--color-oro);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-align: center;
+}
+
+/* TABLA MAESTRA MODERNA */
+.tabla-maestra {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: rgba(255, 255, 255, 0.01);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 55, 0.1);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.tabla-maestra thead th {
+    background-color: rgba(212, 175, 55, 0.05);
+    color: var(--color-oro);
+    text-transform: uppercase;
+    font-weight: 800;
+    font-size: 0.7rem;
+    padding: 20px;
+    text-align: left;
+    border-bottom: 2px solid rgba(212, 175, 55, 0.15);
+}
+
+.tabla-maestra tbody td {
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: 0.2s;
+}
+
+.tabla-maestra tbody tr:hover td { background-color: rgba(212, 175, 55, 0.03); }
+
+/* BOTONES Y BADGES */
+.btn-gold-pro {
+    background: var(--color-oro);
+    color: black;
+    padding: 15px 30px;
+    border-radius: 4px;
+    font-weight: 900;
+    cursor: pointer;
+    border: none;
+}
+
+.si { background: rgba(212, 175, 55, 0.1); color: var(--color-oro); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; }
+.no { background: rgba(255, 255, 255, 0.05); color: #777; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; }
