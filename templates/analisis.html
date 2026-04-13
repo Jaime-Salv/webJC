@@ -192,6 +192,19 @@
                     <div class="chart-box" style="grid-column: 1 / -1;"><h4>Top Compositores</h4><canvas id="chartCompositores"></canvas></div>
                 </section>
 
+                <section id="zona-recorrido-youtube" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid rgba(212,175,55,0.2);">
+    
+                    <div id="admin-panel-youtube" style="display: none; background: rgba(212, 175, 55, 0.05); padding: 20px; border-radius: 8px; border: 1px dashed var(--color-oro); margin-bottom: 25px;">
+                        <h4 style="color: var(--color-oro); margin-top: 0;">Configuración de Vídeo (Solo Admin)</h4>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="input-url-youtube" placeholder="Pega aquí el enlace de la lista o vídeo de YouTube..." style="flex: 1; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 4px;">
+                            <button onclick="guardarUrlYoutube()" style="background: var(--color-oro); color: black; border: none; padding: 0 20px; font-weight: bold; border-radius: 4px; cursor: pointer;">Guardar</button>
+                        </div>
+                    </div>
+
+                    <div id="contenedor-video-final"></div>
+                </section>
+
                 <section id="seccion-debate" class="card-sim" style="margin-top: 30px; border-top: 2px solid var(--color-oro);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="color: var(--color-oro); margin: 0;">Análisis de la Comunidad</h3>

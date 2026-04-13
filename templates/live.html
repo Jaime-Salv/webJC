@@ -3,139 +3,390 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Transmisión en Directo - Julián Cerdán</title>
+    <title>En Directo - Julián Cerdán</title>
     
-    <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../img/escudo.png">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
+        /* =========================================
+           RESET Y FONDO DE PANTALLA COMPLETO
+           ========================================= */
         *, *::before, *::after { box-sizing: border-box; }
-        
-        html, body { 
-            max-width: 100vw; 
-            overflow-x: hidden; 
+
+        :root {
+            --color-oro: #d4af37;
+            --color-negro: #050505;
+            --border-gold: rgba(212, 175, 55, 0.4);
+        }
+
+        html, body {
+            min-height: 100vh; 
             margin: 0; 
-            padding: 0; 
-            background-color: #050505; 
-            color: white; 
-            font-family: 'Montserrat', sans-serif; 
+            padding: 0;
+            background-color: var(--color-negro);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
         }
 
-        body { padding-top: 100px; }
-        :root { --color-oro: #d4af37; --color-negro: #050505; }
-
-        /* HEADER UNIFICADO (Jaime Rubiales) */
-        .main-header-pro { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 80px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 0 15px; background: rgba(5, 5, 5, 0.95); 
-            backdrop-filter: blur(15px); border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
-            z-index: 1000; 
+        body {
+            background-image: linear-gradient(to bottom, rgba(10,10,10,0.7) 0%, rgba(5,5,5,0.98) 100%), url('../img/foto-dashboard.jpg');
+            background-size: cover;
+            background-position: center 30%;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            padding-top: 100px;
         }
-        .header-logo-side img { height: 45px; width: auto; }
-        .header-title-side h2 { font-size: 0.8rem; text-transform: uppercase; text-align: center; margin: 0; letter-spacing: 1px; color: var(--color-oro); }
-        .btn-volver-pro { 
-            border: 1px solid var(--color-oro); color: var(--color-oro); 
-            padding: 8px 12px; border-radius: 4px; font-weight: 700; 
-            font-size: 0.65rem; text-transform: uppercase; text-decoration: none; 
+
+        /* =========================================
+           CABECERA
+           ========================================= */
+        .main-header {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 80px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            z-index: 1000;
+        }
+
+        .logo-side img { height: 45px; width: auto; }
+        
+        .header-center h2 { 
+            font-size: 1rem; text-transform: uppercase; margin: 0; 
+            color: var(--color-oro); letter-spacing: 1px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        
+        .badge-live {
+            background: #ff3b3b; color: white; font-size: 0.6rem;
+            padding: 3px 8px; border-radius: 12px; font-weight: bold;
+            animation: parpadeo 2s infinite;
+        }
+
+        @keyframes parpadeo {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* =========================================
+           LAYOUT PRINCIPAL (2 COLUMNAS)
+           ========================================= */
+        .contenedor-seguimiento-live {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px 40px 15px;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .contenedor-seguimiento-live { grid-template-columns: 1fr; }
+            .columna-chat { order: 2; }
+            .columna-timeline { order: 1; }
+        }
+
+        /* =========================================
+           CHAT EN TIEMPO REAL
+           ========================================= */
+        .columna-chat { position: sticky; top: 100px; }
+
+        #panel-chat-directo {
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-gold);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        #panel-chat-directo h3 {
+            color: var(--color-oro); margin-top: 0; font-size: 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
+            padding-bottom: 15px; margin-bottom: 15px;
+        }
+
+        #caja-mensajes {
+            height: 400px; overflow-y: auto; display: flex; flex-direction: column;
+            gap: 10px; margin-bottom: 15px; padding-right: 5px;
+            scrollbar-width: thin; scrollbar-color: var(--color-oro) transparent;
+        }
+
+        .mensaje-chat {
+            background: rgba(255, 255, 255, 0.05); padding: 10px 12px;
+            border-radius: 8px; font-size: 0.85rem; line-height: 1.4;
+        }
+
+        .controles-chat { display: flex; gap: 10px; }
+        
+        .controles-chat input {
+            flex: 1; padding: 12px; background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1); color: white;
+            border-radius: 4px; font-family: 'Montserrat';
+        }
+
+        .controles-chat button {
+            background: var(--color-oro); color: black; border: none;
+            padding: 0 15px; font-weight: bold; border-radius: 4px; cursor: pointer;
+            text-transform: uppercase; font-size: 0.8rem;
+        }
+
+        /* =========================================
+           ESTÉTICA DE MINI TARJETAS (REPERTORIO)
+           ========================================= */
+        .columna-timeline {
+            background: rgba(18, 18, 18, 0.7);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #timeline-contenedor {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .marcha-live-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 6px;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             transition: 0.3s;
         }
-        .btn-volver-pro:hover { background: var(--color-oro); color: black; }
 
-        .global-container { width: 100%; max-width: 900px; margin: 0 auto; padding: 20px 15px 80px 15px; }
-
-        /* Cabecera Live */
-        .hero-live {
-            position: relative; padding: 40px; border-radius: 12px; margin-bottom: 40px;
-            background-size: cover; background-position: center; border: 1px solid rgba(255, 59, 59, 0.4);
-            overflow: hidden; box-shadow: 0 10px 40px rgba(255, 59, 59, 0.1);
-        }
-        .hero-overlay-live {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to right, rgba(5,5,5,0.95) 20%, rgba(5,5,5,0.8) 100%); z-index: 1;
-        }
-        .hero-content { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; }
-        
-        .indicador-directo {
-            background: rgba(255, 59, 59, 0.15); color: #ff3b3b; padding: 8px 15px;
-            border-radius: 50px; font-size: 0.8rem; font-weight: 900; letter-spacing: 2px;
-            text-transform: uppercase; display: flex; align-items: center; gap: 10px;
-            border: 1px solid rgba(255, 59, 59, 0.3);
-            width: fit-content;
-        }
-        .punto-rojo {
-            width: 10px; height: 10px; background-color: #ff3b3b; border-radius: 50%;
-            animation: latido 1.5s infinite;
-        }
-        @keyframes latido {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 59, 59, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 59, 0); }
+        .marcha-live-card.ultima {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--color-oro);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+            transform: scale(1.02);
+            margin-bottom: 8px; /* Separación extra para la que suena */
         }
 
-        .hero-live h1 { font-size: 2rem; color: white; margin: 15px 0 5px 0; text-transform: uppercase; font-weight: 900; line-height: 1.1; }
-        .hero-live p { color: #ccc; font-size: 1rem; letter-spacing: 1px; margin: 0; }
+        .ml-info { flex: 1; }
 
-        /* Timeline del Directo */
-        .timeline-live { margin-top: 40px; }
-        
-        .marcha-live-card {
-            background: rgba(18, 18, 18, 0.8); border: 1px solid rgba(212, 175, 55, 0.2);
-            padding: 25px; border-radius: 8px; margin-bottom: 20px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-left: 4px solid var(--color-oro);
-            animation: aparecer 0.5s ease-out;
+        .ml-fase {
+            font-size: 0.6rem; text-transform: uppercase;
+            letter-spacing: 1px; color: #888; margin-bottom: 4px;
         }
-        @keyframes aparecer { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .marcha-live-card.ultima { border-left-color: #ff3b3b; background: rgba(255, 59, 59, 0.05); }
+        .ultima .ml-fase { color: var(--color-oro); font-weight: bold; }
 
-        .ml-fase { color: var(--color-oro); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .ml-titulo { color: white; font-size: 1.5rem; font-weight: 900; margin: 5px 0; }
-        .ml-autor { color: #888; font-size: 0.9rem; margin: 0; }
-        .ml-orden { font-size: 2.5rem; font-weight: 900; color: rgba(255,255,255,0.05); }
+        .ml-titulo { margin: 0; font-size: 0.95rem; color: white; font-weight: 700; }
 
-        @media (min-width: 1024px) {
-            .main-header-pro { padding: 0 50px; height: 100px; }
-            body { padding-top: 120px; }
-            .hero-live h1 { font-size: 2.5rem; }
+        .ml-orden {
+            font-size: 0.8rem; font-weight: 900;
+            color: rgba(212, 175, 55, 0.5); margin-left: 15px;
         }
     </style>
 </head>
 <body>
 
-    <header class="main-header-pro">
-        <div class="header-logo-side"><a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a></div>
-        <div class="header-title-side"><h2>Transmisión Live</h2></div>
-        <div class="header-action-side"><a href="../index.html" class="btn-volver-pro">Volver al Hub</a></div>
+    <header class="main-header">
+        <div class="logo-side"><a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a></div>
+        <div class="header-center">
+            <h2><span id="txt-hermandad-header">Cargando...</span> <span class="badge-live">EN VIVO</span></h2>
+        </div>
+        <div style="width: 45px;"></div> 
     </header>
 
-    <main class="global-container">
+    <main class="contenedor-seguimiento-live">
         
-        <section id="hero-live" class="hero-live">
-            <div class="hero-overlay-live"></div>
-            <div class="hero-content">
-                <div>
-                    <div class="indicador-directo"><div class="punto-rojo"></div> EN DIRECTO</div>
-                    <h1 id="titulo-hermandad">Conectando con la cruz de guía...</h1>
-                    <p id="subtitulo-localidad">Sincronizando telemetría...</p>
+        <aside class="columna-chat">
+            <div id="panel-chat-directo">
+                <h3>Comunidad en Vivo</h3>
+                
+                <div id="caja-mensajes">
+                    <p style="color: #555; text-align: center; font-size: 0.8rem; margin-top: 20px;">Conectando con el chat...</p>
                 </div>
-                <div style="text-align: right;">
-                    <span style="display:block; color:#aaa; font-size:0.6rem; text-transform:uppercase; letter-spacing: 1px;">Marchas Tocadas</span>
-                    <strong id="contador-marchas" style="color:white; font-size:3rem; font-weight:900;">0</strong>
-                </div>
-            </div>
-        </section>
 
-        <div id="timeline-directo" class="timeline-live">
+                <div class="controles-chat">
+                    <input type="text" id="input-chat" placeholder="Comenta la cruceta...">
+                    <button id="btn-enviar-chat">Enviar</button>
+                </div>
             </div>
+        </aside>
+
+        <article class="columna-timeline">
+            <h3 style="color: var(--color-oro); border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 15px; margin-top:0;">Secuencia Musical</h3>
+            <div id="timeline-contenedor">
+                <p style="color: #777;">Esperando a que la dirección musical inyecte la primera marcha...</p>
+            </div>
+        </article>
 
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
-    <script src="../js/live.js"></script>
 
+    <script>
+        const parametrosURL = new URLSearchParams(window.location.search);
+        const idProcesion = parametrosURL.get('id');
+
+        let catalogoMaestro = [];
+
+        async function inicializarDirecto() {
+            if (!idProcesion) {
+                document.getElementById('txt-hermandad-header').innerText = "Error: ID no válido";
+                return;
+            }
+
+            // 1. Cargar Cabecera
+            const { data: proc } = await clienteSupabase.from('maestro_procesiones').select('*').eq('id_procesion', idProcesion).maybeSingle();
+            if (proc) {
+                document.getElementById('txt-hermandad-header').innerText = proc.hermandad;
+                if(proc.url_foto) {
+                    document.body.style.backgroundImage = `linear-gradient(to bottom, rgba(10,10,10,0.7) 0%, rgba(5,5,5,0.98) 100%), url('${proc.url_foto}')`;
+                }
+            }
+
+            // 2. Descargar el catálogo para cruzar IDs con Títulos
+            const { data: cat } = await clienteSupabase.from('catalogo_marchas').select('id_marcha, titulo');
+            if (cat) catalogoMaestro = cat;
+
+            // 3. Cargar datos iniciales
+            cargarMarchas();
+            cargarChat();
+
+            // 4. Activar suscripciones en tiempo real
+            activarSuscripcionesRealtime();
+        }
+
+        /* --- MOTOR DE TIMELINE (MINI TARJETAS) --- */
+        async function cargarMarchas() {
+            const { data } = await clienteSupabase
+                .from('repertorio_transaccional')
+                .select('*')
+                .eq('id_procesion', idProcesion)
+                .order('orden', { ascending: false }); // Las más nuevas arriba
+
+            const contenedor = document.getElementById('timeline-contenedor');
+            contenedor.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                contenedor.innerHTML = '<p style="color: #777; text-align: center; padding: 20px;">Esperando marchas...</p>';
+                return;
+            }
+
+            data.forEach((reg, index) => {
+                const marchaInfo = catalogoMaestro.find(m => m.id_marcha === reg.id_marcha) || { titulo: "Marcha Desconocida" };
+                
+                // Es la última si es la posición 0 del array (orden DESC)
+                const esLaUltima = (index === 0);
+                const claseCard = esLaUltima ? 'marcha-live-card ultima' : 'marcha-live-card';
+                const textoFase = esLaUltima ? `🔴 SONANDO AHORA: ${reg.fase}` : reg.fase;
+
+                contenedor.innerHTML += `
+                    <div class="${claseCard}">
+                        <div class="ml-info">
+                            <div class="ml-fase">${textoFase}</div>
+                            <h4 class="ml-titulo">${marchaInfo.titulo}</h4>
+                        </div>
+                        <div class="ml-orden">#${reg.orden}</div>
+                    </div>
+                `;
+            });
+        }
+
+        /* --- MOTOR DE CHAT --- */
+        const cajaMensajes = document.getElementById('caja-mensajes');
+        const inputChat = document.getElementById('input-chat');
+        const btnEnviarChat = document.getElementById('btn-enviar-chat');
+
+        async function cargarChat() {
+            const { data } = await clienteSupabase
+                .from('directo_chat')
+                .select('*')
+                .eq('id_procesion', idProcesion)
+                .order('created_at', { ascending: true });
+
+            cajaMensajes.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                cajaMensajes.innerHTML = '<p style="color:#555; text-align:center; margin-top:20px;">Sé el primero en comentar.</p>';
+            } else {
+                data.forEach(msg => pintarMensaje(msg));
+            }
+        }
+
+        function pintarMensaje(msg) {
+            if (cajaMensajes.innerHTML.includes("Sé el primero")) cajaMensajes.innerHTML = '';
+            
+            cajaMensajes.innerHTML += `
+                <div class="mensaje-chat">
+                    <strong style="color: var(--color-oro);">${msg.usuario_nombre}:</strong> 
+                    <span style="color: #ccc;">${msg.mensaje}</span>
+                </div>
+            `;
+            cajaMensajes.scrollTop = cajaMensajes.scrollHeight;
+        }
+
+        async function enviarMensaje() {
+            const texto = inputChat.value.trim();
+            if (!texto) return;
+
+            const { data: { session } } = await clienteSupabase.auth.getSession();
+            if (!session) return alert("Debes iniciar sesión para usar el chat en vivo.");
+
+            const { data: perf } = await clienteSupabase.from('perfiles').select('username').eq('id', session.user.id).maybeSingle();
+            const nombre = (perf && perf.username) ? perf.username : session.user.email.split('@')[0];
+
+            inputChat.value = '';
+
+            await clienteSupabase.from('directo_chat').insert([{
+                id_procesion: idProcesion,
+                usuario_nombre: nombre,
+                mensaje: texto
+            }]);
+        }
+
+        btnEnviarChat.addEventListener('click', enviarMensaje);
+        inputChat.addEventListener('keypress', (e) => { if (e.key === 'Enter') enviarMensaje(); });
+
+        
+        /* --- MAGIA EN TIEMPO REAL (VERSIÓN BLINDADA) --- */
+        function activarSuscripcionesRealtime() {
+            console.log("Intentando conectar con Supabase Realtime...");
+
+            clienteSupabase
+                .channel('canal-directo')
+                // Escuchar nuevas marchas (sin filtro previo)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'repertorio_transaccional' }, 
+                    (payload) => {
+                        console.log("📡 Señal de nueva marcha recibida:", payload);
+                        // Comprobamos nosotros mismos que sea de esta procesión
+                        if (payload.new.id_procesion == idProcesion) {
+                            cargarMarchas();
+                        }
+                    }
+                )
+                // Escuchar nuevos mensajes de chat (sin filtro previo)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'directo_chat' }, 
+                    (payload) => {
+                        console.log("💬 Señal de nuevo chat recibida:", payload);
+                        // Comprobamos nosotros mismos que sea de esta procesión
+                        if (payload.new.id_procesion == idProcesion) {
+                            pintarMensaje(payload.new);
+                        }
+                    }
+                )
+                .subscribe((estado) => {
+                    console.log("Estado del Realtime:", estado);
+                    if (estado === 'SUBSCRIBED') {
+                        console.log("✅ ¡Conectado al directo con éxito!");
+                    }
+                });
+        }
+
+        window.onload = inicializarDirecto;
+    </script>
 </body>
 </html>

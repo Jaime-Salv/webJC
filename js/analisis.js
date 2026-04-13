@@ -72,6 +72,7 @@ async function cargarDatosActuacion() {
         renderizarGraficos(repertorioEnriquecido);
         renderizarTimeline(repertorioEnriquecido);
         analizarDispersionYEstilo(repertorioEnriquecido);
+        gestionarPanelYoutube(datosProcesion);
 
         // 6. Lanzar la carga de la interacción social
         cargarDatosSociales();
@@ -630,6 +631,154 @@ async function enviarComentarioAnalisis() {
         console.error("Error al comentar:", err.message);
     }
 }
+
+// Variable global para el ID de la procesión
+const urlParams = new URLSearchParams(window.location.search);
+const idProcesionActual = urlParams.get('id');
+
+async function gestionarPanelYoutube(procData) {
+    const { data: { session } } = await clienteSupabase.auth.getSession();
+    
+    // 1. Verificar si es Administrador para mostrar el editor
+    if (session) {
+        const { data: perfil } = await clienteSupabase
+            .from('perfiles')
+            .select('rol')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+        if (perfil && perfil.rol === 'admin') {
+            document.getElementById('admin-panel-youtube').style.display = 'block';
+            if (procData.url_youtube) {
+                document.getElementById('input-url-youtube').value = procData.url_youtube;
+            }
+        }
+    }
+
+    // 2. Renderizar el vídeo para todo el mundo si existe la URL
+    if (procData.url_youtube) {
+        renderizarIframeYoutube(procData.url_youtube);
+    }
+}
+
+function renderizarIframeYoutube(input) {
+    const contenedor = document.getElementById('contenedor-video-final');
+    
+    // CASO A: Si el texto tiene comas, es que has metido varios IDs para hacer una galería
+    if (input.includes(',')) {
+        const ids = input.split(',').map(id => id.trim());
+        
+        let htmlGaleria = `
+            <h3 style="color: var(--color-oro); margin-bottom: 20px;">Recorrido Audiovisual 🎥</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+        `;
+
+        ids.forEach(id => {
+            htmlGaleria += `
+                <div style="background: rgba(18,18,18,0.8); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 8px; overflow: hidden; transition: 0.3s;">
+                    <a href="https://www.youtube.com/watch?v=${id}" target="_blank" style="text-decoration: none;">
+                        <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" style="width: 100%; display: block; border-bottom: 1px solid #333;">
+                        <div style="padding: 12px; text-align: center;">
+                            <span style="color: white; font-size: 0.8rem; font-weight: bold; letter-spacing: 1px;">▶ VER EN YOUTUBE</span>
+                        </div>
+                    </a>
+                </div>
+            `;
+        });
+
+        htmlGaleria += `</div>`;
+        contenedor.innerHTML = htmlGaleria;
+
+    } 
+    // CASO B: Es un enlace normal o un solo vídeo (Reproductor Iframe clásico)
+    else {
+        let embedUrl = input;
+        
+        // Conversión a formato Embed
+        if (input.includes('list=')) {
+            const listId = new URL(input).searchParams.get('list');
+            embedUrl = `https://www.youtube.com/embed/videoseries?list=${listId}`;
+        } else if (input.includes('v=')) {
+            const videoId = new URL(input).searchParams.get('v');
+            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        } else if (input.includes('youtu.be/')) {
+            const videoId = input.split('youtu.be/')[1].split('?')[0];
+            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        } else if (!input.includes('http')) {
+            // Por si metes el código ID a pelo sin enlace (ej: nNWs2uxLek)
+            embedUrl = `https://www.youtube.com/embed/${input}`;
+        }
+
+        contenedor.innerHTML = `
+            <h3 style="color: var(--color-oro); margin-bottom: 20px;">Recorrido Audiovisual Completo 🎥</h3>
+            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border-gold);">
+                <iframe 
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+                    src="${embedUrl}" 
+                    frameborder="0" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+        `;
+    }
+}
+function procesarInputYoutube(inputRaw) {
+    if (!inputRaw) return "";
+
+    // Dividimos por comas por si el admin ha pegado varios enlaces
+    const partes = inputRaw.split(',');
+    
+    const idsProcesados = partes.map(parte => {
+        let cadena = parte.trim();
+        
+        // 1. Si es un enlace corto de móvil (youtu.be)
+        if (cadena.includes('youtu.be/')) {
+            return cadena.split('youtu.be/')[1].split(/[?#]/)[0];
+        }
+        // 2. Si es un enlace largo de PC (youtube.com/watch?v=...)
+        if (cadena.includes('youtube.com/watch')) {
+            try {
+                const urlParams = new URL(cadena).searchParams;
+                return urlParams.get('v') || cadena; // Extrae solo la variable 'v'
+            } catch(e) { 
+                return cadena; 
+            }
+        }
+        // 3. Si ya es un ID puro o no lo reconoce, lo deja como estaba
+        return cadena;
+    });
+
+    // Vuelve a unir los códigos limpios con comas
+    return idsProcesados.filter(id => id.length > 0).join(', ');
+}
+
+// --- FUNCIÓN DE GUARDADO ACTUALIZADA ---
+async function guardarUrlYoutube() {
+    // Cogemos lo que ha escrito el usuario
+    const inputUsuario = document.getElementById('input-url-youtube').value;
+    
+    // Lo pasamos por nuestra "lavadora" de código para sacar solo los IDs
+    const nuevaUrlLimpia = procesarInputYoutube(inputUsuario);
+    
+    if (!idProcesionActual) return;
+
+    try {
+        const { error } = await clienteSupabase
+            .from('maestro_procesiones')
+            .update({ url_youtube: nuevaUrlLimpia })
+            .eq('id_procesion', idProcesionActual);
+
+        if (error) throw error;
+        
+        // Vaciamos la caja para que quede limpio y recargamos
+        document.getElementById('input-url-youtube').value = '';
+        window.location.reload(); 
+
+    } catch (e) {
+        alert("Error al guardar: " + e.message);
+    }
+}
+
 // Arrancar motor al cargar la página
 window.onload = () => {
     cargarDatosActuacion();
