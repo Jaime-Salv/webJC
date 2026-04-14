@@ -46,26 +46,26 @@ async function cargarDatosSidebar(user) {
         document.getElementById('user-name').innerText = userEmailPrefix;
     }
 
-    // CALCULO DE ESTADÍSTICAS EN TIEMPO REAL
-    // 1. Proyectos (Propuestas originales)
+    // CALCULO DE ESTADÍSTICAS EN TIEMPO REAL (Filtramos por usuario_id que es el UUID)
+    // 1. Proyectos
     const { count: nProyectos } = await clienteSupabase
         .from('comunidad_repertorios')
         .select('*', { count: 'exact', head: true })
-        .eq('usuario_nombre', userEmailPrefix)
+        .eq('usuario_id', user.id) 
         .is('respuesta_a_id', null);
 
-    // 2. Mejoras (Propuestas que responden a otras)
+    // 2. Mejoras
     const { count: nMejoras } = await clienteSupabase
         .from('comunidad_repertorios')
         .select('*', { count: 'exact', head: true })
-        .eq('usuario_nombre', userEmailPrefix)
+        .eq('usuario_id', user.id)
         .not('respuesta_a_id', 'is', null);
 
-    // 3. Debates (Número de comentarios realizados)
+    // 3. Debates
     const { count: nDebates } = await clienteSupabase
         .from('comunidad_comentarios')
         .select('*', { count: 'exact', head: true })
-        .eq('usuario_nombre', userEmailPrefix);
+        .eq('usuario_id', user.id);
 
     // Inyectar resultados en el DOM
     document.getElementById('stat-proyectos').innerText = nProyectos || 0;
@@ -123,7 +123,7 @@ function renderizarFeed() {
 
 async function abrirModal(id) {
     idAbierto = id;
-    const post = proyectosRaiz.find(p => p.id === id);
+    const post = proyectosRaiz.find(p => p.id == id);
     if (!post) return;
 
     document.getElementById('modal-titulo').innerText = post.proyecto_nombre;
@@ -217,7 +217,10 @@ async function enviarComentario() {
     const usuario = await obtenerUsuario();
     if (!usuario) return;
 
-    // Intentamos sacar el nombre del perfil, si no, usamos el email
+    const input = document.getElementById('input-comentario');
+    const texto = input.value.trim();
+    if (!texto) return;
+
     const { data: perfil } = await clienteSupabase
         .from('perfiles')
         .select('username')
@@ -226,20 +229,40 @@ async function enviarComentario() {
 
     const nombreAMostrar = (perfil && perfil.username) ? perfil.username : usuario.email.split('@')[0];
 
-    const input = document.getElementById('input-comentario');
-    if (!input.value) return;
+   // INSERCIÓN SIN CONVERSIÓN NUMÉRICA
+    const { error } = await clienteSupabase
+        .from('comunidad_comentarios')
+        .insert([{ 
+            repertorio_id: idAbierto, // Lo mandamos tal cual (es un texto UUID)
+            usuario_id: usuario.id,    // El ID del autor (UUID)
+            comentario: texto, 
+            usuario_nombre: nombreAMostrar 
+        }]);
 
-    await clienteSupabase.from('comunidad_comentarios').insert([{ 
-        repertorio_id: idAbierto, 
-        comentario: input.value, 
-        usuario_nombre: nombreAMostrar 
-    }]);
+    if (error) {
+        console.error("Error al insertar:", error.message);
+        alert("Error al guardar el comentario: " + error.message);
+        return;
+    }
     
     input.value = '';
-    cargarComentarios(idAbierto);
+    await cargarComentarios(idAbierto);
+    cargarDatosSidebar(usuario);
 }
+
 async function cargarComentarios(id) {
-    const { data } = await clienteSupabase.from('comunidad_comentarios').select('*').eq('repertorio_id', id).order('created_at', { ascending: true });
+    // Asegúrate de que idAbierto sea tratado como número si tu DB usa bigint
+    const { data, error } = await clienteSupabase
+        .from('comunidad_comentarios')
+        .select('*')
+        .eq('repertorio_id', id)
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        console.error("Error al cargar comentarios:", error.message);
+        return;
+    }
+
     const cont = document.getElementById('contenedor-comentarios');
     cont.innerHTML = data.length ? data.map(c => `<div class="comentario-item"><strong>${c.usuario_nombre}:</strong> ${c.comentario}</div>`).join('') : '<p style="font-size:0.7rem; color:#444;">Sin comentarios técnicos aún.</p>';
 }

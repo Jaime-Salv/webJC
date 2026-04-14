@@ -661,40 +661,65 @@ async function gestionarPanelYoutube(procData) {
     }
 }
 
-function renderizarIframeYoutube(input) {
+// OJO: Le añadimos 'async' al principio porque ahora tiene que consultar datos a internet
+async function renderizarIframeYoutube(input) {
     const contenedor = document.getElementById('contenedor-video-final');
     
-    // CASO A: Si el texto tiene comas, es que has metido varios IDs para hacer una galería
+    // CASO A: Galería (Varios IDs separados por comas)
     if (input.includes(',')) {
-        const ids = input.split(',').map(id => id.trim());
+        const ids = input.split(',').map(id => id.trim()).filter(id => id.length > 0);
         
+        // 1. Ponemos un mensaje de carga mientras va a buscar los títulos
+        contenedor.innerHTML = `
+            <h3 style="color: var(--color-oro); margin-bottom: 20px;">Recorrido Audiovisual 🎥</h3>
+            <p style="color: #777; font-size: 0.9rem; font-style: italic;">Cargando títulos de los vídeos...</p>
+        `;
+
         let htmlGaleria = `
             <h3 style="color: var(--color-oro); margin-bottom: 20px;">Recorrido Audiovisual 🎥</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
         `;
 
-        ids.forEach(id => {
+        // 2. Bucle inteligente: Preguntamos a internet por el título de CADA vídeo
+        for (const id of ids) {
+            let tituloVideo = "Marcha en Directo"; // Título por defecto por si falla internet
+            
+            try {
+                // Truco OEmbed: Le preguntamos a este servicio gratuito cómo se llama el vídeo
+                const respuesta = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${id}`);
+                const datos = await respuesta.json();
+                if (datos.title) {
+                    tituloVideo = datos.title;
+                }
+            } catch (error) {
+                console.warn(`No se pudo obtener el título para el vídeo ${id}`);
+            }
+
+            // 3. Montamos la tarjeta con el título real y un diseño flexible
             htmlGaleria += `
-                <div style="background: rgba(18,18,18,0.8); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 8px; overflow: hidden; transition: 0.3s;">
-                    <a href="https://www.youtube.com/watch?v=${id}" target="_blank" style="text-decoration: none;">
-                        <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" style="width: 100%; display: block; border-bottom: 1px solid #333;">
-                        <div style="padding: 12px; text-align: center;">
-                            <span style="color: white; font-size: 0.8rem; font-weight: bold; letter-spacing: 1px;">▶ VER EN YOUTUBE</span>
+                <div style="background: rgba(18,18,18,0.8); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; transition: 0.3s;">
+                    <a href="https://www.youtube.com/watch?v=${id}" target="_blank" style="text-decoration: none; flex: 1; display: flex; flex-direction: column;">
+                        
+                        <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" style="width: 100%; display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.2);">
+                        
+                        <div style="padding: 15px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                            <h4 style="color: white; font-size: 0.95rem; margin: 0 0 15px 0; font-weight: normal; line-height: 1.4;">${tituloVideo}</h4>
+                            <span style="color: var(--color-oro); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; display: inline-block;">▶ VER VÍDEO</span>
                         </div>
+
                     </a>
                 </div>
             `;
-        });
+        }
 
         htmlGaleria += `</div>`;
-        contenedor.innerHTML = htmlGaleria;
+        contenedor.innerHTML = htmlGaleria; // Sustituimos el mensaje de carga por la galería terminada
 
     } 
-    // CASO B: Es un enlace normal o un solo vídeo (Reproductor Iframe clásico)
+    // CASO B: Reproductor Individual (El código se queda exactamente igual)
     else {
         let embedUrl = input;
         
-        // Conversión a formato Embed
         if (input.includes('list=')) {
             const listId = new URL(input).searchParams.get('list');
             embedUrl = `https://www.youtube.com/embed/videoseries?list=${listId}`;
@@ -705,7 +730,6 @@ function renderizarIframeYoutube(input) {
             const videoId = input.split('youtu.be/')[1].split('?')[0];
             embedUrl = `https://www.youtube.com/embed/${videoId}`;
         } else if (!input.includes('http')) {
-            // Por si metes el código ID a pelo sin enlace (ej: nNWs2uxLek)
             embedUrl = `https://www.youtube.com/embed/${input}`;
         }
 
@@ -722,6 +746,7 @@ function renderizarIframeYoutube(input) {
         `;
     }
 }
+
 function procesarInputYoutube(inputRaw) {
     if (!inputRaw) return "";
 

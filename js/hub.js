@@ -4,24 +4,17 @@
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. INICIALIZACIÓN GENERAL
     inicializarHub();
     configurarScrollInmersivo();
 
-    // 2. SISTEMA DE AUTENTICACIÓN DINÁMICO
     clienteSupabase.auth.onAuthStateChange((event, session) => {
         actualizarInterfazUsuario(session);
     });
 
-    // Comprobación de sesión al cargar
     clienteSupabase.auth.getSession().then(({ data: { session } }) => {
         actualizarInterfazUsuario(session);
     });
 });
-
-/* ------------------------------------------------------------
-   MÓDULO 1: ESTADO DE SESIÓN (LOGIN / LOGOUT / ROLES SUPABASE)
------------------------------------------------------------- */
 
 async function actualizarInterfazUsuario(session) {
     const btnLogin = document.getElementById('btn-login-google');
@@ -31,21 +24,16 @@ async function actualizarInterfazUsuario(session) {
     if (!btnLogin || !btnLogout) return;
 
     if (session) {
-        // 1. GESTIÓN DE VISIBILIDAD (No borramos el HTML, solo ocultamos/mostramos)
         btnLogin.style.display = 'none';
         btnLogout.style.display = 'flex';
 
-        const correoUsuario = session.user.email;
-
         try {
-            // LECTURA DE PRIVILEGIOS
-            const { data, error } = await clienteSupabase
+            const { data } = await clienteSupabase
                 .from('perfiles')
                 .select('rol')
-                .eq('email', correoUsuario)
+                .eq('id', session.user.id)
                 .maybeSingle();
 
-            // Si es admin, mostramos el enlace que ya está diseñado en el HTML
             if (data && data.rol === 'admin' && linkAdmin) {
                 linkAdmin.style.display = 'block';
             }
@@ -53,15 +41,12 @@ async function actualizarInterfazUsuario(session) {
             console.error("Fallo al consultar el perfil:", err);
         }
 
-        // Configurar evento de cierre de sesión
         btnLogout.onclick = async () => {
-            const { error } = await clienteSupabase.auth.signOut();
-            if (error) console.error("Error al cerrar sesión:", error.message);
+            await clienteSupabase.auth.signOut();
             window.location.reload();
         };
 
     } else {
-        // ESTADO PÚBLICO: Solo mostramos el botón de Login de Google
         btnLogin.style.display = 'flex';
         if (btnLogout) btnLogout.style.display = 'none';
         if (linkAdmin) linkAdmin.style.display = 'none';
@@ -72,23 +57,16 @@ async function actualizarInterfazUsuario(session) {
     }
 }
 
-/* ------------------------------------------------------------
-   MÓDULO 2: EFECTOS UX Y SCROLL
------------------------------------------------------------- */
 function configurarScrollInmersivo() {
     const mainHeader = document.getElementById('cabecera-principal');
-    
-    // Comportamiento de ocultar cabecera al bajar
     let ultimoScroll = window.scrollY;
     
     window.addEventListener('scroll', () => {
         let scrollActual = window.scrollY;
-        
         if (scrollActual <= 0) {
             mainHeader.classList.remove('oculta');
             return;
         }
-
         if (scrollActual > ultimoScroll && scrollActual > 100) {
             mainHeader.classList.add('oculta');
         } else if (scrollActual < ultimoScroll) {
@@ -98,9 +76,6 @@ function configurarScrollInmersivo() {
     });
 }
 
-/* ------------------------------------------------------------
-   MÓDULO 3: EXTRACCIÓN DE DATOS (TELEMETRÍA Y TARJETAS)
------------------------------------------------------------- */
 async function inicializarHub() {
     await verificarTelemetriaDirecto();
     await cargarTarjetasProcesiones();
@@ -131,47 +106,71 @@ async function verificarTelemetriaDirecto() {
     }
 }
 
+/* ------------------------------------------------------------
+   CARGA DE TARJETAS (CORREGIDA PARA EVITAR ERROR 400)
+------------------------------------------------------------ */
 async function cargarTarjetasProcesiones() {
     try {
-        const { data: procesiones, error } = await clienteSupabase
+        // 1. CARGA BASE: Obtenemos solo las procesiones para evitar errores de relación
+        const { data: procesiones, error: errorProc } = await clienteSupabase
             .from('maestro_procesiones')
             .select('*')
             .eq('estado', 'Finalizada')
-            .order('creado_en', { ascending: false });
+            .order('fecha', { ascending: false }); // Usamos tu fecha manual
 
-        if (error) throw error;
+        if (errorProc) throw errorProc;
+
+        // 2. CARGA DE ESTADÍSTICAS: Obtenemos todos los likes y comentarios para cruzar datos manualmente
+        // Esto evita el Error 400 por falta de Foreign Keys configuradas en la DB.
+        const [likesRes, comentariosRes] = await Promise.all([
+            clienteSupabase.from('valoraciones').select('id_procesion'),
+            clienteSupabase.from('procesion_comentarios').select('id_procesion')
+        ]);
+
+        const totalLikes = likesRes.data || [];
+        const totalComentarios = comentariosRes.data || [];
 
         const gridSS = document.getElementById('grid-semana-santa');
         const gridGlorias = document.getElementById('grid-glorias');
 
         if (!gridSS || !gridGlorias) return;
 
-        // Limpiar grids antes de cargar (por rigor técnico)
         gridSS.innerHTML = '';
         gridGlorias.innerHTML = '';
 
         procesiones.forEach(p => {
-            const tarjetaHTML = crearElementoTarjeta(p);
+            // Calculamos los conteos filtrando los arrays en memoria (muy rápido y seguro)
+            const numLikes = totalLikes.filter(l => l.id_procesion === p.id_procesion).length;
+            const numComentarios = totalComentarios.filter(c => c.id_procesion === p.id_procesion).length;
+
+            const tarjetaHTML = crearElementoTarjeta(p, numLikes, numComentarios);
+            
             if (p.tipo === 'Semana Santa') {
                 gridSS.insertAdjacentHTML('beforeend', tarjetaHTML);
             } else {
                 gridGlorias.insertAdjacentHTML('beforeend', tarjetaHTML);
             }
         });
+
     } catch (e) {
         console.error("Error cargando tarjetas:", e);
     }
 }
 
-// Diseño de la Tarjeta Individual - SIN DEGRADADO (BANNER SÓLIDO)
-function crearElementoTarjeta(p) {
+function crearElementoTarjeta(p, likes, comentarios) {
     const foto = p.url_foto || 'img/foto-dashboard.jpg';
-    // Formateamos la fecha para que se vea como en tu foto (ej: 4/4/2026)
-    const fechaFormateada = new Date(p.creado_en).toLocaleDateString('es-ES');
+    
+    // USAMOS EL CAMPO 'fecha' (rellenado a mano)
+    const fechaManual = p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'Fecha N/A';
 
     return `
         <a href="templates/analisis.html?id=${p.id_procesion}" class="tarjeta-procesion" style="background-image: url('${foto}')">
-            <div class="tp-badge-fecha">${fechaFormateada}</div>
+            <div class="tp-badge-fecha">${fechaManual}</div>
+            
+            <div class="tp-stats-badge">
+                <div class="tp-stat-item">❤️ ${likes}</div>
+                <div class="tp-stat-item">💬 ${comentarios}</div>
+            </div>
             
             <div class="tp-gradiente-inmersivo">
                 <div class="tp-content-text">
@@ -190,18 +189,15 @@ async function actualizarAvatarEnHeader() {
     const avatarImg = document.getElementById('header-avatar-img');
 
     if (session) {
-        // Intercambiar botones
         loginBtn.style.display = 'none';
         userZone.style.display = 'flex';
         
-        // Consultar la foto real del usuario en la tabla de perfiles
         const { data: perfil } = await clienteSupabase
             .from('perfiles')
             .select('avatar_url')
             .eq('id', session.user.id)
             .maybeSingle();
 
-        // Si el usuario tiene una foto guardada, la ponemos en el cuadrito
         if (perfil && perfil.avatar_url) {
             avatarImg.src = perfil.avatar_url;
         }
@@ -211,5 +207,4 @@ async function actualizarAvatarEnHeader() {
     }
 }
 
-// Asegúrate de que esta función se ejecute al cargar la página
 document.addEventListener('DOMContentLoaded', actualizarAvatarEnHeader);
