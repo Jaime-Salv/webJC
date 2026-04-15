@@ -130,24 +130,15 @@
 
         .dashboard-horizontal .tarjeta-procesion { flex: 0 0 280px; height: 350px; }
         
-        /* RESTAURADO EXACTAMENTE A TU CÓDIGO ORIGINAL */
         .tarjeta-procesion { 
-            display: block; 
-            background-size: cover; 
-            background-position: center; 
-            border-radius: 12px; 
-            position: relative; 
-            text-decoration: none; 
-            border: none; 
-            transition: transform 0.3s ease; 
-            overflow: hidden;
+            display: block; background-size: cover; background-position: center; 
+            border-radius: 12px; position: relative; text-decoration: none; 
+            border: none !important; outline: none; 
+            transition: transform 0.3s ease; overflow: hidden;
         }
+        .tarjeta-procesion:hover { transform: translateY(-5px); }
 
-        .tarjeta-procesion:hover { 
-            transform: translateY(-5px); 
-        }
-
-        /* ESTADÍSTICAS EN TARJETA (Likes y Comentarios) */
+        /* ESTADÍSTICAS EN TARJETA */
         .tp-stats-badge {
             position: absolute; top: 15px; right: 15px; display: flex; gap: 10px;
             background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
@@ -182,8 +173,9 @@
             .scroll-section { padding: 80px 5%; background-attachment: scroll; } 
         }
 
+        /* FIX PARA CUADRAR LAS HERRAMIENTAS EN MÓVIL (APILAR EN 1 COLUMNA) */
         @media (max-width: 768px) {
-            .laboratorio-grid {
+            #grid-herramientas {
                 grid-template-columns: 1fr !important;
                 gap: 20px !important;
             }
@@ -196,41 +188,21 @@
             .dashboard-horizontal .tarjeta-procesion { flex: 0 0 240px; height: 320px; }
             .user-header-label { display: none; }
 
-            /* --- FIX: ZONA DIRECTO --- */
-            /* Apila los elementos y centra el texto para que el botón no se deforme */
+            /* FIX: ZONA DIRECTO */
             #zona-directo {
                 flex-direction: column !important;
                 padding: 15px !important;
                 text-align: center;
                 gap: 15px;
             }
-            #zona-directo div {
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-            }
-            #texto-directo {
-                margin-left: 0 !important;
-            }
+            #zona-directo div { display: flex; flex-direction: column; gap: 5px; }
+            #texto-directo { margin-left: 0 !important; }
 
-            /* --- FIX: CATÁLOGO MAESTRO --- */
-            /* Reduce los tamaños gigantes para que encaje en el móvil */
-            #fase-catalogo > div {
-                padding: 40px 20px !important;
-            }
-            #fase-catalogo h2 {
-                font-size: 2rem !important;
-            }
-            #fase-catalogo p {
-                font-size: 1rem !important;
-                margin-bottom: 25px !important;
-            }
-            #fase-catalogo a {
-                padding: 15px 20px !important;
-                font-size: 1rem !important;
-                width: 100%;
-                box-sizing: border-box;
-            }
+            /* FIX: CATÁLOGO MAESTRO */
+            #fase-catalogo > div { padding: 40px 20px !important; width: 100%; }
+            #fase-catalogo h2 { font-size: 2rem !important; }
+            #fase-catalogo p { font-size: 1rem !important; margin-bottom: 25px !important; }
+            #fase-catalogo a { padding: 15px 20px !important; font-size: 1rem !important; width: 100%; box-sizing: border-box; }
         }
 
         .btn-gold-pro {
@@ -242,40 +214,29 @@
         .btn-gold-pro:hover { background: white; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
 
         .header-user-side {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            min-width: 50px;
-            gap: 25px; 
+            display: flex; align-items: center; justify-content: flex-end;
+            min-width: 50px; gap: 25px; 
         }
 
         .user-header-label {
-            color: white;
-            font-size: 0.75rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-right: 12px; 
+            color: white; font-size: 0.75rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1px; margin-right: 12px; 
         }
 
         .avatar-mini {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            border: 1.5px solid var(--color-oro);
-            object-fit: cover;
+            width: 35px; height: 35px; border-radius: 50%;
+            border: 1.5px solid var(--color-oro); object-fit: cover;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .avatar-mini:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
-        }
+        .avatar-mini:hover { transform: scale(1.1); box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
+        .profile-link { display: flex; align-items: center; text-decoration: none; }
 
-        .profile-link {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
+        /* Efecto Hover extra para las tarjetas de herramientas respetando sus estilos en línea */
+        #grid-herramientas a:hover {
+            border-color: var(--color-oro) !important;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+            transform: translateY(-5px);
         }
     </style>
 </head>
@@ -353,7 +314,7 @@
 
         <section id="fase-herramientas" class="scroll-section">
             <h3 class="seccion-titulo-jc" style="text-align: center; border: none; margin-bottom: 60px;">Laboratorio Técnico</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1200px; margin: 0 auto; width: 100%;">
+            <div id="grid-herramientas" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1200px; margin: 0 auto; width: 100%;">
                 <a href="templates/simulacion.html" style="background: rgba(18, 18, 18, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); padding: 50px; border-radius: 16px; text-align: center; text-decoration: none; transition: 0.4s; display: block;">
                     <div style="font-size: 3.5rem; margin-bottom: 20px;">📝</div>
                     <h3 style="color: white; text-transform: uppercase; margin: 0 0 10px 0;">Simulador</h3>
