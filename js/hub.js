@@ -7,48 +7,85 @@ document.addEventListener('DOMContentLoaded', () => {
     inicializarHub();
     configurarScrollInmersivo();
 
+    // SISTEMA DE AUTENTICACIÓN DINÁMICO
     clienteSupabase.auth.onAuthStateChange((event, session) => {
-        actualizarInterfazUsuario(session);
+        actualizarInterfazUsuarioCompleta(session);
     });
 
     clienteSupabase.auth.getSession().then(({ data: { session } }) => {
-        actualizarInterfazUsuario(session);
+        actualizarInterfazUsuarioCompleta(session);
     });
 });
 
-async function actualizarInterfazUsuario(session) {
+/* ------------------------------------------------------------
+   MÓDULO 1: ESTADO DE SESIÓN (LOGIN / LOGOUT / DATOS PERFIL)
+------------------------------------------------------------ */
+
+async function actualizarInterfazUsuarioCompleta(session) {
     const btnLogin = document.getElementById('btn-login-google');
     const btnLogout = document.getElementById('btn-logout');
     const linkAdmin = document.getElementById('link-admin');
+    const userZone = document.getElementById('user-header-zone');
+    const avatarImg = document.getElementById('header-avatar-img');
+    const nameLabel = document.getElementById('user-header-name');
     
     if (!btnLogin || !btnLogout) return;
 
     if (session) {
         btnLogin.style.display = 'none';
-        btnLogout.style.display = 'flex';
+        userZone.style.display = 'flex';
 
+        // CARGA DE DATOS DESDE TABLA 'perfiles'
         try {
-            const { data } = await clienteSupabase
+            const { data: perfil } = await clienteSupabase
                 .from('perfiles')
-                .select('rol')
+                // CAMBIO APLICADO: 'nombre' cambiado a 'username'
+                .select('rol, username, avatar_url')
                 .eq('id', session.user.id)
                 .maybeSingle();
 
-            if (data && data.rol === 'admin' && linkAdmin) {
+            // 1. Mostrar ADMIN si corresponde
+            if (perfil && perfil.rol === 'admin' && linkAdmin) {
                 linkAdmin.style.display = 'block';
             }
+
+            // 2. Cargar Nombre (elegido por él o predeterminado de Google)
+            if (nameLabel) {
+                // CAMBIO APLICADO: 'perfil?.nombre' cambiado a 'perfil?.username'
+                nameLabel.innerText = perfil?.username || session.user.user_metadata.full_name || 'Músico';
+            }
+
+           // 3. Cargar Avatar (Prioridad: Personalizada > Google > Predeterminada)
+            if (avatarImg) {
+                const fotoPersonalizada = perfil?.avatar_url;
+                const fotoGoogle = session.user.user_metadata?.avatar_url;
+
+                if (fotoPersonalizada && fotoPersonalizada.trim() !== '') {
+                    // 1º Prioridad: La foto que el usuario subió a la base de datos
+                    avatarImg.src = fotoPersonalizada;
+                } else if (fotoGoogle && fotoGoogle.trim() !== '') {
+                    // 2º Prioridad: La foto de su cuenta de Google
+                    avatarImg.src = fotoGoogle;
+                } else {
+                    // 3º Prioridad: Escudo por defecto
+                    avatarImg.src = 'img/escudo.png';
+                }
+            }
+            
         } catch (err) {
-            console.error("Fallo al consultar el perfil:", err);
+            console.error("Error al cargar datos de usuario:", err);
         }
 
+        // Configurar Logout
         btnLogout.onclick = async () => {
             await clienteSupabase.auth.signOut();
             window.location.reload();
         };
 
     } else {
+        // ESTADO PÚBLICO
         btnLogin.style.display = 'flex';
-        if (btnLogout) btnLogout.style.display = 'none';
+        if (userZone) userZone.style.display = 'none';
         if (linkAdmin) linkAdmin.style.display = 'none';
         
         btnLogin.onclick = () => {
@@ -57,25 +94,25 @@ async function actualizarInterfazUsuario(session) {
     }
 }
 
+/* ------------------------------------------------------------
+   MÓDULO 2: EFECTOS UX Y SCROLL
+------------------------------------------------------------ */
 function configurarScrollInmersivo() {
     const mainHeader = document.getElementById('cabecera-principal');
     let ultimoScroll = window.scrollY;
     
     window.addEventListener('scroll', () => {
         let scrollActual = window.scrollY;
-        if (scrollActual <= 0) {
-            mainHeader.classList.remove('oculta');
-            return;
-        }
-        if (scrollActual > ultimoScroll && scrollActual > 100) {
-            mainHeader.classList.add('oculta');
-        } else if (scrollActual < ultimoScroll) {
-            mainHeader.classList.remove('oculta');
-        }
+        if (scrollActual <= 0) { mainHeader.classList.remove('oculta'); return; }
+        if (scrollActual > ultimoScroll && scrollActual > 100) { mainHeader.classList.add('oculta'); } 
+        else if (scrollActual < ultimoScroll) { mainHeader.classList.remove('oculta'); }
         ultimoScroll = scrollActual;
     });
 }
 
+/* ------------------------------------------------------------
+   MÓDULO 3: EXTRACCIÓN DE DATOS (TELEMETRÍA Y TARJETAS)
+------------------------------------------------------------ */
 async function inicializarHub() {
     await verificarTelemetriaDirecto();
     await cargarTarjetasProcesiones();
@@ -86,13 +123,11 @@ async function verificarTelemetriaDirecto() {
     if (!zonaDirecto) return;
 
     try {
-        const { data, error } = await clienteSupabase
+        const { data } = await clienteSupabase
             .from('maestro_procesiones')
             .select('id_procesion, hermandad, localidad')
             .eq('estado', 'Activa')
             .limit(1);
-
-        if (error) throw error;
 
         if (data && data.length > 0) {
             document.getElementById('texto-directo').innerText = `${data[0].hermandad} (${data[0].localidad})`;
@@ -101,27 +136,19 @@ async function verificarTelemetriaDirecto() {
         } else {
             zonaDirecto.style.display = 'none';
         }
-    } catch (e) {
-        console.error("Error telemetría:", e);
-    }
+    } catch (e) { console.error("Error telemetría:", e); }
 }
 
-/* ------------------------------------------------------------
-   CARGA DE TARJETAS (CORREGIDA PARA EVITAR ERROR 400)
------------------------------------------------------------- */
 async function cargarTarjetasProcesiones() {
     try {
-        // 1. CARGA BASE: Obtenemos solo las procesiones para evitar errores de relación
         const { data: procesiones, error: errorProc } = await clienteSupabase
             .from('maestro_procesiones')
             .select('*')
             .eq('estado', 'Finalizada')
-            .order('fecha', { ascending: false }); // Usamos tu fecha manual
+            .order('fecha', { ascending: false });
 
         if (errorProc) throw errorProc;
 
-        // 2. CARGA DE ESTADÍSTICAS: Obtenemos todos los likes y comentarios para cruzar datos manualmente
-        // Esto evita el Error 400 por falta de Foreign Keys configuradas en la DB.
         const [likesRes, comentariosRes] = await Promise.all([
             clienteSupabase.from('valoraciones').select('id_procesion'),
             clienteSupabase.from('procesion_comentarios').select('id_procesion')
@@ -139,39 +166,25 @@ async function cargarTarjetasProcesiones() {
         gridGlorias.innerHTML = '';
 
         procesiones.forEach(p => {
-            // Calculamos los conteos filtrando los arrays en memoria (muy rápido y seguro)
             const numLikes = totalLikes.filter(l => l.id_procesion === p.id_procesion).length;
             const numComentarios = totalComentarios.filter(c => c.id_procesion === p.id_procesion).length;
-
             const tarjetaHTML = crearElementoTarjeta(p, numLikes, numComentarios);
-            
-            if (p.tipo === 'Semana Santa') {
-                gridSS.insertAdjacentHTML('beforeend', tarjetaHTML);
-            } else {
-                gridGlorias.insertAdjacentHTML('beforeend', tarjetaHTML);
-            }
+            if (p.tipo === 'Semana Santa') gridSS.insertAdjacentHTML('beforeend', tarjetaHTML);
+            else gridGlorias.insertAdjacentHTML('beforeend', tarjetaHTML);
         });
-
-    } catch (e) {
-        console.error("Error cargando tarjetas:", e);
-    }
+    } catch (e) { console.error("Error cargando tarjetas:", e); }
 }
 
 function crearElementoTarjeta(p, likes, comentarios) {
     const foto = p.url_foto || 'img/foto-dashboard.jpg';
-    
-    // USAMOS EL CAMPO 'fecha' (rellenado a mano)
     const fechaManual = p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'Fecha N/A';
-
     return `
         <a href="templates/analisis.html?id=${p.id_procesion}" class="tarjeta-procesion" style="background-image: url('${foto}')">
             <div class="tp-badge-fecha">${fechaManual}</div>
-            
             <div class="tp-stats-badge">
                 <div class="tp-stat-item">❤️ ${likes}</div>
                 <div class="tp-stat-item">💬 ${comentarios}</div>
             </div>
-            
             <div class="tp-gradiente-inmersivo">
                 <div class="tp-content-text">
                     <div class="tp-titulo-bmm">${p.hermandad}</div>
@@ -181,30 +194,3 @@ function crearElementoTarjeta(p, likes, comentarios) {
         </a>
     `;
 }
-
-async function actualizarAvatarEnHeader() {
-    const { data: { session } } = await clienteSupabase.auth.getSession();
-    const userZone = document.getElementById('user-header-zone');
-    const loginBtn = document.getElementById('btn-login-google');
-    const avatarImg = document.getElementById('header-avatar-img');
-
-    if (session) {
-        loginBtn.style.display = 'none';
-        userZone.style.display = 'flex';
-        
-        const { data: perfil } = await clienteSupabase
-            .from('perfiles')
-            .select('avatar_url')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-        if (perfil && perfil.avatar_url) {
-            avatarImg.src = perfil.avatar_url;
-        }
-    } else {
-        loginBtn.style.display = 'flex';
-        userZone.style.display = 'none';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', actualizarAvatarEnHeader);
