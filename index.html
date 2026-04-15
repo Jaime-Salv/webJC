@@ -13,7 +13,6 @@
         /* =========================================
              DISEÑO BASE Y VARIABLES
          ========================================= */
-        /* CAMBIO: Reseteo global para que nada se salga del ancho de pantalla */
         *, *::before, *::after { box-sizing: border-box; }
 
         :root {
@@ -30,7 +29,7 @@
             font-family: var(--font-main);
             background-color: var(--color-negro);
             color: var(--color-texto);
-            overflow-x: hidden; /* Fija el marco de la página */
+            overflow-x: hidden; 
             width: 100%;
         }
 
@@ -131,21 +130,29 @@
 
         .dashboard-horizontal .tarjeta-procesion { flex: 0 0 280px; height: 350px; }
         
+        /* RESTAURADO EXACTAMENTE A TU CÓDIGO ORIGINAL */
         .tarjeta-procesion { 
-            display: block; background-size: cover; background-position: center; 
-            border-radius: 12px; position: relative; text-decoration: none; 
-            /* CORRECCIÓN: Se ha eliminado el borde claro residual */
-            border: none !important; outline: none; 
-            transition: transform 0.3s ease; overflow: hidden;
+            display: block; 
+            background-size: cover; 
+            background-position: center; 
+            border-radius: 12px; 
+            position: relative; 
+            text-decoration: none; 
+            border: none; 
+            transition: transform 0.3s ease; 
+            overflow: hidden;
         }
-        .tarjeta-procesion:hover { transform: translateY(-5px); }
+
+        .tarjeta-procesion:hover { 
+            transform: translateY(-5px); 
+        }
 
         /* ESTADÍSTICAS EN TARJETA (Likes y Comentarios) */
         .tp-stats-badge {
             position: absolute; top: 15px; right: 15px; display: flex; gap: 10px;
             background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
             padding: 6px 12px; border-radius: 20px; z-index: 3;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.05);
         }
         .tp-stat-item { color: white; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 5px; }
 
@@ -175,10 +182,10 @@
             .scroll-section { padding: 80px 5%; background-attachment: scroll; } 
         }
 
-        /* CORRECCIÓN DEL LABORATORIO TÉCNICO EN MÓVIL (APILAR TARJETAS) */
         @media (max-width: 768px) {
-            #fase-herramientas > div {
+            .laboratorio-grid {
                 grid-template-columns: 1fr !important;
+                gap: 20px !important;
             }
         }
 
@@ -187,8 +194,43 @@
             .auth-side { gap: 10px; }
             .btn-google-pro { padding: 8px 12px; font-size: 0.65rem; }
             .dashboard-horizontal .tarjeta-procesion { flex: 0 0 240px; height: 320px; }
-            .header-user-side { gap: 15px; }
-            .user-header-label { display: none; } /* Ocultar nombre en móviles muy pequeños */
+            .user-header-label { display: none; }
+
+            /* --- FIX: ZONA DIRECTO --- */
+            /* Apila los elementos y centra el texto para que el botón no se deforme */
+            #zona-directo {
+                flex-direction: column !important;
+                padding: 15px !important;
+                text-align: center;
+                gap: 15px;
+            }
+            #zona-directo div {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+            #texto-directo {
+                margin-left: 0 !important;
+            }
+
+            /* --- FIX: CATÁLOGO MAESTRO --- */
+            /* Reduce los tamaños gigantes para que encaje en el móvil */
+            #fase-catalogo > div {
+                padding: 40px 20px !important;
+            }
+            #fase-catalogo h2 {
+                font-size: 2rem !important;
+            }
+            #fase-catalogo p {
+                font-size: 1rem !important;
+                margin-bottom: 25px !important;
+            }
+            #fase-catalogo a {
+                padding: 15px 20px !important;
+                font-size: 1rem !important;
+                width: 100%;
+                box-sizing: border-box;
+            }
         }
 
         .btn-gold-pro {
