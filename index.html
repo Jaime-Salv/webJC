@@ -30,6 +30,7 @@
             background-color: var(--color-negro);
             color: var(--color-texto);
             overflow-x: hidden; 
+            width: 100%;
         }
 
         /* =========================================
@@ -47,7 +48,6 @@
             border-bottom: 1px solid rgba(212, 175, 55, 0.3);
             z-index: 1000;
             transition: transform 0.4s cubic-bezier(0.3, 1, 0.2, 1);
-            box-sizing: border-box;
         }
 
         .main-header.oculta { transform: translateY(-100%); }
@@ -63,74 +63,44 @@
         .header-nav a:hover { color: var(--color-oro); }
 
         .auth-side { 
-            display: flex; 
-            gap: 20px; 
-            justify-content: flex-end; 
-            align-items: center; 
-            justify-self: end;
+            display: flex; gap: 20px; justify-content: flex-end; 
+            align-items: center; justify-self: end;
         }
         
         .btn-google-pro {
-            background-color: white;
-            color: black;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-weight: 800;
-            font-family: var(--font-main);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
+            background-color: white; color: black; border: none;
+            padding: 10px 20px; border-radius: 4px; font-weight: 800;
+            font-family: var(--font-main); font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
             display: flex; align-items: center; gap: 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             white-space: nowrap;
         }
         .btn-google-pro:hover {
-            background-color: #f1f1f1;
-            transform: translateY(-2px);
+            background-color: #f1f1f1; transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(212, 175, 55, 0.3);
         }
 
         .btn-logout { 
-            background: transparent; 
-            color: white; 
-            border: 1px solid rgba(255,255,255,0.4); 
-            padding: 10px 20px; 
-            border-radius: 4px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            font-family: var(--font-main);
-            font-size: 0.7rem; 
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            background: transparent; color: white; border: 1px solid rgba(255,255,255,0.4); 
+            padding: 10px 20px; border-radius: 4px; font-weight: 700; cursor: pointer; 
+            font-family: var(--font-main); font-size: 0.7rem; text-transform: uppercase;
             transition: 0.3s;
         }
-        .btn-logout:hover { 
-            border-color: var(--color-oro); 
-            color: var(--color-oro);
-        }
+        .btn-logout:hover { border-color: var(--color-oro); color: var(--color-oro); }
 
         .admin-link { 
-            color: rgba(212, 175, 55, 0.6);
-            text-decoration: none; 
-            font-size: 0.75rem; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            letter-spacing: 2px;
-            transition: 0.3s;
+            color: rgba(212, 175, 55, 0.6); text-decoration: none; 
+            font-size: 0.75rem; font-weight: 800; text-transform: uppercase; transition: 0.3s;
         }
-        .admin-link:hover { color: var(--color-oro); }
 
         /* =========================================
              SCROLL INMERSIVO Y SECCIONES
          ========================================= */
         .scroll-section {
-            min-height: 100vh; 
-            display: flex; flex-direction: column; justify-content: center; 
-            padding: 100px 5%; position: relative;
-            background-size: cover; background-position: center; background-attachment: fixed;
+            min-height: 100vh; display: flex; flex-direction: column; justify-content: center; 
+            padding: 100px 5%; position: relative; background-size: cover; 
+            background-position: center; background-attachment: fixed;
             box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
             border-bottom: 1px solid rgba(255, 255, 255, 0.02);
             transition: background 0.8s ease-in-out;
@@ -142,111 +112,55 @@
 
         .seccion-titulo-jc {
             color: var(--color-oro); font-size: 2.2rem; text-transform: uppercase;
-            letter-spacing: 4px; margin-bottom: 40px; border-left: 4px solid var(--color-oro);
-            padding-left: 20px;
+            letter-spacing: 4px; margin-bottom: 40px; border-left: 4px solid var(--color-oro); padding-left: 20px;
         }
 
         /* =========================================
-             DASHBOARD HORIZONTAL
+             DASHBOARD HORIZONTAL (REPERTORIOS)
          ========================================= */
         .dashboard-horizontal {
-            display: flex;
-            gap: 25px;
-            width: 100%;
-            padding: 20px 0;
-            overflow-x: auto; 
-            scrollbar-width: thin; 
+            display: flex; gap: 25px; width: 100%; padding: 20px 0;
+            overflow-x: auto; scrollbar-width: thin; 
             scrollbar-color: var(--color-oro) rgba(0,0,0,0.2);
             -webkit-overflow-scrolling: touch; 
         }
 
         .dashboard-horizontal::-webkit-scrollbar { height: 6px; }
-        .dashboard-horizontal::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
         .dashboard-horizontal::-webkit-scrollbar-thumb { background-color: var(--color-oro); border-radius: 10px; }
 
-        .dashboard-horizontal .tarjeta-procesion {
-            flex: 0 0 280px; 
-            height: 350px;   
-        }
+        .dashboard-horizontal .tarjeta-procesion { flex: 0 0 280px; height: 350px; }
         
         .tarjeta-procesion { 
-            display: block; 
-            background-size: cover; 
-            background-position: center; 
-            border-radius: 12px; 
-            position: relative; 
-            text-decoration: none; 
-            border: none; 
-            transition: transform 0.3s ease; 
-            overflow: hidden;
+            display: block; background-size: cover; background-position: center; 
+            border-radius: 12px; position: relative; text-decoration: none; 
+            border: none !important; outline: none; 
+            transition: transform 0.3s ease; overflow: hidden;
         }
+        .tarjeta-procesion:hover { transform: translateY(-5px); }
 
-        .tarjeta-procesion:hover { 
-            transform: translateY(-5px); 
-        }
-
+        /* ESTADÍSTICAS EN TARJETA */
         .tp-stats-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            display: flex;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-            padding: 6px 12px;
-            border-radius: 20px;
-            z-index: 3;
+            position: absolute; top: 15px; right: 15px; display: flex; gap: 10px;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
+            padding: 6px 12px; border-radius: 20px; z-index: 3;
             border: 1px solid rgba(255,255,255,0.05);
         }
-
-        .tp-stat-item {
-            color: white;
-            font-size: 0.75rem;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+        .tp-stat-item { color: white; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 5px; }
 
         .tp-gradiente-inmersivo {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, 
-                        rgba(0,0,0,0.9) 0%, 
-                        rgba(0,0,0,0.4) 40%, 
-                        transparent 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 20px;
-            z-index: 2;
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, transparent 100%);
+            display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; z-index: 2;
         }
 
         .tp-badge-fecha {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(5px);
-            color: white;
-            padding: 5px 12px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            z-index: 3;
+            position: absolute; top: 15px; left: 15px; background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px); color: white; padding: 5px 12px; border-radius: 4px;
+            font-size: 0.7rem; font-weight: 700; z-index: 3;
         }
 
-        .tp-content-text { text-align: center; width: 100%; }
-
-        .tp-titulo-bmm {
-            color: white; font-size: 1.2rem; font-weight: 800;
-            margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            text-transform: uppercase;
-        }
-
-        .tp-subtitulo-bmm {
-            color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 400;
-        }
+        .tp-titulo-bmm { color: white; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; text-align: center; }
+        .tp-subtitulo-bmm { color: rgba(255,255,255,0.7); font-size: 0.8rem; text-align: center; }
 
         /* =========================================
              ADAPTACIÓN MÓVIL
@@ -259,9 +173,9 @@
             .scroll-section { padding: 80px 5%; background-attachment: scroll; } 
         }
 
-        /* AQUI ESTA EL ARREGLO EXACTO PARA EL LABORATORIO TÉCNICO EN MÓVILES */
+        /* FIX PARA CUADRAR LAS HERRAMIENTAS EN MÓVIL (APILAR EN 1 COLUMNA) */
         @media (max-width: 768px) {
-            #contenedor-laboratorio {
+            #grid-herramientas {
                 grid-template-columns: 1fr !important;
                 gap: 20px !important;
             }
@@ -272,6 +186,23 @@
             .auth-side { gap: 10px; }
             .btn-google-pro { padding: 8px 12px; font-size: 0.65rem; }
             .dashboard-horizontal .tarjeta-procesion { flex: 0 0 240px; height: 320px; }
+            .user-header-label { display: none; }
+
+            /* FIX: ZONA DIRECTO */
+            #zona-directo {
+                flex-direction: column !important;
+                padding: 15px !important;
+                text-align: center;
+                gap: 15px;
+            }
+            #zona-directo div { display: flex; flex-direction: column; gap: 5px; }
+            #texto-directo { margin-left: 0 !important; }
+
+            /* FIX: CATÁLOGO MAESTRO */
+            #fase-catalogo > div { padding: 40px 20px !important; width: 100%; }
+            #fase-catalogo h2 { font-size: 2rem !important; }
+            #fase-catalogo p { font-size: 1rem !important; margin-bottom: 25px !important; }
+            #fase-catalogo a { padding: 15px 20px !important; font-size: 1rem !important; width: 100%; box-sizing: border-box; }
         }
 
         .btn-gold-pro {
@@ -283,7 +214,13 @@
         .btn-gold-pro:hover { background: white; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
 
         .header-user-side {
-            display: flex; align-items: center; justify-content: flex-end; min-width: 50px;
+            display: flex; align-items: center; justify-content: flex-end;
+            min-width: 50px; gap: 25px; 
+        }
+
+        .user-header-label {
+            color: white; font-size: 0.75rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1px; margin-right: 12px; 
         }
 
         .avatar-mini {
@@ -291,8 +228,16 @@
             border: 1.5px solid var(--color-oro); object-fit: cover;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .avatar-mini:hover { transform: scale(1.1); box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
         .profile-link { display: flex; align-items: center; text-decoration: none; }
+
+        /* Efecto Hover extra para las tarjetas de herramientas respetando sus estilos en línea */
+        #grid-herramientas a:hover {
+            border-color: var(--color-oro) !important;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+            transform: translateY(-5px);
+        }
     </style>
 </head>
 <body>
@@ -317,6 +262,7 @@
                 <a href="templates/admin.html" id="link-admin" class="admin-link" style="display:none; margin-right: 15px;">ADMIN</a>
                 
                 <a href="templates/perfil.html" class="profile-link">
+                    <span id="user-header-name" class="user-header-label">Músico</span>
                     <img src="img/escudo.png" id="header-avatar-img" class="avatar-mini">
                 </a>
 
@@ -340,12 +286,11 @@
                 <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
                     <h3 class="seccion-titulo-jc" style="margin-bottom: 0;">Semana Santa</h3>
                     <a href="templates/analisis_general.html?tipo=Semana Santa&year=2026" 
-                    style="background: rgba(212, 175, 55, 0.1); color: var(--color-oro); border: 1px solid var(--border-gold); text-decoration: none; padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; display: flex; align-items: center; gap: 8px;"
+                    style="background: rgba(212, 175, 55, 0.1); color: var(--color-oro); border: 1px solid var(--color-oro); text-decoration: none; padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; display: flex; align-items: center; gap: 8px;"
                     onmouseover="this.style.background='var(--color-oro)'; this.style.color='black';"
                     onmouseout="this.style.background='rgba(212, 175, 55, 0.1)'; this.style.color='var(--color-oro)';"
                     >
-                        <span>Analizar Ciclo Completo</span>
-                        <span style="font-size: 1rem;">📊</span>
+                        <span>Analizar Ciclo Completo 📊</span>
                     </a>
                 </div>
 
@@ -369,7 +314,7 @@
 
         <section id="fase-herramientas" class="scroll-section">
             <h3 class="seccion-titulo-jc" style="text-align: center; border: none; margin-bottom: 60px;">Laboratorio Técnico</h3>
-            <div id="contenedor-laboratorio" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1200px; margin: 0 auto; width: 100%;">
+            <div id="grid-herramientas" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1200px; margin: 0 auto; width: 100%;">
                 <a href="templates/simulacion.html" style="background: rgba(18, 18, 18, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); padding: 50px; border-radius: 16px; text-align: center; text-decoration: none; transition: 0.4s; display: block;">
                     <div style="font-size: 3.5rem; margin-bottom: 20px;">📝</div>
                     <h3 style="color: white; text-transform: uppercase; margin: 0 0 10px 0;">Simulador</h3>
