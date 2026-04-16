@@ -138,6 +138,11 @@
         .col-num { width: 40px; text-align: center !important; }
         .col-marcha { width: auto; }
         .col-fase { width: 80px; text-align: center !important; }
+        
+        /* NUEVO: Columna para el botón de editar */
+        .col-acciones { width: 45px; text-align: center !important; }
+        .btn-editar-fila { background: transparent; border: none; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .btn-editar-fila:hover { transform: scale(1.2); }
 
         .tabla-historial td {
             font-size: 0.75rem;
@@ -155,6 +160,7 @@
         @media (max-width: 600px) {
             .injection-row { display: flex; flex-direction: column; gap: 15px; background: rgba(212, 175, 55, 0.03); padding: 15px; border-radius: 8px; border: 1px solid rgba(212, 175, 55, 0.2); }
             .col-fase { width: 70px; }
+            .col-acciones { width: 40px; }
             .tabla-historial th, .tabla-historial td { padding: 10px 5px; }
         }
     </style>
@@ -218,7 +224,7 @@
                         <option value="Vuelta">Vuelta</option>
                     </select>
                 </div>
-                <button onclick="inyectarMarcha()" class="btn-send" style="padding: 12px; width: 100%; min-width: 100px;">Añadir</button>
+                <button id="btn-inyectar-marcha" onclick="inyectarMarcha()" class="btn-send" style="padding: 12px; width: 100%; min-width: 100px;">Añadir</button>
             </div>
 
             <div class="table-wrapper">
@@ -228,7 +234,7 @@
                             <th class="col-num">Nº</th>
                             <th class="col-marcha">Marcha</th>
                             <th class="col-fase">Fase</th>
-                        </tr>
+                            <th class="col-acciones">⚙️</th> </tr>
                     </thead>
                     <tbody id="tabla-historial-body"></tbody>
                 </table>
@@ -242,12 +248,10 @@
     <script src="../js/admin.js"></script>
 
     <script>
-        // Lógica reactiva para el administrador
         function actualizarSelectSubfases() {
             const tipo = document.getElementById('adm-tipo').value;
             const selectFase = document.getElementById('inp-fase-marcha');
             
-            // Limpiar opciones
             selectFase.innerHTML = "";
 
             if (tipo === "Semana Santa") {
@@ -260,7 +264,6 @@
                     selectFase.innerHTML += `<option value="${opt.val}">${opt.text}</option>`;
                 });
             } else {
-                // Para Gloria o Extraordinaria
                 const opciones = [
                     { val: "Día", text: "Día" },
                     { val: "Noche", text: "Noche" }

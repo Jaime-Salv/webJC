@@ -238,6 +238,62 @@
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
             transform: translateY(-5px);
         }
+        /* Estilo base del botón Web Oficial */
+        .btn-web-ext {
+            text-decoration: none;
+            color: var(--color-oro);
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s;
+            white-space: nowrap;
+        }
+
+        /* Efecto al pasar el ratón por encima (Hover) */
+        .btn-web-ext:hover {
+            background: var(--color-oro);
+            color: black;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Ajuste para que se vea bien en móviles pequeños */
+        @media (max-width: 600px) {
+            .btn-web-ext { 
+                font-size: 0.6rem; 
+                padding: 5px 10px; 
+            }
+        }
+
+                /* Ajuste para alinear verticalmente escudo y botón */
+        .logo-side { 
+            display: flex; 
+            align-items: center; /* Centra verticalmente los elementos internos */
+            gap: 20px; 
+            height: 100%; /* Asegura que use todo el alto del header */
+        }
+
+        /* El botón Web Oficial con un pequeño ajuste de línea para el texto */
+        .btn-web-ext {
+            text-decoration: none;
+            color: var(--color-oro);
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            padding: 10px 18px; /* Un poco más de aire */
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1; /* Evita que el texto parezca bajado o subido */
+        }
     </style>
 </head>
 <body>
@@ -245,6 +301,7 @@
     <header class="main-header" id="cabecera-principal">
         <div class="logo-side">
             <a href="index.html"><img src="img/escudo.png" alt="Logo Julián Cerdán"></a>
+            <a href="https://bandajuliancerdan.com/" target="_blank" class="btn-web-ext">Web Oficial</a>
         </div>
         
         <nav class="header-nav">
@@ -304,10 +361,10 @@
 
         <section id="fase-catalogo" class="scroll-section">
             <div style="background: rgba(18, 18, 18, 0.6); border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 12px; padding: 80px 40px; text-align: center; backdrop-filter: blur(15px); max-width: 1000px; margin: 0 auto;">
-                <h2 style="color: var(--color-oro); font-size: 3rem; text-transform: uppercase; letter-spacing: 5px; margin: 0 0 20px 0;">Catálogo Maestro</h2>
-                <p style="color: #ddd; margin-bottom: 40px; font-size: 1.2rem;">Base de datos empírica del patrimonio musical. Accede a la matriz completa y datasets.</p>
+                <h2 style="color: var(--color-oro); font-size: 3rem; text-transform: uppercase; letter-spacing: 5px; margin: 0 0 20px 0;">Repertorio Maestro</h2>
+                <p style="color: #ddd; margin-bottom: 40px; font-size: 1.2rem;">Repertorio completo de nuestra formación para las procesiones. Entra y descubre sus secretos</p>
                 <a href="templates/catalogo.html" class="btn-gold-pro" style="font-size: 1.2rem; padding: 20px 45px; display: inline-block;">
-                    ABRIR MATRIZ HISTÓRICA
+                    ABRIR REPERTORIO
                 </a>
             </div>
         </section>

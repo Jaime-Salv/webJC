@@ -6,6 +6,9 @@ let procesionActiva = null;
 let catalogoCache = [];
 let contadorOrden = 1;
 
+// VARIABLE GLOBAL PARA SABER SI ESTAMOS EDITANDO
+let ordenEnEdicion = null; 
+
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarCatalogoEnMemoria();
     await comprobarEstadoSistema();
@@ -145,7 +148,7 @@ async function iniciarNuevaProcesion() {
 }
 
 /* ------------------------------------------------------------
-   MÓDULO 4: INYECCIÓN DE MARCHAS
+   MÓDULO 4: INYECCIÓN DE MARCHAS Y EDICIÓN
 ------------------------------------------------------------ */
 function autocompletarTitulo() {
     const inputId = parseInt(document.getElementById('inp-id-marcha').value);
@@ -166,6 +169,24 @@ function autocompletarTitulo() {
     }
 }
 
+// PREPARAR MODO EDICIÓN
+window.prepararEdicion = function(orden, id_marcha, fase) {
+    ordenEnEdicion = orden; 
+    
+    document.getElementById('inp-id-marcha').value = id_marcha;
+    autocompletarTitulo(); 
+    document.getElementById('inp-fase-marcha').value = fase;
+
+    const btn = document.getElementById('btn-inyectar-marcha');
+    if(btn) {
+        btn.innerText = "ACTUALIZAR";
+        btn.style.background = "#3498db"; 
+        btn.style.color = "white";
+    }
+    
+    document.getElementById('panel-inyeccion').scrollIntoView({ behavior: 'smooth' });
+};
+
 async function inyectarMarcha() {
     if (!procesionActiva) return alert("No hay proceso activo.");
 
@@ -178,16 +199,50 @@ async function inyectarMarcha() {
     }
 
     try {
-        const { error } = await clienteSupabase
-            .from('repertorio_transaccional')
-            .insert([{ 
-                id_procesion: procesionActiva.id_procesion, 
-                id_marcha: inputId, 
-                fase: fase, 
-                orden: contadorOrden 
-            }]);
+        if (ordenEnEdicion !== null) {
+            // ==========================================
+            // MODO EDICIÓN BLINDADO: Obligamos a devolver resultado (.select())
+            // ==========================================
+            const { data, error } = await clienteSupabase
+                .from('repertorio_transaccional')
+                .update({ 
+                    id_marcha: inputId, 
+                    fase: fase 
+                })
+                .eq('id_procesion', procesionActiva.id_procesion)
+                .eq('orden', ordenEnEdicion)
+                .select(); // <-- Esto comprueba si de verdad Supabase guardó el cambio
 
-        if (error) throw error;
+            if (error) throw error;
+            
+            // Si data está vacío, es que Supabase nos bloqueó (RLS o falta de Primary Key)
+            if (!data || data.length === 0) {
+                return alert("⚠️ Supabase ha bloqueado el cambio en la base de datos. Revisa en Supabase que la tabla tiene una 'Primary Key' asignada y que tienes activado el permiso UPDATE en las políticas RLS.");
+            }
+            
+            ordenEnEdicion = null;
+            const btn = document.getElementById('btn-inyectar-marcha');
+            if(btn) {
+                btn.innerText = "Añadir";
+                btn.style.background = "var(--color-oro)";
+                btn.style.color = "black";
+            }
+            
+        } else {
+            // ==========================================
+            // MODO CREACIÓN NORMAL
+            // ==========================================
+            const { error } = await clienteSupabase
+                .from('repertorio_transaccional')
+                .insert([{ 
+                    id_procesion: procesionActiva.id_procesion, 
+                    id_marcha: inputId, 
+                    fase: fase, 
+                    orden: contadorOrden 
+                }]);
+
+            if (error) throw error;
+        }
 
         document.getElementById('inp-id-marcha').value = '';
         document.getElementById('inp-titulo-marcha').value = '';
@@ -225,6 +280,9 @@ async function cargarHistorialTransaccional() {
                 <td class="col-num">#${reg.orden}</td>
                 <td class="col-marcha">${nombreMostrar}</td>
                 <td class="col-fase">${reg.fase}</td>
+                <td class="col-acciones">
+                    <button class="btn-editar-fila" title="Editar marcha" onclick="prepararEdicion(${reg.orden}, ${reg.id_marcha}, '${reg.fase}')">✏️</button>
+                </td>
             </tr>
         `;
     });
