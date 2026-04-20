@@ -67,7 +67,7 @@ async function cargarDatosActuacion() {
 
         // 5. Lanzamos la cadena de renderizado
         renderizarCabecera(datosProcesion);
-        calcularMetricas(repertorioEnriquecido, datosProcesion.hermandad);
+        calcularMetricas(repertorioEnriquecido, datosProcesion.hermandad, datosProcesion.localidad);
         analizarRepeticiones(repertorioEnriquecido);
         renderizarGraficos(repertorioEnriquecido);
         renderizarTimeline(repertorioEnriquecido);
@@ -110,7 +110,8 @@ function renderizarCabecera(data) {
 /* ------------------------------------------------------------
    MÓDULO 2: KPIS Y ESTADÍSTICAS MATEMÁTICAS
 ------------------------------------------------------------ */
-function calcularMetricas(repertorio, hermandadStr) {
+// OJO: Recuerda que hemos añadido el parámetro "localidadStr" a la función
+function calcularMetricas(repertorio, hermandadStr, localidadStr) {
     const n = repertorio.length;
     if (n === 0) return;
 
@@ -138,17 +139,48 @@ function calcularMetricas(repertorio, hermandadStr) {
     const minutos = Math.floor((duracionSegundos % 3600) / 60);
     document.getElementById('kpi-duracion').innerText = `${horas}h ${minutos}m`;
 
-    // KPI 6: % Marchas Dedicadas (Algoritmo de Coincidencia)
+    // KPI 6: % Marchas Dedicadas (Algoritmo de Doble Coincidencia Estricta: Hermandad + Localidad)
     const normalizar = (txt) => txt ? txt.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
-    const palabrasIgnoradas = ["la", "el", "los", "las", "de", "del", "hermandad", "cofradia", "cristo", "virgen", "nuestra", "senora", "jesus"];
     
+    // Lista ampliada de palabras ignoradas para evitar falsos positivos
+    const palabrasIgnoradas = ["la", "el", "los", "las", "de", "del", "hermandad", "cofradia", "cristo", "virgen", "nuestra", "senora", "jesus", "san", "santa"];
+    
+    // 1. Extraemos palabras clave de la hermandad y de la localidad
     const termsHermandad = normalizar(hermandadStr).split(" ").filter(w => !palabrasIgnoradas.includes(w) && w.length > 3);
     
+    // Controlamos si la localidadStr viene vacía o indefinida
+    const termsLocalidadProcesion = localidadStr ? normalizar(localidadStr).split(" ").filter(w => !palabrasIgnoradas.includes(w) && w.length > 3) : [];
+    
     let dedicadasContador = 0;
+    
     repertorio.forEach(m => {
         const dedicatoria = normalizar(m.dedicatoria);
-        const isDedicada = termsHermandad.some(term => dedicatoria.includes(term));
-        if (isDedicada) dedicadasContador++;
+        const localidadComposicion = normalizar(m.localidad); 
+        
+        // CONDICIÓN 1: La dedicatoria debe contener alguna palabra clave de la Hermandad
+        const coincideHermandad = termsHermandad.some(term => dedicatoria.includes(term));
+        
+        if (coincideHermandad) {
+            // CONDICIÓN 2: Filtro estricto de localidad
+            
+            // Si por algún motivo no tenemos el dato de la localidad de la procesión, 
+            // asumimos que es válida solo con la hermandad para no romper el contador.
+            if (termsLocalidadProcesion.length === 0) {
+                dedicadasContador++;
+                return; // Pasa a la siguiente marcha
+            }
+
+            // A) ¿Aparece el pueblo de la procesión escrito textualmente dentro de la dedicatoria?
+            const localidadEnDedicatoria = termsLocalidadProcesion.some(term => dedicatoria.includes(term));
+            
+            // B) ¿Coincide el pueblo de la procesión con la columna 'localidad' de la marcha?
+            const localidadEnCampo = localidadComposicion && termsLocalidadProcesion.some(term => localidadComposicion.includes(term));
+            
+            // Si cumple el filtro de localidad por A o por B, es una dedicatoria real
+            if (localidadEnDedicatoria || localidadEnCampo) {
+                dedicadasContador++;
+            }
+        }
     });
 
     document.getElementById('kpi-dedicadas').innerText = ((dedicadasContador / n) * 100).toFixed(1) + "%";
@@ -491,26 +523,39 @@ function analizarDispersionYEstilo(repertorio) {
 
 /* --- SISTEMA DE INVITACIÓN VISUAL EN ANÁLISIS --- */
 
+/* --- SISTEMA DE INVITACIÓN VISUAL EN ANÁLISIS --- */
+
 async function cargarDatosSociales() {
-    const { data: proc } = await clienteSupabase
-        .from('maestro_procesiones')
-        .select('likes')
-        .eq('id_procesion', idProcesion)
-        .maybeSingle(); 
-    
-    // CAMBIO: Apuntamos a la nueva tabla dedicada
+    // 1. LECTURA DE COMENTARIOS
     const { data: comentarios } = await clienteSupabase
         .from('procesion_comentarios')
         .select('*')
         .eq('id_procesion', idProcesion)
         .order('created_at', { ascending: true });
 
-    const totalLikes = proc ? (proc.likes || 0) : 0;
+    // 2. LECTURA DE LIKES (AHORA DESDE LA TABLA 'valoraciones')
+    const { data: valoraciones } = await clienteSupabase
+        .from('valoraciones')
+        .select('usuario_id')
+        .eq('id_procesion', idProcesion);
+
+    const totalLikes = valoraciones ? valoraciones.length : 0;
     const totalComentarios = comentarios ? comentarios.length : 0;
 
-    let votosRealizados = JSON.parse(localStorage.getItem('jc_votos_procesiones') || "[]");
-    const yaVotado = votosRealizados.includes(idProcesion);
+    // 3. COMPROBAR SI EL USUARIO HA VOTADO DIRECTO EN BASE DE DATOS
+    const { data: { session } } = await clienteSupabase.auth.getSession();
+    let yaVotado = false;
+    
+    if (session && valoraciones) {
+        // Si su ID de usuario está en la lista de valoraciones, ya le dio a Me Gusta
+        yaVotado = valoraciones.some(v => v.usuario_id === session.user.id);
+    } else {
+        // Respaldo visual en caché por si no ha iniciado sesión
+        let votosRealizados = JSON.parse(localStorage.getItem('jc_votos_procesiones') || "[]");
+        yaVotado = votosRealizados.includes(idProcesion);
+    }
 
+    // RENDERIZADO VISUAL
     const hLike = document.getElementById('like-count-hero');
     const hComm = document.getElementById('comment-count-hero');
     const btnMainLike = document.getElementById('btn-like-main');
@@ -532,6 +577,7 @@ async function cargarDatosSociales() {
         btnLikeAnalisis.style.borderColor = yaVotado ? '#ff3b3b' : '#333';
     }
 
+    // PINTAR COMENTARIOS
     const cont = document.getElementById('contenedor-comentarios-analisis');
     if (cont) {
         if (comentarios && comentarios.length > 0) {
@@ -556,37 +602,47 @@ async function gestionarLike() {
         return;
     }
 
-    let votosRealizados = JSON.parse(localStorage.getItem('jc_votos_procesiones') || "[]");
-    const yaVotado = votosRealizados.includes(idProcesion);
-
-    // FIX: maybeSingle() para que no colapse si está vacío
-    const { data: proc, error: errProc } = await clienteSupabase
-        .from('maestro_procesiones')
-        .select('likes')
+    // Comprobamos en la base de datos si el usuario ya le había dado MG
+    const { data: likeExistente } = await clienteSupabase
+        .from('valoraciones')
+        .select('*')
         .eq('id_procesion', idProcesion)
-        .maybeSingle(); 
-    
-    let likesActuales = proc ? (proc.likes || 0) : 0;
-    let nuevosLikes = yaVotado ? Math.max(0, likesActuales - 1) : likesActuales + 1;
+        .eq('usuario_id', session.user.id)
+        .maybeSingle();
 
     try {
-        const { error } = await clienteSupabase
-            .from('maestro_procesiones')
-            .update({ likes: nuevosLikes })
-            .eq('id_procesion', idProcesion);
+        let votosRealizados = JSON.parse(localStorage.getItem('jc_votos_procesiones') || "[]");
 
-        if (error) throw error;
+        if (likeExistente) {
+            // SI YA LE DIO LIKE: Lo borramos de la tabla valoraciones
+            const { error } = await clienteSupabase
+                .from('valoraciones')
+                .delete()
+                .eq('id_procesion', idProcesion)
+                .eq('usuario_id', session.user.id);
 
-        if (yaVotado) {
+            if (error) throw error;
             votosRealizados = votosRealizados.filter(id => id !== idProcesion);
+            
         } else {
-            votosRealizados.push(idProcesion);
-        }
-        localStorage.setItem('jc_votos_procesiones', JSON.stringify(votosRealizados));
+            // SI NO LE HA DADO LIKE: Insertamos el registro nuevo
+            const { error } = await clienteSupabase
+                .from('valoraciones')
+                .insert([{
+                    id_procesion: idProcesion,
+                    usuario_id: session.user.id
+                }]);
 
+            if (error) throw error;
+            if (!votosRealizados.includes(idProcesion)) votosRealizados.push(idProcesion);
+        }
+
+        // Guardamos el caché y recargamos los números
+        localStorage.setItem('jc_votos_procesiones', JSON.stringify(votosRealizados));
         cargarDatosSociales();
+
     } catch (err) {
-        console.error("Error al actualizar MG:", err);
+        console.error("Error al actualizar MG en valoraciones:", err);
     }
 }
 

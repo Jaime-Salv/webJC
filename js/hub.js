@@ -166,8 +166,10 @@ async function cargarTarjetasProcesiones() {
         gridGlorias.innerHTML = '';
 
         procesiones.forEach(p => {
-            const numLikes = totalLikes.filter(l => l.id_procesion === p.id_procesion).length;
-            const numComentarios = totalComentarios.filter(c => c.id_procesion === p.id_procesion).length;
+            // CORRECCIÓN APLICADA AQUÍ:
+            const numLikes = totalLikes.filter(l => String(l.id_procesion) === String(p.id_procesion)).length;
+            const numComentarios = totalComentarios.filter(c => String(c.id_procesion) === String(p.id_procesion)).length;
+            
             const tarjetaHTML = crearElementoTarjeta(p, numLikes, numComentarios);
             if (p.tipo === 'Semana Santa') gridSS.insertAdjacentHTML('beforeend', tarjetaHTML);
             else gridGlorias.insertAdjacentHTML('beforeend', tarjetaHTML);
