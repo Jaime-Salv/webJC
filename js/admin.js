@@ -1,5 +1,5 @@
 /* ============================================================
-   CONSOLA DE ADMINISTRACIÓN COMPLETA - REPARADA (Jaime Rubiales)
+   CONSOLA DE ADMINISTRACIÓN COMPLETA - WEB JULIÁN CERDÁN
    ============================================================ */
 
 let procesionActiva = null;
@@ -9,6 +9,7 @@ let ordenEnEdicion = null;
 
 let usuarioActual = null;
 let perfilActual = null;
+let marchaFichaActual = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const accesoPermitido = await comprobarAccesoAdmin();
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const inputIdMarcha = document.getElementById('inp-id-marcha');
     const btnFinalizarEvento = document.getElementById('btn-finalizar-evento');
+    const inputFichaIdMarcha = document.getElementById('ficha-id-marcha');
 
     if (inputIdMarcha) {
         inputIdMarcha.addEventListener('input', autocompletarTitulo);
@@ -31,14 +33,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnFinalizarEvento) {
         btnFinalizarEvento.addEventListener('click', finalizarEvento);
     }
+
+    if (inputFichaIdMarcha) {
+        inputFichaIdMarcha.addEventListener('keydown', (evento) => {
+            if (evento.key === 'Enter') {
+                buscarMarchaParaFicha();
+            }
+        });
+    }
 });
 
 /* ------------------------------------------------------------
-   MÓDULO 1: INICIALIZACIÓN Y ESTADO
------------------------------------------------------------- */
-/* ------------------------------------------------------------
    MÓDULO 0: SEGURIDAD DE ACCESO ADMIN
 ------------------------------------------------------------ */
+
 async function comprobarAccesoAdmin() {
     try {
         bloquearPantallaAdmin('Comprobando permisos...');
@@ -139,12 +147,22 @@ function mostrarAccesoDenegado(mensaje) {
     bloquearPantallaAdmin(mensaje);
 }
 
+/* ------------------------------------------------------------
+   MÓDULO 1: INICIALIZACIÓN Y ESTADO
+------------------------------------------------------------ */
 
 async function cargarCatalogoEnMemoria() {
     const { data, error } = await clienteSupabase
         .from('catalogo_marchas')
         .select('id_marcha, titulo');
-    if (!error && data) catalogoCache = data;
+
+    if (error) {
+        console.error('Error cargando catálogo:', error);
+        catalogoCache = [];
+        return;
+    }
+
+    catalogoCache = data || [];
 }
 
 async function comprobarEstadoSistema() {
@@ -153,6 +171,12 @@ async function comprobarEstadoSistema() {
         .select('*')
         .eq('estado', 'Activa')
         .maybeSingle();
+
+    if (error) {
+        console.error('Error comprobando procesión activa:', error);
+        desactivarModoInyeccion();
+        return;
+    }
 
     if (data) {
         procesionActiva = data;
@@ -165,75 +189,110 @@ async function comprobarEstadoSistema() {
 /* ------------------------------------------------------------
    MÓDULO 2: GESTIÓN DE LA INTERFAZ
 ------------------------------------------------------------ */
-function activarModoInyeccion() {
-    document.getElementById('form-nueva-procesion').style.display = 'none';
-    const info = document.getElementById('info-procesion-activa');
-    info.style.display = 'block';
-    
-    document.getElementById('txt-hermandad-activa').innerText = procesionActiva.hermandad;
-    document.getElementById('txt-lugar-activa').innerText = `${procesionActiva.localidad} (${procesionActiva.tipo})`;
-    
-    document.getElementById('btn-finalizar-evento').style.display = 'block';
-    document.getElementById('panel-inyeccion').style.opacity = "1";
-    document.getElementById('panel-inyeccion').style.pointerEvents = "auto";
 
-    // Lógica para el selector de fases
+function activarModoInyeccion() {
+    const formNuevaProcesion = document.getElementById('form-nueva-procesion');
+    const info = document.getElementById('info-procesion-activa');
+    const txtHermandad = document.getElementById('txt-hermandad-activa');
+    const txtLugar = document.getElementById('txt-lugar-activa');
+    const btnFinalizar = document.getElementById('btn-finalizar-evento');
+    const panelInyeccion = document.getElementById('panel-inyeccion');
     const selectFase = document.getElementById('inp-fase-marcha');
-    selectFase.innerHTML = ''; 
-    
-    if (procesionActiva.tipo === 'Semana Santa') {
-        selectFase.innerHTML = `
-            <option value="Ida">Ida</option>
-            <option value="Carrera Oficial">Carrera Oficial</option>
-            <option value="Vuelta">Vuelta</option>
-        `;
-    } else {
-        selectFase.innerHTML = `
-            <option value="Día">Día</option>
-            <option value="Noche">Noche</option>
-        `;
+
+    if (formNuevaProcesion) formNuevaProcesion.style.display = 'none';
+    if (info) info.style.display = 'block';
+
+    if (txtHermandad) {
+        txtHermandad.innerText = procesionActiva.hermandad;
+    }
+
+    if (txtLugar) {
+        txtLugar.innerText = `${procesionActiva.localidad} (${procesionActiva.tipo})`;
+    }
+
+    if (btnFinalizar) {
+        btnFinalizar.style.display = 'block';
+    }
+
+    if (panelInyeccion) {
+        panelInyeccion.style.opacity = '1';
+        panelInyeccion.style.pointerEvents = 'auto';
+    }
+
+    if (selectFase) {
+        selectFase.innerHTML = '';
+
+        if (procesionActiva.tipo === 'Semana Santa') {
+            selectFase.innerHTML = `
+                <option value="Ida">Ida</option>
+                <option value="Carrera Oficial">Carrera Oficial</option>
+                <option value="Vuelta">Vuelta</option>
+            `;
+        } else {
+            selectFase.innerHTML = `
+                <option value="Día">Día</option>
+                <option value="Noche">Noche</option>
+            `;
+        }
     }
 
     cargarHistorialTransaccional();
 }
 
 function desactivarModoInyeccion() {
-    document.getElementById('form-nueva-procesion').style.display = 'block';
-    document.getElementById('info-procesion-activa').style.display = 'none';
-    document.getElementById('btn-finalizar-evento').style.display = 'none';
-    document.getElementById('panel-inyeccion').style.opacity = "0.5";
-    document.getElementById('panel-inyeccion').style.pointerEvents = "none";
+    const formNuevaProcesion = document.getElementById('form-nueva-procesion');
+    const info = document.getElementById('info-procesion-activa');
+    const btnFinalizar = document.getElementById('btn-finalizar-evento');
+    const panelInyeccion = document.getElementById('panel-inyeccion');
+
+    if (formNuevaProcesion) formNuevaProcesion.style.display = 'block';
+    if (info) info.style.display = 'none';
+    if (btnFinalizar) btnFinalizar.style.display = 'none';
+
+    if (panelInyeccion) {
+        panelInyeccion.style.opacity = '0.5';
+        panelInyeccion.style.pointerEvents = 'none';
+    }
 }
 
 /* ------------------------------------------------------------
    MÓDULO 3: CREACIÓN DE PROCESIÓN
 ------------------------------------------------------------ */
+
 async function iniciarNuevaProcesion() {
-    const hermandad = document.getElementById('adm-hermandad').value.trim();
-    const localidad = document.getElementById('adm-localidad').value.trim();
-    const fecha = document.getElementById('adm-fecha').value;
-    const tipo = document.getElementById('adm-tipo').value;
-    const inputArchivo = document.getElementById('adm-foto-archivo').files[0];
+    const hermandad = document.getElementById('adm-hermandad')?.value.trim();
+    const localidad = document.getElementById('adm-localidad')?.value.trim();
+    const fecha = document.getElementById('adm-fecha')?.value;
+    const tipo = document.getElementById('adm-tipo')?.value;
+    const inputArchivo = document.getElementById('adm-foto-archivo')?.files?.[0];
 
-    if (!hermandad || !localidad || !fecha) return alert("Rellena los campos obligatorios.");
+    if (!hermandad || !localidad || !fecha) {
+        alert('Rellena los campos obligatorios.');
+        return;
+    }
 
-    let url_foto_final = '../img/foto-dashboard.jpg'; 
+    let url_foto_final = '../img/foto-dashboard.jpg';
 
     try {
-        const btnSend = document.querySelector('.btn-send');
-        btnSend.innerText = "PROCESANDO...";
-        btnSend.disabled = true;
+        const btnSend = document.querySelector('#form-nueva-procesion .btn-send');
+
+        if (btnSend) {
+            btnSend.innerText = 'PROCESANDO...';
+            btnSend.disabled = true;
+        }
 
         if (inputArchivo) {
             const extension = inputArchivo.name.split('.').pop();
             const nombreUnico = `procesion_${Date.now()}.${extension}`;
 
-            const { data: uploadData, error: uploadError } = await clienteSupabase
+            const { error: uploadError } = await clienteSupabase
                 .storage
                 .from('portadas')
                 .upload(nombreUnico, inputArchivo);
 
-            if (uploadError) throw new Error("Error al subir foto: " + uploadError.message);
+            if (uploadError) {
+                throw new Error('Error al subir foto: ' + uploadError.message);
+            }
 
             const { data: publicUrlData } = clienteSupabase
                 .storage
@@ -245,137 +304,177 @@ async function iniciarNuevaProcesion() {
 
         const { data, error } = await clienteSupabase
             .from('maestro_procesiones')
-            .insert([{ 
-                hermandad, localidad, fecha, tipo, 
-                url_foto: url_foto_final, 
-                estado: 'Activa' 
+            .insert([{
+                hermandad,
+                localidad,
+                fecha,
+                tipo,
+                url_foto: url_foto_final,
+                estado: 'Activa'
             }])
-            .select().single();
+            .select()
+            .single();
 
-        if (error) throw error;
+        if (error) {
+            throw error;
+        }
 
         procesionActiva = data;
         activarModoInyeccion();
 
-    } catch (e) {
-        alert("Fallo al iniciar directo: " + e.message);
+    } catch (error) {
+        alert('Fallo al iniciar directo: ' + error.message);
     } finally {
-        const btnSend = document.querySelector('.btn-send');
-        btnSend.innerText = "ACTIVAR DIRECTO";
-        btnSend.disabled = false;
+        const btnSend = document.querySelector('#form-nueva-procesion .btn-send');
+
+        if (btnSend) {
+            btnSend.innerText = 'ACTIVAR DIRECTO';
+            btnSend.disabled = false;
+        }
     }
 }
 
 /* ------------------------------------------------------------
    MÓDULO 4: INYECCIÓN DE MARCHAS Y EDICIÓN
 ------------------------------------------------------------ */
+
 function autocompletarTitulo() {
-    const inputId = parseInt(document.getElementById('inp-id-marcha').value);
+    const inputId = parseInt(document.getElementById('inp-id-marcha')?.value);
     const inputTitulo = document.getElementById('inp-titulo-marcha');
 
-    if (isNaN(inputId)) {
-        inputTitulo.value = "";
+    if (!inputTitulo) {
         return;
     }
 
-    const marchaEncontrada = catalogoCache.find(m => m.id_marcha === inputId);
+    if (isNaN(inputId)) {
+        inputTitulo.value = '';
+        return;
+    }
+
+    const marchaEncontrada = catalogoCache.find((marcha) => marcha.id_marcha === inputId);
+
     if (marchaEncontrada) {
         inputTitulo.value = marchaEncontrada.titulo;
-        inputTitulo.style.color = "#27ae60";
+        inputTitulo.style.color = '#27ae60';
     } else {
-        inputTitulo.value = "⚠️ ID no registrado";
-        inputTitulo.style.color = "#ff3b3b";
+        inputTitulo.value = '⚠️ ID no registrado';
+        inputTitulo.style.color = '#ff3b3b';
     }
 }
 
-// PREPARAR MODO EDICIÓN
 window.prepararEdicion = function(orden, id_marcha, fase) {
-    ordenEnEdicion = orden; 
-    
-    document.getElementById('inp-id-marcha').value = id_marcha;
-    autocompletarTitulo(); 
-    document.getElementById('inp-fase-marcha').value = fase;
+    ordenEnEdicion = orden;
 
+    const inputId = document.getElementById('inp-id-marcha');
+    const selectFase = document.getElementById('inp-fase-marcha');
     const btn = document.getElementById('btn-inyectar-marcha');
-    if(btn) {
-        btn.innerText = "ACTUALIZAR";
-        btn.style.background = "#3498db"; 
-        btn.style.color = "white";
+    const panel = document.getElementById('panel-inyeccion');
+
+    if (inputId) {
+        inputId.value = id_marcha;
     }
-    
-    document.getElementById('panel-inyeccion').scrollIntoView({ behavior: 'smooth' });
+
+    autocompletarTitulo();
+
+    if (selectFase) {
+        selectFase.value = fase;
+    }
+
+    if (btn) {
+        btn.innerText = 'ACTUALIZAR';
+        btn.style.background = '#3498db';
+        btn.style.color = 'white';
+    }
+
+    if (panel) {
+        panel.scrollIntoView({ behavior: 'smooth' });
+    }
 };
 
 async function inyectarMarcha() {
-    if (!procesionActiva) return alert("No hay proceso activo.");
+    if (!procesionActiva) {
+        alert('No hay proceso activo.');
+        return;
+    }
 
-    const inputId = parseInt(document.getElementById('inp-id-marcha').value);
-    const fase = document.getElementById('inp-fase-marcha').value;
-    const tituloInput = document.getElementById('inp-titulo-marcha').value;
+    const inputId = parseInt(document.getElementById('inp-id-marcha')?.value);
+    const fase = document.getElementById('inp-fase-marcha')?.value;
+    const tituloInput = document.getElementById('inp-titulo-marcha')?.value || '';
 
-    if (isNaN(inputId) || tituloInput.includes("⚠️") || tituloInput === "") {
-        return alert("Introduce un ID de marcha válido.");
+    if (isNaN(inputId) || tituloInput.includes('⚠️') || tituloInput === '') {
+        alert('Introduce un ID de marcha válido.');
+        return;
     }
 
     try {
         if (ordenEnEdicion !== null) {
-            // ==========================================
-            // MODO EDICIÓN BLINDADO: Obligamos a devolver resultado (.select())
-            // ==========================================
             const { data, error } = await clienteSupabase
                 .from('repertorio_transaccional')
-                .update({ 
-                    id_marcha: inputId, 
-                    fase: fase 
+                .update({
+                    id_marcha: inputId,
+                    fase: fase
                 })
                 .eq('id_procesion', procesionActiva.id_procesion)
                 .eq('orden', ordenEnEdicion)
-                .select(); // <-- Esto comprueba si de verdad Supabase guardó el cambio
+                .select();
 
-            if (error) throw error;
-            
-            // Si data está vacío, es que Supabase nos bloqueó (RLS o falta de Primary Key)
+            if (error) {
+                throw error;
+            }
+
             if (!data || data.length === 0) {
-                return alert("⚠️ Supabase ha bloqueado el cambio en la base de datos. Revisa en Supabase que la tabla tiene una 'Primary Key' asignada y que tienes activado el permiso UPDATE en las políticas RLS.");
+                alert("⚠️ Supabase ha bloqueado el cambio. Revisa la Primary Key y las políticas UPDATE.");
+                return;
             }
-            
+
             ordenEnEdicion = null;
+
             const btn = document.getElementById('btn-inyectar-marcha');
-            if(btn) {
-                btn.innerText = "Añadir";
-                btn.style.background = "var(--color-oro)";
-                btn.style.color = "black";
+
+            if (btn) {
+                btn.innerText = 'Añadir';
+                btn.style.background = 'var(--color-oro)';
+                btn.style.color = 'black';
             }
-            
+
         } else {
-            // ==========================================
-            // MODO CREACIÓN NORMAL
-            // ==========================================
             const { error } = await clienteSupabase
                 .from('repertorio_transaccional')
-                .insert([{ 
-                    id_procesion: procesionActiva.id_procesion, 
-                    id_marcha: inputId, 
-                    fase: fase, 
-                    orden: contadorOrden 
+                .insert([{
+                    id_procesion: procesionActiva.id_procesion,
+                    id_marcha: inputId,
+                    fase: fase,
+                    orden: contadorOrden
                 }]);
 
-            if (error) throw error;
+            if (error) {
+                throw error;
+            }
         }
 
-        document.getElementById('inp-id-marcha').value = '';
-        document.getElementById('inp-titulo-marcha').value = '';
-        document.getElementById('inp-id-marcha').focus();
+        const inputIdMarcha = document.getElementById('inp-id-marcha');
+        const inputTituloMarcha = document.getElementById('inp-titulo-marcha');
+
+        if (inputIdMarcha) {
+            inputIdMarcha.value = '';
+            inputIdMarcha.focus();
+        }
+
+        if (inputTituloMarcha) {
+            inputTituloMarcha.value = '';
+        }
 
         cargarHistorialTransaccional();
 
-    } catch (e) {
-        alert("Error al guardar marcha: " + e.message);
+    } catch (error) {
+        alert('Error al guardar marcha: ' + error.message);
     }
 }
 
 async function cargarHistorialTransaccional() {
-    if (!procesionActiva) return;
+    if (!procesionActiva) {
+        return;
+    }
 
     const { data, error } = await clienteSupabase
         .from('repertorio_transaccional')
@@ -383,24 +482,32 @@ async function cargarHistorialTransaccional() {
         .eq('id_procesion', procesionActiva.id_procesion)
         .order('orden', { ascending: true });
 
-    if (error) return;
+    if (error) {
+        console.error('Error cargando historial:', error);
+        return;
+    }
 
     const tbody = document.getElementById('tabla-historial-body');
+
+    if (!tbody) {
+        return;
+    }
+
     tbody.innerHTML = '';
-    
+
     contadorOrden = data.length > 0 ? data[data.length - 1].orden + 1 : 1;
 
-    data.forEach(reg => {
-        const marcha = catalogoCache.find(m => m.id_marcha === reg.id_marcha);
-        const nombreMostrar = marcha ? marcha.titulo : `ID: ${reg.id_marcha}`;
+    data.forEach((registro) => {
+        const marcha = catalogoCache.find((item) => item.id_marcha === registro.id_marcha);
+        const nombreMostrar = marcha ? marcha.titulo : `ID: ${registro.id_marcha}`;
 
         tbody.innerHTML += `
             <tr>
-                <td class="col-num">#${reg.orden}</td>
-                <td class="col-marcha">${nombreMostrar}</td>
-                <td class="col-fase">${reg.fase}</td>
+                <td class="col-num">#${registro.orden}</td>
+                <td class="col-marcha">${escaparHTML(nombreMostrar)}</td>
+                <td class="col-fase">${escaparHTML(registro.fase)}</td>
                 <td class="col-acciones">
-                    <button class="btn-editar-fila" title="Editar marcha" onclick="prepararEdicion(${reg.orden}, ${reg.id_marcha}, '${reg.fase}')">✏️</button>
+                    <button class="btn-editar-fila" title="Editar marcha" onclick="prepararEdicion(${registro.orden}, ${registro.id_marcha}, '${escaparAtributo(registro.fase)}')">✏️</button>
                 </td>
             </tr>
         `;
@@ -408,7 +515,7 @@ async function cargarHistorialTransaccional() {
 }
 
 /* ------------------------------------------------------------
-   MÓDULO: GESTIÓN DE USUARIOS Y ROLES
+   MÓDULO 5: GESTIÓN DE USUARIOS Y ROLES
 ------------------------------------------------------------ */
 
 async function cargarUsuariosAdmin() {
@@ -418,9 +525,7 @@ async function cargarUsuariosAdmin() {
         return;
     }
 
-    contenedor.innerHTML = `
-        <p style="color:#999;">Cargando usuarios...</p>
-    `;
+    contenedor.innerHTML = `<p style="color:#999;">Cargando usuarios...</p>`;
 
     const { data, error } = await clienteSupabase
         .from('perfiles')
@@ -429,16 +534,12 @@ async function cargarUsuariosAdmin() {
 
     if (error) {
         console.error('Error cargando usuarios:', error);
-        contenedor.innerHTML = `
-            <p style="color:#ff7070;">No se han podido cargar los usuarios.</p>
-        `;
+        contenedor.innerHTML = `<p style="color:#ff7070;">No se han podido cargar los usuarios.</p>`;
         return;
     }
 
     if (!data || data.length === 0) {
-        contenedor.innerHTML = `
-            <p style="color:#999;">Todavía no hay usuarios registrados.</p>
-        `;
+        contenedor.innerHTML = `<p style="color:#999;">Todavía no hay usuarios registrados.</p>`;
         return;
     }
 
@@ -460,16 +561,15 @@ async function cargarUsuariosAdmin() {
         const nombreVisible = usuario.nombre_completo || usuario.username || 'Sin nombre';
         const emailVisible = usuario.email || 'Sin email';
         const rolActual = usuario.rol || 'usuario';
-
         const esMiUsuario = usuarioActual && usuario.id === usuarioActual.id;
 
         html += `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
-                <td style="padding:10px; color:white;">${nombreVisible}</td>
-                <td style="padding:10px; color:#aaa;">${emailVisible}</td>
+                <td style="padding:10px; color:white;">${escaparHTML(nombreVisible)}</td>
+                <td style="padding:10px; color:#aaa;">${escaparHTML(emailVisible)}</td>
                 <td style="padding:10px;">
                     <span style="color:${rolActual === 'admin' ? '#d4af37' : '#ccc'}; font-weight:bold;">
-                        ${rolActual}
+                        ${escaparHTML(rolActual)}
                     </span>
                 </td>
                 <td style="padding:10px;">
@@ -477,7 +577,7 @@ async function cargarUsuariosAdmin() {
                         esMiUsuario
                             ? `<span style="color:#777;">Tu usuario</span>`
                             : `
-                                <button 
+                                <button
                                     onclick="cambiarRolUsuario('${usuario.id}', '${rolActual === 'admin' ? 'usuario' : 'admin'}')"
                                     style="
                                         background:${rolActual === 'admin' ? '#333' : '#d4af37'};
@@ -543,11 +643,343 @@ async function cambiarRolUsuario(idUsuario, nuevoRol) {
 }
 
 /* ------------------------------------------------------------
-   MÓDULO 5: FINALIZAR EVENTO
+   MÓDULO 6: GESTIÓN DE FICHA MUSICAL DE MARCHAS
+   Bucket Supabase Storage: mp3
 ------------------------------------------------------------ */
+
+async function buscarMarchaParaFicha() {
+    const inputId = document.getElementById('ficha-id-marcha');
+    const estado = document.getElementById('estado-guardado-ficha');
+
+    if (!inputId) {
+        alert('No se encuentra el campo de ID de marcha.');
+        return;
+    }
+
+    const idMarcha = Number(inputId.value);
+
+    if (!idMarcha || idMarcha <= 0) {
+        alert('Introduce un ID de marcha válido.');
+        return;
+    }
+
+    if (estado) {
+        estado.style.color = '#aaa';
+        estado.textContent = 'Buscando marcha...';
+    }
+
+    const { data, error } = await clienteSupabase
+        .from('catalogo_marchas')
+        .select('id_marcha, titulo, autor, url_audio, url_youtube, spotify_uri, url_patrimonio')
+        .eq('id_marcha', idMarcha)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error buscando marcha:', error);
+
+        if (estado) {
+            estado.style.color = '#ff7070';
+            estado.textContent = 'No se ha podido buscar la marcha.';
+        }
+
+        return;
+    }
+
+    if (!data) {
+        marchaFichaActual = null;
+        limpiarFichaMusical();
+
+        if (estado) {
+            estado.style.color = '#ff7070';
+            estado.textContent = 'No existe ninguna marcha con ese ID.';
+        }
+
+        return;
+    }
+
+    marchaFichaActual = data;
+    pintarFichaMusical(data);
+
+    if (estado) {
+        estado.style.color = '#d4af37';
+        estado.textContent = 'Marcha cargada. Puedes editar MP3, YouTube, Spotify y Patrimonio Musical.';
+    }
+}
+
+function limpiarFichaMusical() {
+    const resultado = document.getElementById('resultado-ficha-marcha');
+    const titulo = document.getElementById('ficha-titulo-detectado');
+    const autor = document.getElementById('ficha-autor-detectado');
+    const audioActual = document.getElementById('ficha-audio-actual');
+    const youtubeActual = document.getElementById('ficha-youtube-actual');
+    const spotifyActual = document.getElementById('ficha-spotify-actual');
+    const patrimonioActual = document.getElementById('ficha-patrimonio-actual');
+    const inputYoutube = document.getElementById('ficha-url-youtube');
+    const inputSpotify = document.getElementById('ficha-spotify-uri');
+    const inputPatrimonio = document.getElementById('ficha-url-patrimonio');
+    const inputAudio = document.getElementById('ficha-audio-mp3');
+
+    if (resultado) resultado.classList.remove('activo');
+    if (titulo) titulo.textContent = '--';
+    if (autor) autor.textContent = '--';
+    if (audioActual) audioActual.textContent = 'Sin audio interno.';
+    if (youtubeActual) youtubeActual.textContent = 'Sin enlace de YouTube.';
+    if (spotifyActual) spotifyActual.textContent = 'Sin URI de Spotify.';
+    if (patrimonioActual) patrimonioActual.textContent = 'Sin enlace de Patrimonio Musical.';
+    if (inputYoutube) inputYoutube.value = '';
+    if (inputSpotify) inputSpotify.value = '';
+    if (inputPatrimonio) inputPatrimonio.value = '';
+    if (inputAudio) inputAudio.value = '';
+}
+
+function pintarFichaMusical(marcha) {
+    const resultado = document.getElementById('resultado-ficha-marcha');
+    const titulo = document.getElementById('ficha-titulo-detectado');
+    const autor = document.getElementById('ficha-autor-detectado');
+    const audioActual = document.getElementById('ficha-audio-actual');
+    const youtubeActual = document.getElementById('ficha-youtube-actual');
+    const spotifyActual = document.getElementById('ficha-spotify-actual');
+    const patrimonioActual = document.getElementById('ficha-patrimonio-actual');
+    const inputYoutube = document.getElementById('ficha-url-youtube');
+    const inputSpotify = document.getElementById('ficha-spotify-uri');
+    const inputPatrimonio = document.getElementById('ficha-url-patrimonio');
+    const inputAudio = document.getElementById('ficha-audio-mp3');
+
+    if (resultado) resultado.classList.add('activo');
+
+    if (titulo) {
+        titulo.textContent = marcha.titulo || 'Sin título';
+    }
+
+    if (autor) {
+        autor.textContent = marcha.autor || 'Autor desconocido';
+    }
+
+    if (audioActual) {
+        audioActual.innerHTML = '';
+
+        if (marcha.url_audio) {
+            const enlace = document.createElement('a');
+            enlace.href = marcha.url_audio;
+            enlace.target = '_blank';
+            enlace.rel = 'noopener noreferrer';
+            enlace.textContent = marcha.url_audio;
+            enlace.style.color = '#d4af37';
+
+            const audio = document.createElement('audio');
+            audio.controls = true;
+            audio.preload = 'none';
+            audio.src = marcha.url_audio;
+            audio.className = 'preview-audio-admin';
+
+            audioActual.appendChild(enlace);
+            audioActual.appendChild(audio);
+        } else {
+            audioActual.textContent = 'Sin audio interno.';
+        }
+    }
+
+    pintarEnlaceActual(youtubeActual, marcha.url_youtube, 'Sin enlace de YouTube.');
+    pintarTextoActual(spotifyActual, marcha.spotify_uri, 'Sin URI de Spotify.');
+    pintarEnlaceActual(patrimonioActual, marcha.url_patrimonio, 'Sin enlace de Patrimonio Musical.');
+
+    if (inputYoutube) {
+        inputYoutube.value = marcha.url_youtube || '';
+    }
+
+    if (inputSpotify) {
+        inputSpotify.value = marcha.spotify_uri || '';
+    }
+
+    if (inputPatrimonio) {
+        inputPatrimonio.value = marcha.url_patrimonio || '';
+    }
+
+    if (inputAudio) {
+        inputAudio.value = '';
+    }
+}
+
+function pintarEnlaceActual(contenedor, url, mensajeVacio) {
+    if (!contenedor) {
+        return;
+    }
+
+    contenedor.innerHTML = '';
+
+    if (url) {
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.target = '_blank';
+        enlace.rel = 'noopener noreferrer';
+        enlace.textContent = url;
+        enlace.style.color = '#d4af37';
+
+        contenedor.appendChild(enlace);
+    } else {
+        contenedor.textContent = mensajeVacio;
+    }
+}
+
+function pintarTextoActual(contenedor, texto, mensajeVacio) {
+    if (!contenedor) {
+        return;
+    }
+
+    contenedor.innerHTML = '';
+
+    if (texto) {
+        const span = document.createElement('span');
+        span.textContent = texto;
+        span.style.color = '#d4af37';
+        contenedor.appendChild(span);
+    } else {
+        contenedor.textContent = mensajeVacio;
+    }
+}
+
+async function guardarFichaMusicalMarcha() {
+    const estado = document.getElementById('estado-guardado-ficha');
+    const inputAudio = document.getElementById('ficha-audio-mp3');
+    const inputYoutube = document.getElementById('ficha-url-youtube');
+    const inputSpotify = document.getElementById('ficha-spotify-uri');
+    const inputPatrimonio = document.getElementById('ficha-url-patrimonio');
+
+    if (!marchaFichaActual) {
+        alert('Primero busca una marcha por ID.');
+        return;
+    }
+
+    const archivoAudio = inputAudio?.files?.[0] || null;
+    const urlYoutube = inputYoutube?.value?.trim() || null;
+    const spotifyInput = inputSpotify?.value?.trim() || null;
+    const spotifyUri = convertirSpotifyInputAUri(spotifyInput);
+    const urlPatrimonio = inputPatrimonio?.value?.trim() || null;
+
+    if (archivoAudio && !archivoAudio.type.includes('audio')) {
+        alert('El archivo seleccionado debe ser de audio.');
+        return;
+    }
+
+    if (archivoAudio && !archivoAudio.name.toLowerCase().endsWith('.mp3')) {
+        const confirmar = confirm('El archivo no parece ser .mp3. Puede que el navegador no lo reproduzca bien. ¿Quieres continuar?');
+
+        if (!confirmar) {
+            return;
+        }
+    }
+
+    if (spotifyInput && !spotifyUri) {
+        alert('No se ha podido reconocer la pista de Spotify. Pega una URL de pista o una URI tipo spotify:track:...');
+        return;
+    }
+
+    if (urlPatrimonio && !urlPatrimonio.includes('patrimoniomusical.com')) {
+        const confirmar = confirm('El enlace no parece ser de patrimoniomusical.com. ¿Quieres guardarlo igualmente?');
+
+        if (!confirmar) {
+            return;
+        }
+    }
+
+    if (estado) {
+        estado.style.color = '#aaa';
+        estado.textContent = 'Guardando ficha musical...';
+    }
+
+    let urlAudioFinal = marchaFichaActual.url_audio || null;
+
+    try {
+        if (archivoAudio) {
+            urlAudioFinal = await subirAudioMarcha(archivoAudio, marchaFichaActual);
+        }
+
+        const datosActualizar = {
+            url_audio: urlAudioFinal,
+            url_youtube: urlYoutube,
+            spotify_uri: spotifyUri,
+            url_patrimonio: urlPatrimonio
+        };
+
+        const { error } = await clienteSupabase
+            .from('catalogo_marchas')
+            .update(datosActualizar)
+            .eq('id_marcha', marchaFichaActual.id_marcha);
+
+        if (error) {
+            throw error;
+        }
+
+        marchaFichaActual = {
+            ...marchaFichaActual,
+            ...datosActualizar
+        };
+
+        pintarFichaMusical(marchaFichaActual);
+
+        if (estado) {
+            estado.style.color = '#27ae60';
+            estado.textContent = 'Ficha musical guardada correctamente.';
+        }
+
+        alert('Ficha musical actualizada correctamente.');
+
+    } catch (error) {
+        console.error('Error guardando ficha musical:', error);
+
+        if (estado) {
+            estado.style.color = '#ff7070';
+            estado.textContent = 'No se ha podido guardar la ficha musical.';
+        }
+
+        alert('Error guardando ficha musical: ' + error.message);
+    }
+}
+
+async function subirAudioMarcha(archivoAudio, marcha) {
+    const extension = obtenerExtensionArchivo(archivoAudio.name) || 'mp3';
+    const nombreBase = normalizarNombreArchivo(`${marcha.id_marcha}-${marcha.titulo || 'marcha'}`);
+    const rutaArchivo = `marchas/${nombreBase}.${extension}`;
+
+    const { error: errorUpload } = await clienteSupabase
+        .storage
+        .from('mp3')
+        .upload(rutaArchivo, archivoAudio, {
+            cacheControl: '3600',
+            upsert: true,
+            contentType: archivoAudio.type || 'audio/mpeg'
+        });
+
+    if (errorUpload) {
+        throw errorUpload;
+    }
+
+    const { data } = clienteSupabase
+        .storage
+        .from('mp3')
+        .getPublicUrl(rutaArchivo);
+
+    if (!data || !data.publicUrl) {
+        throw new Error('No se ha podido obtener la URL pública del audio.');
+    }
+
+    return data.publicUrl;
+}
+
+/* ------------------------------------------------------------
+   MÓDULO 7: FINALIZAR EVENTO
+------------------------------------------------------------ */
+
 async function finalizarEvento() {
-    if (!procesionActiva) return;
-    if (!confirm("¿Finalizar el evento? Se guardará en el histórico.")) return;
+    if (!procesionActiva) {
+        return;
+    }
+
+    const confirmar = confirm('¿Finalizar el evento? Se guardará en el histórico.');
+
+    if (!confirmar) {
+        return;
+    }
 
     try {
         const { error } = await clienteSupabase
@@ -555,10 +987,81 @@ async function finalizarEvento() {
             .update({ estado: 'Finalizada' })
             .eq('id_procesion', procesionActiva.id_procesion);
 
-        if (error) throw error;
+        if (error) {
+            throw error;
+        }
+
         window.location.reload();
 
-    } catch (e) {
-        alert("Error al finalizar: " + e.message);
+    } catch (error) {
+        alert('Error al finalizar: ' + error.message);
     }
+}
+
+/* ------------------------------------------------------------
+   UTILIDADES
+------------------------------------------------------------ */
+
+function obtenerExtensionArchivo(nombreArchivo) {
+    if (!nombreArchivo || !nombreArchivo.includes('.')) {
+        return '';
+    }
+
+    return nombreArchivo.split('.').pop().toLowerCase();
+}
+
+function normalizarNombreArchivo(texto) {
+    return String(texto || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/ñ/g, 'n')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 90);
+}
+
+function convertirSpotifyInputAUri(valor) {
+    if (!valor || String(valor).trim() === '') {
+        return null;
+    }
+
+    const texto = String(valor).trim();
+
+    if (texto.startsWith('spotify:track:')) {
+        return texto;
+    }
+
+    try {
+        const url = new URL(texto);
+        const partes = url.pathname.split('/').filter(Boolean);
+        const indiceTrack = partes.indexOf('track');
+
+        if (indiceTrack !== -1 && partes[indiceTrack + 1]) {
+            const trackId = partes[indiceTrack + 1];
+            return `spotify:track:${trackId}`;
+        }
+
+        return null;
+
+    } catch (error) {
+        return null;
+    }
+}
+
+function escaparHTML(valor) {
+    if (valor === null || valor === undefined) {
+        return '';
+    }
+
+    return String(valor)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function escaparAtributo(valor) {
+    return escaparHTML(valor).replaceAll('`', '&#096;');
 }

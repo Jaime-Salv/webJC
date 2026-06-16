@@ -11,9 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* =========================================
-           RESET Y CONTENCIÓN MÓVIL
-        ========================================= */
         *, *::before, *::after {
             box-sizing: border-box;
         }
@@ -47,9 +44,6 @@
             gap: 20px;
         }
 
-        /* =========================================
-           CABECERA ADAPTATIVA
-        ========================================= */
         .main-header {
             position: fixed;
             top: 0;
@@ -79,9 +73,6 @@
             letter-spacing: 1px;
         }
 
-        /* =========================================
-           TARJETAS Y FORMULARIOS
-        ========================================= */
         .card-admin {
             width: 100%;
             background: rgba(18, 18, 18, 0.9);
@@ -158,9 +149,25 @@
             opacity: 0.85;
         }
 
-        /* =========================================
-           TABLA DE HISTORIAL
-        ========================================= */
+        .btn-secundario {
+            width: 100%;
+            background: transparent;
+            color: var(--color-oro);
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            font-weight: 900;
+            padding: 14px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: 'Montserrat', sans-serif;
+            margin-bottom: 15px;
+        }
+
+        .btn-secundario:hover {
+            background: rgba(212, 175, 55, 0.08);
+        }
+
         .table-wrapper {
             width: 100%;
             margin-top: 20px;
@@ -229,10 +236,8 @@
             transform: scale(1.2);
         }
 
-        /* =========================================
-           GESTIÓN DE USUARIOS
-        ========================================= */
-        .panel-usuarios-admin {
+        .panel-usuarios-admin,
+        .panel-ficha-musical {
             margin-top: 10px;
         }
 
@@ -304,9 +309,35 @@
             font-weight: 700;
         }
 
-        /* =========================================
-           RESPONSIVE
-        ========================================= */
+        .resultado-ficha {
+            display: none;
+            margin-bottom: 18px;
+            padding: 15px;
+            background: rgba(212, 175, 55, 0.06);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: 6px;
+        }
+
+        .resultado-ficha.activo {
+            display: block;
+        }
+
+        .resultado-ficha strong {
+            color: var(--color-oro);
+        }
+
+        .estado-url {
+            font-size: 0.8rem;
+            color: #aaa;
+            word-break: break-word;
+            margin-top: 5px;
+        }
+
+        .preview-audio-admin {
+            width: 100%;
+            margin-top: 10px;
+        }
+
         @media (min-width: 1024px) {
             .global-container {
                 display: grid;
@@ -331,8 +362,16 @@
                 font-size: 1.2rem;
             }
 
-            .panel-usuarios-admin {
+            .panel-usuarios-admin,
+            .panel-ficha-musical {
                 grid-column: 1 / -1;
+            }
+
+            .grid-ficha-musical {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                align-items: start;
             }
         }
 
@@ -494,6 +533,118 @@
 
             <div id="tabla-usuarios-admin">
                 <p style="color:#999;">Cargando usuarios...</p>
+            </div>
+        </section>
+
+        <section class="card-admin panel-ficha-musical" id="panel-ficha-musical">
+            <h3>4. Gestión de ficha musical</h3>
+
+            <p style="color:#aaa; font-size:0.9rem; margin-top:0;">
+                Usa esta sección para subir el audio interno de una marcha y guardar su enlace de YouTube.
+                El audio se subirá al bucket público <strong style="color:#d4af37;">mp3</strong> de Supabase Storage.
+            </p>
+
+            <div class="grid-ficha-musical">
+                <div>
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        ID de marcha
+                    </label>
+                    <input
+                        type="number"
+                        id="ficha-id-marcha"
+                        class="input-admin"
+                        placeholder="Ejemplo: 12"
+                    >
+
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="buscarMarchaParaFicha()"
+                    >
+                        Buscar marcha
+                    </button>
+
+                    <div id="resultado-ficha-marcha" class="resultado-ficha">
+                        <p style="margin:0 0 8px 0;">
+                            <strong>Marcha:</strong>
+                            <span id="ficha-titulo-detectado">--</span>
+                        </p>
+
+                        <p style="margin:0 0 8px 0; color:#aaa; font-size:0.85rem;">
+                            <strong>Autor:</strong>
+                            <span id="ficha-autor-detectado">--</span>
+                        </p>
+
+                        <p style="margin:0 0 8px 0; color:#aaa; font-size:0.85rem;">
+                            <strong>Audio actual:</strong>
+                        </p>
+                        <div id="ficha-audio-actual" class="estado-url">Sin audio interno.</div>
+
+                        <p style="margin:12px 0 8px 0; color:#aaa; font-size:0.85rem;">
+                            <strong>YouTube actual:</strong>
+                        </p>
+
+                        <div id="ficha-youtube-actual" class="estado-url">Sin enlace de YouTube.</div>
+                        <p style="margin:12px 0 8px 0; color:#aaa; font-size:0.85rem;">
+                            <strong>Spotify actual:</strong>
+                        </p>
+
+                        <p style="margin:12px 0 8px 0; color:#aaa; font-size:0.85rem;">
+                            <strong>Patrimonio Musical actual:</strong>
+                        </p>
+                        <div id="ficha-patrimonio-actual" class="estado-url">Sin enlace de Patrimonio Musical.</div>
+
+                        <div id="ficha-spotify-actual" class="estado-url">Sin URI de Spotify.</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="input-file-container">
+                        <label>Archivo MP3</label>
+                        <input type="file" id="ficha-audio-mp3" accept="audio/mpeg,audio/mp3">
+                    </div>
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        URL de YouTube
+                    </label>
+                    <input
+                        type="url"
+                        id="ficha-url-youtube"
+                        class="input-admin"
+                        placeholder="https://www.youtube.com/watch?v=..."
+                    >
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        URI de Spotify
+                    </label>
+                    <input
+                        type="text"
+                        id="ficha-spotify-uri"
+                        class="input-admin"
+                        placeholder="Pega aquí la URL o URI de Spotify"
+                    >
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        URL Patrimonio Musical
+                    </label>
+                    <input
+                        type="url"
+                        id="ficha-url-patrimonio"
+                        class="input-admin"
+                        placeholder="https://www.patrimoniomusical.com/bd-marcha-..."
+                    >
+
+                    <button
+                        type="button"
+                        class="btn-send"
+                        onclick="guardarFichaMusicalMarcha()"
+                    >
+                        Guardar ficha musical
+                    </button>
+
+                    <p id="estado-guardado-ficha" style="color:#888; font-size:0.85rem; margin-top:12px;">
+                        Primero busca una marcha por ID.
+                    </p>
+                </div>
             </div>
         </section>
 

@@ -3,199 +3,1007 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <title>Catálogo Histórico - Julián Cerdán</title>
-    
+
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../img/escudo.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
-    
-    <style>
-        /* =========================================
-             RESET Y SEGURIDAD MÓVIL
-         ========================================= */
-        *, *::before, *::after { box-sizing: border-box; }
 
-        html, body {
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-oro: #d4af37;
+            --color-negro: #050505;
+        }
+
+        html,
+        body {
             max-width: 100vw;
             overflow-x: hidden;
-            margin: 0; padding: 0;
-            background-color: #050505;
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-negro);
             font-family: 'Montserrat', sans-serif;
             color: white;
         }
 
-        body { 
-            padding-top: 100px; 
-            background-image: linear-gradient(to bottom, rgba(10,10,10,0.85) 0%, rgba(5,5,5,0.95) 100%), url('../img/catalogo.jpg');
+        body {
+            padding-top: 100px;
+            background-image:
+                linear-gradient(to bottom, rgba(10,10,10,0.85) 0%, rgba(5,5,5,0.95) 100%),
+                url('../img/catalogo.jpg');
             background-size: cover;
             background-position: center center;
             background-attachment: fixed;
         }
 
-        /* =========================================
-             CABECERA SMART (OPTIMIZADA)
-         ========================================= */
-        .main-header-pro { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 80px;
+        .main-header-pro {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
             background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 20px; z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            transition: transform 0.25s ease;
         }
 
-        .header-logo-side img { height: 50px; width: auto; }
-        .header-title-side h2 { font-size: 0.8rem; letter-spacing: 2px; text-align: center; margin: 0; text-transform: uppercase; color: white; font-weight: 900;}
-        .header-title-side h2 span { font-size: 0.6rem; letter-spacing: 1px; display: block; color: var(--color-oro); font-weight: 400;}
-
-        .btn-volver-pro { 
-            border: 1px solid var(--color-oro); color: var(--color-oro);
-            padding: 8px 12px; border-radius: 4px; font-weight: 700; font-size: 0.65rem;
-            text-transform: uppercase; text-decoration: none;
+        .header-logo-side img {
+            height: 50px;
+            width: auto;
         }
 
-        /* =========================================
-             LAYOUT CONTENIDO
-         ========================================= */
-        .header-catalogo-title { padding: 20px; text-align: center; display: flex; flex-direction: column; gap: 15px; align-items: center;}
-        .header-catalogo-title h1 { color: var(--color-oro); font-size: 1.4rem; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
+        .header-title-side h2 {
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-align: center;
+            margin: 0;
+            text-transform: uppercase;
+            color: white;
+            font-weight: 900;
+        }
+
+        .header-title-side h2 span {
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            display: block;
+            color: var(--color-oro);
+            font-weight: 400;
+        }
+
+        .btn-volver-pro {
+            border: 1px solid var(--color-oro);
+            color: var(--color-oro);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        .global-container {
+            width: 100%;
+        }
+
+        .header-catalogo-title {
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .header-catalogo-title h1 {
+            color: var(--color-oro);
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .intro-catalogo {
+            max-width: 900px;
+            margin: 0 auto 20px auto;
+            padding: 0 20px;
+            text-align: center;
+            color: #bbb;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
 
         .btn-send {
-            background: var(--color-oro); color: black; padding: 10px 15px; border: none; border-radius: 4px;
-            font-weight: 900; text-transform: uppercase; cursor: pointer; transition: 0.3s; width: 100%;
+            background: var(--color-oro);
+            color: black;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 900;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            font-family: 'Montserrat', sans-serif;
         }
 
-        /* KPIs en Vertical para Móvil */
-        .kpi-bar { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; /* 2 por fila en móvil */
-            gap: 10px; padding: 0 15px; margin-bottom: 20px; 
+        .btn-send:hover {
+            opacity: 0.85;
         }
-        .kpi-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 6px; text-align: center; }
-        .kpi-box span { font-size: 0.6rem; color: var(--color-oro); font-weight: 800; text-transform: uppercase;}
-        .kpi-box strong { font-size: 1.2rem; display: block; margin-top: 4px; color: white;}
+
+        .kpi-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .kpi-box span {
+            font-size: 0.6rem;
+            color: var(--color-oro);
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .kpi-box strong {
+            font-size: 1.2rem;
+            display: block;
+            margin-top: 4px;
+            color: white;
+        }
 
         .btn-analisis-pro {
-            grid-column: 1 / -1; 
-            background: linear-gradient(135deg, var(--color-oro) 0%, #b5952f 100%); 
-            color: black; padding: 15px; border-radius: 6px;
-            font-weight: 900; text-transform: uppercase; border: none; font-size: 0.85rem;
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--color-oro) 0%, #b5952f 100%);
+            color: black;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: 900;
+            text-transform: uppercase;
+            border: none;
+            font-size: 0.85rem;
         }
 
-        /* Filtros en una sola columna */
-        .filtros-bar { 
-            display: flex; flex-direction: column; 
-            gap: 10px; padding: 0 15px; margin-bottom: 25px; 
-        }
-        .input-filtro { 
-            width: 100%; padding: 14px; 
-            background: rgba(0, 0, 0, 0.7); border: 1px solid #333; 
-            color: white; border-radius: 6px; font-size: 16px; font-family: 'Montserrat';
+        .filtros-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 0 15px;
+            margin-bottom: 25px;
         }
 
-        /* =========================================
-             TABLA BLINDADA (STRUCTURAL SELECTORS)
-         ========================================= */
-        .tabla-contenedor { padding: 0 10px 60px 10px; width: 100%; }
-        
-        .tabla-catalogo { 
-            width: 100%; border-collapse: collapse; 
-            table-layout: fixed; /* Fuerza los anchos asignados */
-            background: rgba(0, 0, 0, 0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);
+        .input-filtro {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #333;
+            color: white;
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: 'Montserrat', sans-serif;
         }
 
-        .tabla-catalogo th, .tabla-catalogo td {
-            padding: 12px 8px; text-align: left;
+        .tabla-contenedor {
+            padding: 0 10px 120px 10px;
+            width: 100%;
+        }
+
+        .tabla-catalogo {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+            overflow: hidden;
+        }
+
+        .tabla-catalogo th,
+        .tabla-catalogo td {
+            padding: 12px 8px;
+            text-align: left;
             border-bottom: 1px solid rgba(255,255,255,0.05);
-            word-wrap: break-word; overflow-wrap: break-word;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
-        .tabla-catalogo th { background: rgba(212,175,55,0.1); color: var(--color-oro); font-size: 0.65rem; text-transform: uppercase; border-bottom: 2px solid var(--color-oro);}
-        .tabla-catalogo td { font-size: 0.8rem; color: #ccc; vertical-align: middle; }
+        .tabla-catalogo th {
+            background: rgba(212,175,55,0.1);
+            color: var(--color-oro);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--color-oro);
+        }
 
-        /* MAGIA NEGRA PARA MÓVILES: Oculta dinámicamente las columnas 1(ID), 4(Año) y 5(Estilo) de TODO el DOM */
-        .tabla-catalogo th:nth-child(1), .tabla-catalogo td:nth-child(1),
-        .tabla-catalogo th:nth-child(4), .tabla-catalogo td:nth-child(4),
-        .tabla-catalogo th:nth-child(5), .tabla-catalogo td:nth-child(5) {
+        .tabla-catalogo td {
+            font-size: 0.8rem;
+            color: #ccc;
+            vertical-align: middle;
+        }
+
+        .tabla-catalogo tbody tr {
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .tabla-catalogo tbody tr:hover {
+            background: rgba(212, 175, 55, 0.09);
+        }
+
+        .tabla-catalogo th:nth-child(1),
+        .tabla-catalogo td:nth-child(1),
+        .tabla-catalogo th:nth-child(4),
+        .tabla-catalogo td:nth-child(4),
+        .tabla-catalogo th:nth-child(5),
+        .tabla-catalogo td:nth-child(5),
+        .tabla-catalogo th:nth-child(6),
+        .tabla-catalogo td:nth-child(6) {
             display: none;
         }
 
-        /* Asignación estricta de espacio en móvil para 2(Título), 3(Autor) y 6(Dur) */
-        .tabla-catalogo th:nth-child(2), .tabla-catalogo td:nth-child(2) { width: 50%; color: white; font-weight: 700; font-size: 0.85rem;}
-        .tabla-catalogo th:nth-child(3), .tabla-catalogo td:nth-child(3) { width: 35%; font-size: 0.7rem; }
-        .tabla-catalogo th:nth-child(6), .tabla-catalogo td:nth-child(6) { width: 15%; text-align: right; font-size: 0.75rem; }
+        .tabla-catalogo th:nth-child(2),
+        .tabla-catalogo td:nth-child(2) {
+            width: 48%;
+            color: white;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .tabla-catalogo th:nth-child(3),
+        .tabla-catalogo td:nth-child(3) {
+            width: 34%;
+            font-size: 0.7rem;
+        }
+
+        .tabla-catalogo th:nth-child(7),
+        .tabla-catalogo td:nth-child(7) {
+            width: 18%;
+            text-align: center;
+        }
+
+        .ayuda-tabla {
+            color: #888;
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 12px;
+        }
 
         /* =========================================
-             REAPARICIÓN DE COLUMNAS EN ESCRITORIO
-         ========================================= */
+           MINI REPRODUCTOR FIJO
+        ========================================= */
+
+        .mini-player {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            z-index: 3500;
+            background: rgba(8, 8, 8, 0.96);
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            border-radius: 10px;
+            padding: 12px;
+            display: none;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.65);
+            backdrop-filter: blur(10px);
+        }
+
+        .mini-player.activo {
+            display: block;
+        }
+
+        .mini-player-superior {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .mini-player-info {
+            min-width: 0;
+        }
+
+        .mini-player-info strong {
+            display: block;
+            color: var(--color-oro);
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-player-info span {
+            display: block;
+            color: #aaa;
+            font-size: 0.72rem;
+            margin-top: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-player-cerrar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: transparent;
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            color: var(--color-oro);
+            font-weight: 900;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .mini-player audio {
+            width: 100%;
+            display: block;
+        }
+
+        .btn-play-tabla {
+            border: 1px solid rgba(212, 175, 55, 0.55);
+            background: rgba(212, 175, 55, 0.08);
+            color: var(--color-oro);
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            cursor: pointer;
+            font-weight: 900;
+            transition: 0.2s;
+        }
+
+        .btn-play-tabla:hover {
+            background: var(--color-oro);
+            color: #000;
+            transform: scale(1.08);
+        }
+
+        .btn-play-tabla:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* =========================================
+           MODAL WIKIPEDIA DE MARCHAS
+        ========================================= */
+        .modal-marcha {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(8px);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        .modal-marcha.activo {
+            display: flex;
+        }
+
+        .modal-contenido {
+            width: 100%;
+            max-width: 980px;
+            max-height: 88vh;
+            overflow-y: auto;
+            background:
+                linear-gradient(145deg, rgba(20,20,20,0.98), rgba(5,5,5,0.98));
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.65);
+            padding: 24px;
+            position: relative;
+        }
+
+        .btn-cerrar-modal {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 38px;
+            height: 38px;
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            background: rgba(0,0,0,0.5);
+            color: var(--color-oro);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 900;
+        }
+
+        .modal-cabecera {
+            padding-right: 45px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            margin-bottom: 20px;
+            padding-bottom: 18px;
+        }
+
+        .modal-cabecera h2 {
+            color: var(--color-oro);
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1.45rem;
+        }
+
+        .modal-subtitulo {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+        }
+
+        .bloque-ficha {
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .bloque-ficha h3 {
+            color: var(--color-oro);
+            margin: 0 0 12px 0;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .bloque-ficha p {
+            color: #d5d5d5;
+            line-height: 1.7;
+            font-size: 0.92rem;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .ficha-datos {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .dato-ficha {
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(212,175,55,0.12);
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .dato-ficha span {
+            display: block;
+            color: var(--color-oro);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .dato-ficha strong {
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .btn-youtube {
+            display: inline-block;
+            background: #ff3333;
+            color: white;
+            text-decoration: none;
+            font-weight: 900;
+            text-transform: uppercase;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+
+        .sin-dato {
+            color: #777 !important;
+            font-style: italic;
+        }
+
+        .fuentes-lista {
+            margin: 0;
+            padding-left: 18px;
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 0.85rem;
+        }
+
+        .fuentes-lista a {
+            color: var(--color-oro);
+            word-break: break-word;
+        }
+
+        @media (min-width: 900px) {
+            .modal-grid {
+                grid-template-columns: 340px 1fr;
+            }
+
+            .ficha-datos {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .bloque-reproductores {
+                grid-column: 1 / -1;
+            }
+
+            .bloque-textos {
+                grid-column: 1 / -1;
+            }
+
+            .mini-player {
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                width: min(760px, calc(100vw - 40px));
+            }
+        }
+
         @media (min-width: 1024px) {
-            body { padding-top: 130px; }
-            .main-header-pro { height: 100px; padding: 0 50px; }
-            .header-logo-side img { height: 70px; }
-            .header-title-side h2 { font-size: 1.4rem; }
-            .btn-volver-pro { padding: 12px 24px; font-size: 0.85rem; }
+            body {
+                padding-top: 130px;
+            }
 
-            .global-container { max-width: 1400px; margin: 0 auto; }
-            .header-catalogo-title { flex-direction: row; justify-content: space-between; padding: 20px 50px; }
-            .header-catalogo-title h1 { margin-bottom: 0; }
-            .header-catalogo-title .btn-send { width: auto; background: #111; color: var(--color-oro); border: 1px solid var(--color-oro); }
+            .main-header-pro {
+                height: 100px;
+                padding: 0 50px;
+            }
 
-            .kpi-bar { grid-template-columns: repeat(3, 1fr) 200px; padding: 0 50px; }
-            .filtros-bar { flex-direction: row; padding: 0 50px; }
-            .tabla-contenedor { padding: 0 50px 60px 50px; }
+            .header-logo-side img {
+                height: 70px;
+            }
 
-            /* Restaurar la matriz completa */
-            .tabla-catalogo th:nth-child(1), .tabla-catalogo td:nth-child(1),
-            .tabla-catalogo th:nth-child(4), .tabla-catalogo td:nth-child(4),
-            .tabla-catalogo th:nth-child(5), .tabla-catalogo td:nth-child(5) {
+            .header-title-side h2 {
+                font-size: 1.4rem;
+            }
+
+            .btn-volver-pro {
+                padding: 12px 24px;
+                font-size: 0.85rem;
+            }
+
+            .global-container {
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+
+            .header-catalogo-title {
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 20px 50px;
+            }
+
+            .header-catalogo-title h1 {
+                margin-bottom: 0;
+            }
+
+            .intro-catalogo {
+                padding: 0 50px;
+                text-align: left;
+                margin: 0 0 20px 0;
+            }
+
+            .kpi-bar {
+                grid-template-columns: repeat(3, 1fr) 200px;
+                padding: 0 50px;
+            }
+
+            .filtros-bar {
+                flex-direction: row;
+                padding: 0 50px;
+            }
+
+            .tabla-contenedor {
+                padding: 0 50px 130px 50px;
+            }
+
+            .tabla-catalogo th:nth-child(1),
+            .tabla-catalogo td:nth-child(1),
+            .tabla-catalogo th:nth-child(4),
+            .tabla-catalogo td:nth-child(4),
+            .tabla-catalogo th:nth-child(5),
+            .tabla-catalogo td:nth-child(5),
+            .tabla-catalogo th:nth-child(6),
+            .tabla-catalogo td:nth-child(6) {
                 display: table-cell;
             }
 
-            /* Reseteo de anchos para 6 columnas */
-            .tabla-catalogo th:nth-child(1) { width: 60px; }
-            .tabla-catalogo th:nth-child(4) { width: 80px; }
-            .tabla-catalogo th:nth-child(5) { width: 130px; }
-            .tabla-catalogo th:nth-child(6) { width: 80px; text-align: left; }
-            .tabla-catalogo th:nth-child(2), .tabla-catalogo td:nth-child(2),
-            .tabla-catalogo th:nth-child(3), .tabla-catalogo td:nth-child(3) { width: auto; font-size: 0.9rem; font-weight: normal; color: #ccc;}
+            .tabla-catalogo th:nth-child(1) {
+                width: 60px;
+            }
+
+            .tabla-catalogo th:nth-child(4) {
+                width: 80px;
+            }
+
+            .tabla-catalogo th:nth-child(5) {
+                width: 130px;
+            }
+
+            .tabla-catalogo th:nth-child(6) {
+                width: 80px;
+                text-align: left;
+            }
+
+            .tabla-catalogo th:nth-child(7) {
+                width: 80px;
+                text-align: center;
+            }
+
+            .tabla-catalogo th:nth-child(2),
+            .tabla-catalogo td:nth-child(2),
+            .tabla-catalogo th:nth-child(3),
+            .tabla-catalogo td:nth-child(3) {
+                width: auto;
+                font-size: 0.9rem;
+                font-weight: normal;
+                color: #ccc;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .modal-contenido {
+                padding: 18px;
+            }
+
+            .modal-cabecera h2 {
+                font-size: 1.1rem;
+            }
+
+            .modal-subtitulo {
+                font-size: 0.8rem;
+            }
+        }
+        /* =========================================
+        OPTIMIZACIÓN REAL PARA MÓVIL
+        ========================================= */
+
+        @media (max-width: 720px) {
+            body {
+                padding-top: 85px;
+                background-attachment: scroll;
+            }
+
+            .main-header-pro {
+                height: 72px;
+                padding: 0 12px;
+            }
+
+            .header-logo-side img {
+                height: 42px;
+            }
+
+            .header-title-side h2 {
+                font-size: 0.72rem;
+                letter-spacing: 1px;
+            }
+
+            .header-title-side h2 span {
+                font-size: 0.52rem;
+            }
+
+            .btn-volver-pro {
+                padding: 7px 9px;
+                font-size: 0.58rem;
+            }
+
+            .header-catalogo-title {
+                padding: 14px 15px 8px 15px;
+            }
+
+            .header-catalogo-title h1 {
+                font-size: 1.05rem;
+                line-height: 1.3;
+            }
+
+            .intro-catalogo {
+                font-size: 0.78rem;
+                padding: 0 15px;
+                margin-bottom: 16px;
+            }
+
+            .kpi-bar {
+                grid-template-columns: 1fr 1fr 1fr;
+                padding: 0 10px;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+
+            .kpi-box {
+                padding: 10px 6px;
+            }
+
+            .kpi-box span {
+                font-size: 0.5rem;
+            }
+
+            .kpi-box strong {
+                font-size: 0.95rem;
+            }
+
+            .btn-analisis-pro {
+                grid-column: 1 / -1;
+                padding: 12px;
+                font-size: 0.75rem;
+            }
+
+            .filtros-bar {
+                padding: 0 10px;
+                gap: 8px;
+                margin-bottom: 18px;
+            }
+
+            .input-filtro {
+                padding: 12px;
+                font-size: 15px;
+            }
+
+            .tabla-contenedor {
+                padding: 0 10px 140px 10px;
+            }
+
+            .tabla-catalogo {
+                display: block;
+                background: transparent;
+                border: none;
+            }
+
+            .tabla-catalogo thead {
+                display: none;
+            }
+
+            .tabla-catalogo tbody {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .tabla-catalogo tr {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 6px 10px;
+                background: rgba(12, 12, 12, 0.88);
+                border: 1px solid rgba(212, 175, 55, 0.22);
+                border-radius: 10px;
+                padding: 13px;
+                box-shadow: 0 8px 22px rgba(0,0,0,0.28);
+            }
+
+            .tabla-catalogo tr:hover {
+                background: rgba(212, 175, 55, 0.08);
+            }
+
+            .tabla-catalogo td {
+                border-bottom: none;
+                padding: 0;
+            }
+
+            .tabla-catalogo td:nth-child(1),
+            .tabla-catalogo td:nth-child(4),
+            .tabla-catalogo td:nth-child(5),
+            .tabla-catalogo td:nth-child(6) {
+                display: none !important;
+            }
+
+            .tabla-catalogo td:nth-child(2) {
+                display: block !important;
+                grid-column: 1 / 2;
+                grid-row: 1;
+                width: auto;
+                font-size: 0.92rem;
+                line-height: 1.35;
+                color: white;
+                font-weight: 900;
+            }
+
+            .tabla-catalogo td:nth-child(3) {
+                display: block !important;
+                grid-column: 1 / 2;
+                grid-row: 2;
+                width: auto;
+                font-size: 0.75rem;
+                color: #aaa;
+                line-height: 1.3;
+            }
+
+            .tabla-catalogo td:nth-child(7) {
+                display: flex !important;
+                grid-column: 2 / 3;
+                grid-row: 1 / 3;
+                width: auto;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .btn-play-tabla {
+                width: 44px;
+                height: 44px;
+                font-size: 1rem;
+            }
+
+            .ayuda-tabla {
+                font-size: 0.72rem;
+                padding: 0 8px;
+                line-height: 1.5;
+            }
+
+            .modal-marcha {
+                padding: 0;
+                align-items: stretch;
+            }
+
+            .modal-contenido {
+                max-height: 100vh;
+                height: 100vh;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                padding: 20px 16px 120px 16px;
+            }
+
+            .btn-cerrar-modal {
+                top: 12px;
+                right: 12px;
+                width: 42px;
+                height: 42px;
+                font-size: 1.4rem;
+            }
+
+            .modal-cabecera {
+                padding-right: 48px;
+                margin-bottom: 16px;
+                padding-bottom: 14px;
+            }
+
+            .modal-cabecera h2 {
+                font-size: 1.05rem;
+                line-height: 1.3;
+            }
+
+            .modal-subtitulo {
+                font-size: 0.75rem;
+            }
+
+            .bloque-ficha {
+                padding: 14px;
+            }
+
+            .bloque-ficha h3 {
+                font-size: 0.78rem;
+            }
+
+            .bloque-ficha p {
+                font-size: 0.84rem;
+                line-height: 1.65;
+            }
+
+            .dato-ficha {
+                padding: 10px;
+            }
+
+            .dato-ficha strong {
+                font-size: 0.82rem;
+            }
+
+            .mini-player {
+                left: 8px;
+                right: 8px;
+                bottom: 8px;
+                padding: 10px;
+                border-radius: 9px;
+            }
+
+            .mini-player-info strong {
+                font-size: 0.78rem;
+            }
+
+            .mini-player-info span {
+                font-size: 0.68rem;
+            }
+
+            .mini-player-cerrar {
+                width: 34px;
+                height: 34px;
+            }
+
+            .mini-player audio {
+                height: 42px;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <header class="main-header-pro">
         <div class="header-logo-side">
-            <a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a>
+            <a href="../index.html">
+                <img src="../img/escudo.png" alt="Escudo">
+            </a>
         </div>
+
         <div class="header-title-side">
             <h2>ARCHIVO MUSICAL<span>JULIÁN CERDÁN</span></h2>
         </div>
+
         <div class="header-action-side">
             <a href="../index.html" class="btn-volver-pro">← Hub</a>
         </div>
     </header>
 
     <main class="global-container">
-        
-    
+
+        <section class="header-catalogo-title">
+            <h1>Catálogo de Marchas</h1>
+        </section>
+
+        <p class="intro-catalogo">
+            Consulta el archivo musical de la banda. Puedes reproducir una marcha directamente desde la tabla
+            o pulsar sobre ella para abrir su ficha completa.
+        </p>
 
         <div class="kpi-bar">
-            <div class="kpi-box"><span>Muestra (N)</span><strong id="kpi-muestra">0</strong></div>
-            <div class="kpi-box"><span>Media</span><strong id="kpi-duracion">0:00</strong></div>
-            <div class="kpi-box"><span>Cornetas</span><strong id="kpi-cornetas">0%</strong></div>
-            <a href="bigdata.html" class="btn-analisis-pro" style="display: flex; align-items: center; justify-content: center; text-decoration: none; text-align: center;">Análisis Big Data</a>
+            <div class="kpi-box">
+                <span>Muestra (N)</span>
+                <strong id="kpi-muestra">0</strong>
+            </div>
+
+            <div class="kpi-box">
+                <span>Media</span>
+                <strong id="kpi-duracion">0:00</strong>
+            </div>
+
+            <div class="kpi-box">
+                <span>Cornetas</span>
+                <strong id="kpi-cornetas">0%</strong>
+            </div>
+
+            <a
+                href="bigdata.html"
+                class="btn-analisis-pro"
+                style="display: flex; align-items: center; justify-content: center; text-decoration: none; text-align: center;"
+            >
+                Análisis Big Data
+            </a>
         </div>
 
         <div class="filtros-bar">
-            <input type="text" id="filtro-texto" class="input-filtro" placeholder="Buscar título...">
+            <input type="text" id="filtro-texto" class="input-filtro" placeholder="Buscar título, autor, dedicatoria...">
+
             <select id="filtro-autor" class="input-filtro">
                 <option value="TODOS">Todos los Autores</option>
             </select>
+
             <select id="filtro-estilo" class="input-filtro">
                 <option value="TODOS">Todos los Estilos</option>
                 <option value="CORNETAS">Con Cornetas</option>
                 <option value="SIN_CORNETAS">Sin Cornetas</option>
             </select>
+
             <div style="display: flex; gap: 10px; width: 100%;">
                 <input type="number" id="filtro-ano-min" class="input-filtro" placeholder="Min Año">
                 <input type="number" id="filtro-ano-max" class="input-filtro" placeholder="Max Año">
@@ -212,15 +1020,117 @@
                         <th>Año</th>
                         <th>Estilo</th>
                         <th>Dur.</th>
+                        <th>Audio</th>
                     </tr>
                 </thead>
+
                 <tbody id="tabla-catalogo-body">
-                    <tr><td colspan="6" style="text-align:center; padding: 40px; color:#666;">Sincronizando matriz...</td></tr>
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding: 40px; color:#666;">
+                            Sincronizando matriz...
+                        </td>
+                    </tr>
                 </tbody>
             </table>
+
+            <p class="ayuda-tabla">
+                Pulsa ▶ para escuchar directamente o pulsa sobre una fila para abrir la ficha completa.
+            </p>
         </div>
 
     </main>
+
+    <div id="mini-player" class="mini-player" aria-hidden="true">
+        <div class="mini-player-superior">
+            <div class="mini-player-info">
+                <strong id="mini-player-titulo">Marcha</strong>
+                <span id="mini-player-autor">Autor</span>
+            </div>
+
+            <button id="mini-player-cerrar" class="mini-player-cerrar" type="button">×</button>
+        </div>
+
+        <audio id="mini-player-audio" controls preload="none"></audio>
+    </div>
+
+    <div id="modal-marcha" class="modal-marcha" aria-hidden="true">
+        <div class="modal-contenido">
+            <button id="btn-cerrar-modal" class="btn-cerrar-modal" type="button">×</button>
+
+            <div class="modal-cabecera">
+                <h2 id="modal-titulo">Título de la marcha</h2>
+                <div id="modal-subtitulo" class="modal-subtitulo"></div>
+            </div>
+
+            <div class="modal-grid">
+                <section class="bloque-ficha">
+                    <h3>Datos generales</h3>
+
+                    <div class="ficha-datos">
+                        <div class="dato-ficha">
+                            <span>ID</span>
+                            <strong id="modal-id">--</strong>
+                        </div>
+
+                        <div class="dato-ficha">
+                            <span>Año</span>
+                            <strong id="modal-ano">--</strong>
+                        </div>
+
+                        <div class="dato-ficha">
+                            <span>Duración</span>
+                            <strong id="modal-duracion">--</strong>
+                        </div>
+
+                        <div class="dato-ficha">
+                            <span>Estilo</span>
+                            <strong id="modal-estilo">--</strong>
+                        </div>
+
+                        <div class="dato-ficha">
+                            <span>Localidad</span>
+                            <strong id="modal-localidad">--</strong>
+                        </div>
+
+                        <div class="dato-ficha">
+                            <span>Dedicatoria</span>
+                            <strong id="modal-dedicatoria">--</strong>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bloque-ficha">
+                    <h3>Escucha</h3>
+
+                    <div id="modal-audio-web"></div>
+
+                    <div id="modal-youtube" style="margin-top: 16px;"></div>
+                </section>
+
+                <section class="bloque-ficha bloque-textos">
+                    <h3>Historia</h3>
+                    <p id="modal-historia" class="sin-dato">Sin información histórica disponible.</p>
+                </section>
+
+                <section class="bloque-ficha bloque-textos">
+                    <h3>Análisis musical</h3>
+                    <p id="modal-analisis" class="sin-dato">Sin análisis musical disponible.</p>
+                </section>
+
+                <section class="bloque-ficha bloque-textos">
+                    <h3>Descripción</h3>
+                    <p id="modal-descripcion" class="sin-dato">Sin descripción disponible.</p>
+                </section>
+
+                <section class="bloque-ficha bloque-textos">
+                    <h3>Fuentes</h3>
+                    <div id="modal-fuentes">
+                        <p class="sin-dato">Sin fuentes registradas.</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>

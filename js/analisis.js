@@ -405,26 +405,173 @@ function renderizarGraficos(repertorio) {
 /* ------------------------------------------------------------
    MÓDULO 5: LÍNEA DE TIEMPO (TIMELINE)
 ------------------------------------------------------------ */
+/* ------------------------------------------------------------
+   MINI REPRODUCTOR EN ANÁLISIS
+------------------------------------------------------------ */
+
+function reproducirEnMiniPlayerAnalisis(marcha) {
+    const miniPlayer = document.getElementById('mini-player-analisis');
+    const audio = document.getElementById('mini-player-analisis-audio');
+    const titulo = document.getElementById('mini-player-analisis-titulo');
+    const autor = document.getElementById('mini-player-analisis-autor');
+
+    if (!miniPlayer || !audio) {
+        return;
+    }
+
+    if (!marcha.url_audio || String(marcha.url_audio).trim() === '') {
+        alert('Esta marcha no tiene audio interno disponible.');
+        return;
+    }
+
+    if (titulo) {
+        titulo.textContent = marcha.titulo || 'Marcha sin título';
+    }
+
+    if (autor) {
+        const partes = [
+            marcha.autor || 'Autor desconocido',
+            marcha.fase || '',
+            marcha.orden ? `Nº ${marcha.orden}` : ''
+        ].filter(Boolean);
+
+        autor.textContent = partes.join(' · ');
+    }
+
+    const urlActual = audio.getAttribute('src');
+
+    if (urlActual !== marcha.url_audio) {
+        audio.src = marcha.url_audio;
+    }
+
+    miniPlayer.classList.add('activo');
+    miniPlayer.setAttribute('aria-hidden', 'false');
+
+    audio.play().catch((error) => {
+        console.warn('El navegador ha bloqueado la reproducción automática:', error);
+    });
+}
+
+function cerrarMiniPlayerAnalisis() {
+    const miniPlayer = document.getElementById('mini-player-analisis');
+    const audio = document.getElementById('mini-player-analisis-audio');
+
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.removeAttribute('src');
+        audio.load();
+    }
+
+    if (miniPlayer) {
+        miniPlayer.classList.remove('activo');
+        miniPlayer.setAttribute('aria-hidden', 'true');
+    }
+}
+
 function renderizarTimeline(repertorio) {
     const contenedor = document.getElementById('timeline-contenedor');
     contenedor.innerHTML = "";
 
     if (repertorio.length === 0) {
-        return contenedor.innerHTML = `<p style="color: #ff3b3b; font-weight: bold;">No hay marchas registradas en este informe.</p>`;
+        contenedor.innerHTML = `<p style="color: #ff3b3b; font-weight: bold;">No hay marchas registradas en este informe.</p>`;
+        return;
     }
 
-    repertorio.forEach(marcha => {
-        const badgeDedicada = marcha.dedicatoria ? `<br><span style="font-size:0.75rem; color: rgba(212, 175, 55, 0.8); font-style:italic;">Dedicada a: ${marcha.dedicatoria}</span>` : '';
-        
-        contenedor.innerHTML += `
-            <div class="timeline-item">
-                <div class="timeline-punto"></div>
-                <div class="t-hora">Nº ${marcha.orden}</div>
-                <div class="t-fase">${marcha.fase || 'Itinerario'}</div>
-                <h4 class="t-titulo">${marcha.titulo}</h4>
-                <p class="t-autor">${marcha.autor || 'Autor no registrado'} ${badgeDedicada}</p>
-            </div>
-        `;
+    repertorio.forEach((marcha) => {
+        const tieneAudio = marcha.url_audio && String(marcha.url_audio).trim() !== '';
+
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+
+        const info = document.createElement('div');
+        info.className = 'timeline-info';
+
+        const punto = document.createElement('div');
+        punto.className = 'timeline-punto';
+
+        const hora = document.createElement('div');
+        hora.className = 't-hora';
+        hora.textContent = `Nº ${marcha.orden}`;
+
+        const fase = document.createElement('div');
+        fase.className = 't-fase';
+        fase.textContent = marcha.fase || 'Itinerario';
+
+        const titulo = document.createElement('h4');
+        titulo.className = 't-titulo';
+        titulo.textContent = marcha.titulo || 'Marcha sin título';
+
+        const autor = document.createElement('p');
+        autor.className = 't-autor';
+        autor.textContent = marcha.autor || 'Autor no registrado';
+
+        info.appendChild(punto);
+        info.appendChild(hora);
+        info.appendChild(fase);
+        info.appendChild(titulo);
+        info.appendChild(autor);
+
+        if (marcha.dedicatoria) {
+            const dedicatoria = document.createElement('span');
+            dedicatoria.style.display = 'block';
+            dedicatoria.style.fontSize = '0.75rem';
+            dedicatoria.style.color = 'rgba(212, 175, 55, 0.8)';
+            dedicatoria.style.fontStyle = 'italic';
+            dedicatoria.style.marginTop = '3px';
+            dedicatoria.textContent = `Dedicada a: ${marcha.dedicatoria}`;
+            info.appendChild(dedicatoria);
+        }
+
+        const botonPlay = document.createElement('button');
+        botonPlay.type = 'button';
+        botonPlay.className = 'btn-play-analisis';
+        botonPlay.textContent = '▶';
+        botonPlay.title = tieneAudio ? 'Reproducir marcha' : 'Audio no disponible';
+        botonPlay.setAttribute('aria-label', tieneAudio ? 'Reproducir marcha' : 'Audio no disponible');
+
+        if (!tieneAudio) {
+            botonPlay.disabled = true;
+        }
+
+        botonPlay.addEventListener('click', (evento) => {
+            evento.stopPropagation();
+
+            if (!tieneAudio) {
+                return;
+            }
+
+            reproducirEnMiniPlayerAnalisis(marcha);
+        });
+
+        const botonSpotify = document.createElement('a');
+        botonSpotify.className = 'btn-spotify-analisis';
+        botonSpotify.textContent = 'Spotify';
+        botonSpotify.target = '_blank';
+        botonSpotify.rel = 'noopener noreferrer';
+
+        const urlSpotify = convertirSpotifyUriAUrlAnalisis(marcha.spotify_uri);
+
+        if (urlSpotify) {
+            botonSpotify.href = urlSpotify;
+        } else {
+            botonSpotify.href = '#';
+            botonSpotify.classList.add('desactivado');
+            botonSpotify.addEventListener('click', (evento) => {
+                evento.preventDefault();
+            });
+        }
+
+        const acciones = document.createElement('div');
+        acciones.className = 'acciones-marcha-analisis';
+
+        acciones.appendChild(botonPlay);
+        acciones.appendChild(botonSpotify);
+
+        item.appendChild(info);
+        item.appendChild(acciones);
+
+        contenedor.appendChild(item);
     });
 }
 
@@ -875,13 +1022,37 @@ async function guardarUrlYoutube() {
     }
 }
 
+function convertirSpotifyUriAUrlAnalisis(spotifyUri) {
+    if (!spotifyUri) {
+        return null;
+    }
+
+    const texto = String(spotifyUri).trim();
+
+    if (!texto.startsWith('spotify:track:')) {
+        return null;
+    }
+
+    const trackId = texto.replace('spotify:track:', '').trim();
+
+    if (!trackId) {
+        return null;
+    }
+
+    return `https://open.spotify.com/track/${trackId}`;
+}
+
 // Arrancar motor al cargar la página
 window.onload = () => {
     cargarDatosActuacion();
-    
-    // Asignar el listener al botón de la sección debate
+
     const btnLikeAnalisis = document.getElementById('btn-like-analisis');
     if (btnLikeAnalisis) {
         btnLikeAnalisis.addEventListener('click', gestionarLike);
+    }
+
+    const btnCerrarMiniPlayer = document.getElementById('mini-player-analisis-cerrar');
+    if (btnCerrarMiniPlayer) {
+        btnCerrarMiniPlayer.addEventListener('click', cerrarMiniPlayerAnalisis);
     }
 };
