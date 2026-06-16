@@ -15,6 +15,19 @@ let instanciaEpocas = null;
 let instanciaEvolucion = null;
 let instanciaCompositores = null;
 
+function escaparHTML(valor) {
+    if (valor === null || valor === undefined) {
+        return '';
+    }
+
+    return String(valor)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
 async function cargarDatosActuacion() {
     if (!idProcesion) {
         document.getElementById('titulo-hermandad').innerText = "⚠️ Error: ID no proporcionado";
@@ -672,13 +685,15 @@ async function enviarComentarioAnalisis() {
         const nombre = (perf && perf.username) ? perf.username : session.user.email.split('@')[0];
 
         // CAMBIO: Apuntamos a la nueva tabla dedicada
-        const { error } = await clienteSupabase.from('procesion_comentarios').insert([{ 
-            id_procesion: idProcesion, 
-            comentario: input.value, 
-            usuario_nombre: nombre 
-        }]);
-
-        if (error) throw error;
+       const { error } = await clienteSupabase
+        .from('procesion_comentarios')
+        .insert([{ 
+                id_procesion: Number(idProcesion), 
+                usuario_id: session.user.id,
+                comentario: input.value.trim(), 
+                usuario_nombre: nombre 
+            }]);
+            if (error) throw error;
 
         input.value = '';
         cargarDatosSociales();

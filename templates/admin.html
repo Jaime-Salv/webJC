@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <title>Consola de Administración - Julián Cerdán</title>
-    
+
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../img/escudo.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
-    
+
     <style>
         /* =========================================
-              RESET Y CONTENCIÓN MÓVIL
-          ========================================= */
-        *, *::before, *::after { box-sizing: border-box; }
+           RESET Y CONTENCIÓN MÓVIL
+        ========================================= */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
 
         :root {
             --color-oro: #d4af37;
@@ -21,32 +24,41 @@
             --border-gold: rgba(212, 175, 55, 0.4);
         }
 
-        html, body {
+        html,
+        body {
             max-width: 100vw;
             overflow-x: hidden;
-            margin: 0; padding: 0;
+            margin: 0;
+            padding: 0;
             background-color: var(--color-negro);
             color: white;
             font-family: 'Montserrat', sans-serif;
         }
 
-        body { padding-top: 100px; }
+        body {
+            padding-top: 100px;
+        }
 
-        .global-container { 
+        .global-container {
             width: 100%;
-            padding: 0 15px 40px 15px; 
+            padding: 0 15px 40px 15px;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
 
         /* =========================================
-              CABECERA ADAPTATIVA
-          ========================================= */
+           CABECERA ADAPTATIVA
+        ========================================= */
         .main-header {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 80px;
-            display: flex; justify-content: space-between; align-items: center;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 0 15px;
             background: rgba(5, 5, 5, 0.95);
             backdrop-filter: blur(15px);
@@ -54,30 +66,55 @@
             z-index: 1000;
         }
 
-        .logo-side img { height: 45px; width: auto; }
-        .header-center h2 { font-size: 0.8rem; text-transform: uppercase; text-align: center; margin: 0; letter-spacing: 1px; }
+        .logo-side img {
+            height: 45px;
+            width: auto;
+        }
+
+        .header-center h2 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            text-align: center;
+            margin: 0;
+            letter-spacing: 1px;
+        }
 
         /* =========================================
-              TARJETAS Y FORMULARIOS
-          ========================================= */
-        .card-admin { 
+           TARJETAS Y FORMULARIOS
+        ========================================= */
+        .card-admin {
             width: 100%;
-            background: rgba(18, 18, 18, 0.9); 
-            border: 1px solid var(--border-gold); 
-            padding: 20px; 
-            border-radius: 8px; 
+            background: rgba(18, 18, 18, 0.9);
+            border: 1px solid var(--border-gold);
+            padding: 20px;
+            border-radius: 8px;
         }
 
-        .card-admin h3 { 
-            color: var(--color-oro); font-size: 1rem; text-transform: uppercase; 
-            margin-bottom: 20px; border-bottom: 1px solid rgba(212, 175, 55, 0.1); 
-            padding-bottom: 10px; letter-spacing: 1px;
+        .card-admin h3 {
+            color: var(--color-oro);
+            font-size: 1rem;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            padding-bottom: 10px;
+            letter-spacing: 1px;
         }
 
-        .input-admin { 
-            width: 100%; display: block; padding: 12px; margin-bottom: 15px; 
-            background: #0a0a0a; border: 1px solid #333; color: white; 
-            border-radius: 4px; font-size: 16px; font-family: 'Montserrat';
+        .card-admin p {
+            line-height: 1.5;
+        }
+
+        .input-admin {
+            width: 100%;
+            display: block;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: 'Montserrat', sans-serif;
         }
 
         .input-file-container {
@@ -89,22 +126,41 @@
         }
 
         .input-file-container label {
-            display: block; font-size: 0.65rem; color: #888; 
-            text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;
+            display: block;
+            font-size: 0.65rem;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
         }
 
-        input[type="file"] { width: 100%; color: #aaa; font-size: 0.8rem; }
+        input[type="file"] {
+            width: 100%;
+            color: #aaa;
+            font-size: 0.8rem;
+        }
 
-        .btn-send { 
-            width: 100%; background: var(--color-oro); color: black; 
-            font-weight: 900; padding: 16px; border: none; 
-            border-radius: 4px; text-transform: uppercase; cursor: pointer;
+        .btn-send {
+            width: 100%;
+            background: var(--color-oro);
+            color: black;
+            font-weight: 900;
+            padding: 16px;
+            border: none;
+            border-radius: 4px;
+            text-transform: uppercase;
+            cursor: pointer;
             transition: 0.3s;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .btn-send:hover {
+            opacity: 0.85;
         }
 
         /* =========================================
-              TABLA DE HISTORIAL BLINDADA (FIX FINAL)
-          ========================================= */
+           TABLA DE HISTORIAL
+        ========================================= */
         .table-wrapper {
             width: 100%;
             margin-top: 20px;
@@ -119,7 +175,8 @@
             table-layout: fixed;
         }
 
-        .tabla-historial th, .tabla-historial td {
+        .tabla-historial th,
+        .tabla-historial td {
             padding: 12px 10px;
             text-align: left;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -135,52 +192,218 @@
             letter-spacing: 1px;
         }
 
-        .col-num { width: 40px; text-align: center !important; }
-        .col-marcha { width: auto; }
-        .col-fase { width: 80px; text-align: center !important; }
-        
-        /* NUEVO: Columna para el botón de editar */
-        .col-acciones { width: 45px; text-align: center !important; }
-        .btn-editar-fila { background: transparent; border: none; cursor: pointer; font-size: 1rem; transition: 0.2s; }
-        .btn-editar-fila:hover { transform: scale(1.2); }
-
         .tabla-historial td {
             font-size: 0.75rem;
             color: #ccc;
             vertical-align: middle;
         }
 
-        /* Escritorio */
+        .col-num {
+            width: 40px;
+            text-align: center !important;
+        }
+
+        .col-marcha {
+            width: auto;
+        }
+
+        .col-fase {
+            width: 80px;
+            text-align: center !important;
+        }
+
+        .col-acciones {
+            width: 45px;
+            text-align: center !important;
+        }
+
+        .btn-editar-fila {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+
+        .btn-editar-fila:hover {
+            transform: scale(1.2);
+        }
+
+        /* =========================================
+           GESTIÓN DE USUARIOS
+        ========================================= */
+        .panel-usuarios-admin {
+            margin-top: 10px;
+        }
+
+        #tabla-usuarios-admin {
+            width: 100%;
+        }
+
+        .tabla-usuarios-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .tabla-usuarios {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+        }
+
+        .tabla-usuarios th,
+        .tabla-usuarios td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            text-align: left;
+            font-size: 0.8rem;
+        }
+
+        .tabla-usuarios th {
+            background: #000;
+            color: var(--color-oro);
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+        }
+
+        .tabla-usuarios td {
+            color: #ccc;
+        }
+
+        .btn-rol {
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem;
+        }
+
+        .btn-hacer-admin {
+            background: var(--color-oro);
+            color: #000;
+        }
+
+        .btn-quitar-admin {
+            background: #333;
+            color: #fff;
+        }
+
+        .rol-admin {
+            color: var(--color-oro);
+            font-weight: 900;
+        }
+
+        .rol-usuario {
+            color: #ccc;
+            font-weight: 700;
+        }
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
         @media (min-width: 1024px) {
-            .global-container { display: grid; grid-template-columns: 1fr 2fr; align-items: start; gap: 30px; padding: 0 50px 40px 50px; }
-            .injection-row { flex-direction: row; align-items: flex-end; display: flex; gap: 15px; background: rgba(212, 175, 55, 0.03); padding: 15px; border-radius: 8px; border: 1px solid rgba(212, 175, 55, 0.2); }
-            .header-center h2 { font-size: 1.2rem; }
+            .global-container {
+                display: grid;
+                grid-template-columns: 1fr 2fr;
+                align-items: start;
+                gap: 30px;
+                padding: 0 50px 40px 50px;
+            }
+
+            .injection-row {
+                flex-direction: row;
+                align-items: flex-end;
+                display: flex;
+                gap: 15px;
+                background: rgba(212, 175, 55, 0.03);
+                padding: 15px;
+                border-radius: 8px;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+            }
+
+            .header-center h2 {
+                font-size: 1.2rem;
+            }
+
+            .panel-usuarios-admin {
+                grid-column: 1 / -1;
+            }
         }
 
         @media (max-width: 600px) {
-            .injection-row { display: flex; flex-direction: column; gap: 15px; background: rgba(212, 175, 55, 0.03); padding: 15px; border-radius: 8px; border: 1px solid rgba(212, 175, 55, 0.2); }
-            .col-fase { width: 70px; }
-            .col-acciones { width: 40px; }
-            .tabla-historial th, .tabla-historial td { padding: 10px 5px; }
+            .injection-row {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                background: rgba(212, 175, 55, 0.03);
+                padding: 15px;
+                border-radius: 8px;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+            }
+
+            .col-fase {
+                width: 70px;
+            }
+
+            .col-acciones {
+                width: 40px;
+            }
+
+            .tabla-historial th,
+            .tabla-historial td {
+                padding: 10px 5px;
+            }
+
+            .main-header {
+                padding: 0 10px;
+            }
+
+            .header-center h2 {
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <header class="main-header">
-        <div class="logo-side"><a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a></div>
-        <div class="header-center"><h2>Consola Admin</h2></div>
+        <div class="logo-side">
+            <a href="../index.html">
+                <img src="../img/escudo.png" alt="Escudo">
+            </a>
+        </div>
+
+        <div class="header-center">
+            <h2>Consola Admin</h2>
+        </div>
+
         <div class="auth-side">
-            <button id="btn-finalizar-evento" class="btn-send" style="background:#ff3b3b; width:auto; padding:8px 12px; font-size:0.6rem; display:none;">Cerrar</button>
+            <button
+                id="btn-finalizar-evento"
+                class="btn-send"
+                style="background:#ff3b3b; width:auto; padding:8px 12px; font-size:0.6rem; display:none;"
+            >
+                Cerrar
+            </button>
         </div>
     </header>
 
     <main class="global-container">
-        
+
         <div class="card-admin" id="panel-configuracion">
             <h3>1. Iniciar Señal</h3>
-            
-            <div id="info-procesion-activa" style="display: none; margin-bottom: 20px; padding: 15px; background: rgba(39, 174, 96, 0.1); border-radius: 4px; border: 1px solid #27ae60;">
+
+            <div
+                id="info-procesion-activa"
+                style="display: none; margin-bottom: 20px; padding: 15px; background: rgba(39, 174, 96, 0.1); border-radius: 4px; border: 1px solid #27ae60;"
+            >
                 <p id="txt-hermandad-activa" style="font-weight: 900; color: #27ae60; margin: 0;"></p>
                 <p id="txt-lugar-activa" style="font-size: 0.8rem; color: #ccc; margin: 5px 0 0 0;"></p>
             </div>
@@ -189,33 +412,44 @@
                 <input type="text" id="adm-hermandad" class="input-admin" placeholder="Hermandad...">
                 <input type="text" id="adm-localidad" class="input-admin" placeholder="Localidad...">
                 <input type="date" id="adm-fecha" class="input-admin">
-                
+
                 <select id="adm-tipo" class="input-admin" onchange="actualizarSelectSubfases()">
                     <option value="Semana Santa">Semana Santa</option>
                     <option value="Gloria">Gloria</option>
-                    <option value="Extraordinaria">Extraordinaria</option>
                 </select>
 
                 <div class="input-file-container">
                     <label>Imagen de Portada (Opcional)</label>
                     <input type="file" id="adm-foto-archivo" accept="image/*">
                 </div>
-                
-                <button onclick="iniciarNuevaProcesion()" class="btn-send">Activar Directo</button>
+
+                <button onclick="iniciarNuevaProcesion()" class="btn-send">
+                    Activar Directo
+                </button>
             </div>
         </div>
 
         <div class="card-admin" id="panel-inyeccion">
             <h3>2. Inyección Live</h3>
+
             <div class="injection-row">
                 <div style="width: 100%;">
                     <label style="font-size:0.6rem; color:#888; display:block; margin-bottom:5px;">ID</label>
                     <input type="number" id="inp-id-marcha" class="input-admin" placeholder="ID" style="margin-bottom:0;">
                 </div>
+
                 <div style="width: 100%;">
                     <label style="font-size:0.6rem; color:#888; display:block; margin-bottom:5px;">TÍTULO</label>
-                    <input type="text" id="inp-titulo-marcha" class="input-admin" readonly placeholder="Esperando..." style="background: #000; margin-bottom:0; color: var(--color-oro);">
+                    <input
+                        type="text"
+                        id="inp-titulo-marcha"
+                        class="input-admin"
+                        readonly
+                        placeholder="Esperando..."
+                        style="background: #000; margin-bottom:0; color: var(--color-oro);"
+                    >
                 </div>
+
                 <div style="width: 100%;">
                     <label style="font-size:0.6rem; color:#888; display:block; margin-bottom:5px;">ESTRATO</label>
                     <select id="inp-fase-marcha" class="input-admin" style="margin-bottom:0;">
@@ -224,7 +458,15 @@
                         <option value="Vuelta">Vuelta</option>
                     </select>
                 </div>
-                <button id="btn-inyectar-marcha" onclick="inyectarMarcha()" class="btn-send" style="padding: 12px; width: 100%; min-width: 100px;">Añadir</button>
+
+                <button
+                    id="btn-inyectar-marcha"
+                    onclick="inyectarMarcha()"
+                    class="btn-send"
+                    style="padding: 12px; width: 100%; min-width: 100px;"
+                >
+                    Añadir
+                </button>
             </div>
 
             <div class="table-wrapper">
@@ -234,12 +476,26 @@
                             <th class="col-num">Nº</th>
                             <th class="col-marcha">Marcha</th>
                             <th class="col-fase">Fase</th>
-                            <th class="col-acciones">⚙️</th> </tr>
+                            <th class="col-acciones">⚙️</th>
+                        </tr>
                     </thead>
                     <tbody id="tabla-historial-body"></tbody>
                 </table>
             </div>
         </div>
+
+        <section class="card-admin panel-usuarios-admin" id="panel-usuarios-admin">
+            <h3>3. Gestión de usuarios</h3>
+
+            <p style="color:#aaa; font-size:0.9rem; margin-top:0;">
+                Desde aquí puedes conceder o retirar permisos de administrador a los usuarios registrados.
+                No puedes quitarte el rol a ti mismo desde esta pantalla.
+            </p>
+
+            <div id="tabla-usuarios-admin">
+                <p style="color:#999;">Cargando usuarios...</p>
+            </div>
+        </section>
 
     </main>
 
@@ -251,24 +507,30 @@
         function actualizarSelectSubfases() {
             const tipo = document.getElementById('adm-tipo').value;
             const selectFase = document.getElementById('inp-fase-marcha');
-            
-            selectFase.innerHTML = "";
 
-            if (tipo === "Semana Santa") {
+            if (!selectFase) {
+                return;
+            }
+
+            selectFase.innerHTML = '';
+
+            if (tipo === 'Semana Santa') {
                 const opciones = [
-                    { val: "Ida", text: "Ida" },
-                    { val: "CO", text: "CO" },
-                    { val: "Vuelta", text: "Vuelta" }
+                    { val: 'Ida', text: 'Ida' },
+                    { val: 'CO', text: 'CO' },
+                    { val: 'Vuelta', text: 'Vuelta' }
                 ];
-                opciones.forEach(opt => {
+
+                opciones.forEach((opt) => {
                     selectFase.innerHTML += `<option value="${opt.val}">${opt.text}</option>`;
                 });
             } else {
                 const opciones = [
-                    { val: "Día", text: "Día" },
-                    { val: "Noche", text: "Noche" }
+                    { val: 'Día', text: 'Día' },
+                    { val: 'Noche', text: 'Noche' }
                 ];
-                opciones.forEach(opt => {
+
+                opciones.forEach((opt) => {
                     selectFase.innerHTML += `<option value="${opt.val}">${opt.text}</option>`;
                 });
             }

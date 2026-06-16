@@ -2,17 +2,16 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>En Directo - Julián Cerdán</title>
-    
+
     <link rel="icon" type="image/png" href="../img/escudo.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
-    
+
     <style>
-        /* =========================================
-           RESET Y FONDO DE PANTALLA COMPLETO
-           ========================================= */
-        *, *::before, *::after { box-sizing: border-box; }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
 
         :root {
             --color-oro: #d4af37;
@@ -20,9 +19,10 @@
             --border-gold: rgba(212, 175, 55, 0.4);
         }
 
-        html, body {
-            min-height: 100vh; 
-            margin: 0; 
+        html,
+        body {
+            min-height: 100vh;
+            margin: 0;
             padding: 0;
             background-color: var(--color-negro);
             color: white;
@@ -31,7 +31,9 @@
         }
 
         body {
-            background-image: linear-gradient(to bottom, rgba(10,10,10,0.7) 0%, rgba(5,5,5,0.98) 100%), url('../img/foto-dashboard.jpg');
+            background-image:
+                linear-gradient(to bottom, rgba(10,10,10,0.7) 0%, rgba(5,5,5,0.98) 100%),
+                url('../img/foto-dashboard.jpg');
             background-size: cover;
             background-position: center 30%;
             background-attachment: fixed;
@@ -39,13 +41,15 @@
             padding-top: 100px;
         }
 
-        /* =========================================
-           CABECERA
-           ========================================= */
         .main-header {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 80px;
-            display: flex; justify-content: space-between; align-items: center;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 0 20px;
             background: rgba(5, 5, 5, 0.95);
             backdrop-filter: blur(15px);
@@ -53,29 +57,40 @@
             z-index: 1000;
         }
 
-        .logo-side img { height: 45px; width: auto; }
-        
-        .header-center h2 { 
-            font-size: 1rem; text-transform: uppercase; margin: 0; 
-            color: var(--color-oro); letter-spacing: 1px;
-            display: flex; align-items: center; gap: 8px;
+        .logo-side img {
+            height: 45px;
+            width: auto;
         }
-        
+
+        .header-center h2 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            margin: 0;
+            color: var(--color-oro);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+
         .badge-live {
-            background: #ff3b3b; color: white; font-size: 0.6rem;
-            padding: 3px 8px; border-radius: 12px; font-weight: bold;
+            background: #ff3b3b;
+            color: white;
+            font-size: 0.6rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: bold;
             animation: parpadeo 2s infinite;
+            white-space: nowrap;
         }
 
         @keyframes parpadeo {
             0% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.45; }
             100% { opacity: 1; }
         }
 
-        /* =========================================
-           LAYOUT PRINCIPAL (2 COLUMNAS)
-           ========================================= */
         .contenedor-seguimiento-live {
             max-width: 1200px;
             margin: 0 auto;
@@ -86,16 +101,10 @@
             align-items: start;
         }
 
-        @media (max-width: 900px) {
-            .contenedor-seguimiento-live { grid-template-columns: 1fr; }
-            .columna-chat { order: 2; }
-            .columna-timeline { order: 1; }
+        .columna-chat {
+            position: sticky;
+            top: 100px;
         }
-
-        /* =========================================
-           CHAT EN TIEMPO REAL
-           ========================================= */
-        .columna-chat { position: sticky; top: 100px; }
 
         #panel-chat-directo {
             background: rgba(18, 18, 18, 0.85);
@@ -106,39 +115,66 @@
         }
 
         #panel-chat-directo h3 {
-            color: var(--color-oro); margin-top: 0; font-size: 1rem;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
-            padding-bottom: 15px; margin-bottom: 15px;
+            color: var(--color-oro);
+            margin-top: 0;
+            font-size: 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
         }
 
         #caja-mensajes {
-            height: 400px; overflow-y: auto; display: flex; flex-direction: column;
-            gap: 10px; margin-bottom: 15px; padding-right: 5px;
-            scrollbar-width: thin; scrollbar-color: var(--color-oro) transparent;
+            height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-right: 5px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--color-oro) transparent;
         }
 
         .mensaje-chat {
-            background: rgba(255, 255, 255, 0.05); padding: 10px 12px;
-            border-radius: 8px; font-size: 0.85rem; line-height: 1.4;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            line-height: 1.4;
         }
 
-        .controles-chat { display: flex; gap: 10px; }
-        
+        .controles-chat {
+            display: flex;
+            gap: 10px;
+        }
+
         .controles-chat input {
-            flex: 1; padding: 12px; background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1); color: white;
-            border-radius: 4px; font-family: 'Montserrat';
+            flex: 1;
+            padding: 12px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+            min-width: 0;
         }
 
         .controles-chat button {
-            background: var(--color-oro); color: black; border: none;
-            padding: 0 15px; font-weight: bold; border-radius: 4px; cursor: pointer;
-            text-transform: uppercase; font-size: 0.8rem;
+            background: var(--color-oro);
+            color: black;
+            border: none;
+            padding: 0 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.8rem;
         }
 
-        /* =========================================
-           ESTÉTICA DE MINI TARJETAS (REPERTORIO)
-           ========================================= */
+        .controles-chat button:hover {
+            opacity: 0.85;
+        }
+
         .columna-timeline {
             background: rgba(18, 18, 18, 0.7);
             border-radius: 8px;
@@ -168,57 +204,153 @@
             border: 1px solid var(--color-oro);
             box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
             transform: scale(1.02);
-            margin-bottom: 8px; /* Separación extra para la que suena */
+            margin-bottom: 8px;
         }
 
-        .ml-info { flex: 1; }
+        .ml-info {
+            flex: 1;
+            min-width: 0;
+        }
 
         .ml-fase {
-            font-size: 0.6rem; text-transform: uppercase;
-            letter-spacing: 1px; color: #888; margin-bottom: 4px;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 4px;
         }
 
-        .ultima .ml-fase { color: var(--color-oro); font-weight: bold; }
+        .ultima .ml-fase {
+            color: var(--color-oro);
+            font-weight: bold;
+        }
 
-        .ml-titulo { margin: 0; font-size: 0.95rem; color: white; font-weight: 700; }
+        .ml-titulo {
+            margin: 0;
+            font-size: 0.95rem;
+            color: white;
+            font-weight: 700;
+        }
 
         .ml-orden {
-            font-size: 0.8rem; font-weight: 900;
-            color: rgba(212, 175, 55, 0.5); margin-left: 15px;
+            font-size: 0.8rem;
+            font-weight: 900;
+            color: rgba(212, 175, 55, 0.5);
+            margin-left: 15px;
+            white-space: nowrap;
+        }
+
+        .estado-vacio {
+            color: #777;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding-top: 90px;
+            }
+
+            .contenedor-seguimiento-live {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .columna-chat {
+                position: static;
+                order: 2;
+            }
+
+            .columna-timeline {
+                order: 1;
+            }
+
+            #caja-mensajes {
+                height: 300px;
+            }
+
+            .header-center h2 {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .main-header {
+                padding: 0 12px;
+            }
+
+            .logo-side img {
+                height: 38px;
+            }
+
+            .header-center h2 {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .contenedor-seguimiento-live {
+                padding: 0 10px 30px 10px;
+            }
+
+            .controles-chat {
+                flex-direction: column;
+            }
+
+            .controles-chat button {
+                padding: 12px;
+            }
+
+            .marcha-live-card {
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <header class="main-header">
-        <div class="logo-side"><a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a></div>
-        <div class="header-center">
-            <h2><span id="txt-hermandad-header">Cargando...</span> <span class="badge-live">EN VIVO</span></h2>
+        <div class="logo-side">
+            <a href="../index.html">
+                <img src="../img/escudo.png" alt="Escudo">
+            </a>
         </div>
-        <div style="width: 45px;"></div> 
+
+        <div class="header-center">
+            <h2>
+                <span id="txt-hermandad-header">Cargando...</span>
+                <span class="badge-live">EN VIVO</span>
+            </h2>
+        </div>
+
+        <div style="width: 45px;"></div>
     </header>
 
     <main class="contenedor-seguimiento-live">
-        
+
         <aside class="columna-chat">
             <div id="panel-chat-directo">
                 <h3>Comunidad en Vivo</h3>
-                
+
                 <div id="caja-mensajes">
-                    <p style="color: #555; text-align: center; font-size: 0.8rem; margin-top: 20px;">Conectando con el chat...</p>
+                    <p class="estado-vacio">Conectando con el chat...</p>
                 </div>
 
                 <div class="controles-chat">
                     <input type="text" id="input-chat" placeholder="Comenta la cruceta...">
-                    <button id="btn-enviar-chat">Enviar</button>
+                    <button id="btn-enviar-chat" type="button">Enviar</button>
                 </div>
             </div>
         </aside>
 
         <article class="columna-timeline">
-            <h3 style="color: var(--color-oro); border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 15px; margin-top:0;">Secuencia Musical</h3>
+            <h3 style="color: var(--color-oro); border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 15px; margin-top:0;">
+                Secuencia Musical
+            </h3>
+
             <div id="timeline-contenedor">
-                <p style="color: #777;">Esperando a que la dirección musical inyecte la primera marcha...</p>
+                <p class="estado-vacio">Esperando a que la dirección musical inyecte la primera marcha...</p>
             </div>
         </article>
 
@@ -226,167 +358,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
-
-    <script>
-        const parametrosURL = new URLSearchParams(window.location.search);
-        const idProcesion = parametrosURL.get('id');
-
-        let catalogoMaestro = [];
-
-        async function inicializarDirecto() {
-            if (!idProcesion) {
-                document.getElementById('txt-hermandad-header').innerText = "Error: ID no válido";
-                return;
-            }
-
-            // 1. Cargar Cabecera
-            const { data: proc } = await clienteSupabase.from('maestro_procesiones').select('*').eq('id_procesion', idProcesion).maybeSingle();
-            if (proc) {
-                document.getElementById('txt-hermandad-header').innerText = proc.hermandad;
-                if(proc.url_foto) {
-                    document.body.style.backgroundImage = `linear-gradient(to bottom, rgba(10,10,10,0.7) 0%, rgba(5,5,5,0.98) 100%), url('${proc.url_foto}')`;
-                }
-            }
-
-            // 2. Descargar el catálogo para cruzar IDs con Títulos
-            const { data: cat } = await clienteSupabase.from('catalogo_marchas').select('id_marcha, titulo');
-            if (cat) catalogoMaestro = cat;
-
-            // 3. Cargar datos iniciales
-            cargarMarchas();
-            cargarChat();
-
-            // 4. Activar suscripciones en tiempo real
-            activarSuscripcionesRealtime();
-        }
-
-        /* --- MOTOR DE TIMELINE (MINI TARJETAS) --- */
-        async function cargarMarchas() {
-            const { data } = await clienteSupabase
-                .from('repertorio_transaccional')
-                .select('*')
-                .eq('id_procesion', idProcesion)
-                .order('orden', { ascending: false }); // Las más nuevas arriba
-
-            const contenedor = document.getElementById('timeline-contenedor');
-            contenedor.innerHTML = '';
-
-            if (!data || data.length === 0) {
-                contenedor.innerHTML = '<p style="color: #777; text-align: center; padding: 20px;">Esperando marchas...</p>';
-                return;
-            }
-
-            data.forEach((reg, index) => {
-                const marchaInfo = catalogoMaestro.find(m => m.id_marcha === reg.id_marcha) || { titulo: "Marcha Desconocida" };
-                
-                // Es la última si es la posición 0 del array (orden DESC)
-                const esLaUltima = (index === 0);
-                const claseCard = esLaUltima ? 'marcha-live-card ultima' : 'marcha-live-card';
-                const textoFase = esLaUltima ? `🔴 SONANDO AHORA: ${reg.fase}` : reg.fase;
-
-                contenedor.innerHTML += `
-                    <div class="${claseCard}">
-                        <div class="ml-info">
-                            <div class="ml-fase">${textoFase}</div>
-                            <h4 class="ml-titulo">${marchaInfo.titulo}</h4>
-                        </div>
-                        <div class="ml-orden">#${reg.orden}</div>
-                    </div>
-                `;
-            });
-        }
-
-        /* --- MOTOR DE CHAT --- */
-        const cajaMensajes = document.getElementById('caja-mensajes');
-        const inputChat = document.getElementById('input-chat');
-        const btnEnviarChat = document.getElementById('btn-enviar-chat');
-
-        async function cargarChat() {
-            const { data } = await clienteSupabase
-                .from('directo_chat')
-                .select('*')
-                .eq('id_procesion', idProcesion)
-                .order('created_at', { ascending: true });
-
-            cajaMensajes.innerHTML = '';
-            
-            if (!data || data.length === 0) {
-                cajaMensajes.innerHTML = '<p style="color:#555; text-align:center; margin-top:20px;">Sé el primero en comentar.</p>';
-            } else {
-                data.forEach(msg => pintarMensaje(msg));
-            }
-        }
-
-        function pintarMensaje(msg) {
-            if (cajaMensajes.innerHTML.includes("Sé el primero")) cajaMensajes.innerHTML = '';
-            
-            cajaMensajes.innerHTML += `
-                <div class="mensaje-chat">
-                    <strong style="color: var(--color-oro);">${msg.usuario_nombre}:</strong> 
-                    <span style="color: #ccc;">${msg.mensaje}</span>
-                </div>
-            `;
-            cajaMensajes.scrollTop = cajaMensajes.scrollHeight;
-        }
-
-        async function enviarMensaje() {
-            const texto = inputChat.value.trim();
-            if (!texto) return;
-
-            const { data: { session } } = await clienteSupabase.auth.getSession();
-            if (!session) return alert("Debes iniciar sesión para usar el chat en vivo.");
-
-            const { data: perf } = await clienteSupabase.from('perfiles').select('username').eq('id', session.user.id).maybeSingle();
-            const nombre = (perf && perf.username) ? perf.username : session.user.email.split('@')[0];
-
-            inputChat.value = '';
-
-            await clienteSupabase.from('directo_chat').insert([{
-                id_procesion: idProcesion,
-                usuario_nombre: nombre,
-                mensaje: texto
-            }]);
-        }
-
-        btnEnviarChat.addEventListener('click', enviarMensaje);
-        inputChat.addEventListener('keypress', (e) => { if (e.key === 'Enter') enviarMensaje(); });
-
-        
-        /* --- MAGIA EN TIEMPO REAL (VERSIÓN BLINDADA) --- */
-        function activarSuscripcionesRealtime() {
-            console.log("Intentando conectar con Supabase Realtime...");
-
-            clienteSupabase
-                .channel('canal-directo')
-                // Escuchar nuevas marchas (sin filtro previo)
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'repertorio_transaccional' }, 
-                    (payload) => {
-                        console.log("📡 Señal de nueva marcha recibida:", payload);
-                        // Comprobamos nosotros mismos que sea de esta procesión
-                        if (payload.new.id_procesion == idProcesion) {
-                            cargarMarchas();
-                        }
-                    }
-                )
-                // Escuchar nuevos mensajes de chat (sin filtro previo)
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'directo_chat' }, 
-                    (payload) => {
-                        console.log("💬 Señal de nuevo chat recibida:", payload);
-                        // Comprobamos nosotros mismos que sea de esta procesión
-                        if (payload.new.id_procesion == idProcesion) {
-                            pintarMensaje(payload.new);
-                        }
-                    }
-                )
-                .subscribe((estado) => {
-                    console.log("Estado del Realtime:", estado);
-                    if (estado === 'SUBSCRIBED') {
-                        console.log("✅ ¡Conectado al directo con éxito!");
-                    }
-                });
-        }
-
-        window.onload = inicializarDirecto;
-    </script>
+    <script src="../js/live.js"></script>
 </body>
 </html>

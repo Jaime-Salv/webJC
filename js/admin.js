@@ -5,22 +5,141 @@
 let procesionActiva = null;
 let catalogoCache = [];
 let contadorOrden = 1;
+let ordenEnEdicion = null;
 
-// VARIABLE GLOBAL PARA SABER SI ESTAMOS EDITANDO
-let ordenEnEdicion = null; 
+let usuarioActual = null;
+let perfilActual = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const accesoPermitido = await comprobarAccesoAdmin();
+
+    if (!accesoPermitido) {
+        return;
+    }
+
     await cargarCatalogoEnMemoria();
     await comprobarEstadoSistema();
+    await cargarUsuariosAdmin();
 
-    // Event Listeners
-    document.getElementById('inp-id-marcha').addEventListener('input', autocompletarTitulo);
-    document.getElementById('btn-finalizar-evento').addEventListener('click', finalizarEvento);
+    const inputIdMarcha = document.getElementById('inp-id-marcha');
+    const btnFinalizarEvento = document.getElementById('btn-finalizar-evento');
+
+    if (inputIdMarcha) {
+        inputIdMarcha.addEventListener('input', autocompletarTitulo);
+    }
+
+    if (btnFinalizarEvento) {
+        btnFinalizarEvento.addEventListener('click', finalizarEvento);
+    }
 });
 
 /* ------------------------------------------------------------
    MÓDULO 1: INICIALIZACIÓN Y ESTADO
 ------------------------------------------------------------ */
+/* ------------------------------------------------------------
+   MÓDULO 0: SEGURIDAD DE ACCESO ADMIN
+------------------------------------------------------------ */
+async function comprobarAccesoAdmin() {
+    try {
+        bloquearPantallaAdmin('Comprobando permisos...');
+
+        const { data: sesionData, error: errorSesion } = await clienteSupabase.auth.getSession();
+
+        if (errorSesion) {
+            console.error('Error comprobando sesión:', errorSesion);
+            mostrarAccesoDenegado('No se ha podido comprobar la sesión.');
+            return false;
+        }
+
+        const session = sesionData.session;
+
+        if (!session) {
+            mostrarAccesoDenegado('Debes iniciar sesión para acceder al panel de administración.');
+            setTimeout(() => {
+                window.location.href = './login.html';
+            }, 1800);
+            return false;
+        }
+
+        usuarioActual = session.user;
+
+        const { data: perfil, error: errorPerfil } = await clienteSupabase
+            .from('perfiles')
+            .select('id, username, rol')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+        if (errorPerfil) {
+            console.error('Error obteniendo perfil:', errorPerfil);
+            mostrarAccesoDenegado('No se ha podido comprobar tu perfil.');
+            return false;
+        }
+
+        if (!perfil) {
+            mostrarAccesoDenegado('Tu usuario no tiene perfil asociado.');
+            return false;
+        }
+
+        perfilActual = perfil;
+
+        if (perfil.rol !== 'admin') {
+            mostrarAccesoDenegado('No tienes permisos para acceder al panel de administración.');
+            setTimeout(() => {
+                window.location.href = '../index.html';
+            }, 2200);
+            return false;
+        }
+
+        desbloquearPantallaAdmin();
+        return true;
+
+    } catch (error) {
+        console.error('Error inesperado comprobando acceso admin:', error);
+        mostrarAccesoDenegado('Error inesperado comprobando permisos.');
+        return false;
+    }
+}
+
+function bloquearPantallaAdmin(mensaje) {
+    let bloqueo = document.getElementById('bloqueo-admin');
+
+    if (!bloqueo) {
+        bloqueo = document.createElement('div');
+        bloqueo.id = 'bloqueo-admin';
+        bloqueo.style.position = 'fixed';
+        bloqueo.style.inset = '0';
+        bloqueo.style.zIndex = '99999';
+        bloqueo.style.background = 'rgba(5, 5, 5, 0.98)';
+        bloqueo.style.color = '#d4af37';
+        bloqueo.style.display = 'flex';
+        bloqueo.style.alignItems = 'center';
+        bloqueo.style.justifyContent = 'center';
+        bloqueo.style.textAlign = 'center';
+        bloqueo.style.padding = '30px';
+        bloqueo.style.fontFamily = 'Montserrat, sans-serif';
+        bloqueo.style.fontWeight = '900';
+        bloqueo.style.letterSpacing = '1px';
+        bloqueo.style.textTransform = 'uppercase';
+
+        document.body.appendChild(bloqueo);
+    }
+
+    bloqueo.textContent = mensaje;
+}
+
+function desbloquearPantallaAdmin() {
+    const bloqueo = document.getElementById('bloqueo-admin');
+
+    if (bloqueo) {
+        bloqueo.remove();
+    }
+}
+
+function mostrarAccesoDenegado(mensaje) {
+    bloquearPantallaAdmin(mensaje);
+}
+
+
 async function cargarCatalogoEnMemoria() {
     const { data, error } = await clienteSupabase
         .from('catalogo_marchas')
@@ -286,6 +405,141 @@ async function cargarHistorialTransaccional() {
             </tr>
         `;
     });
+}
+
+/* ------------------------------------------------------------
+   MÓDULO: GESTIÓN DE USUARIOS Y ROLES
+------------------------------------------------------------ */
+
+async function cargarUsuariosAdmin() {
+    const contenedor = document.getElementById('tabla-usuarios-admin');
+
+    if (!contenedor) {
+        return;
+    }
+
+    contenedor.innerHTML = `
+        <p style="color:#999;">Cargando usuarios...</p>
+    `;
+
+    const { data, error } = await clienteSupabase
+        .from('perfiles')
+        .select('id, username, nombre_completo, email, rol, created_at')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error cargando usuarios:', error);
+        contenedor.innerHTML = `
+            <p style="color:#ff7070;">No se han podido cargar los usuarios.</p>
+        `;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        contenedor.innerHTML = `
+            <p style="color:#999;">Todavía no hay usuarios registrados.</p>
+        `;
+        return;
+    }
+
+    let html = `
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                <thead>
+                    <tr style="border-bottom:1px solid rgba(212,175,55,0.35); color:#d4af37; text-align:left;">
+                        <th style="padding:10px;">Usuario</th>
+                        <th style="padding:10px;">Email</th>
+                        <th style="padding:10px;">Rol actual</th>
+                        <th style="padding:10px;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    data.forEach((usuario) => {
+        const nombreVisible = usuario.nombre_completo || usuario.username || 'Sin nombre';
+        const emailVisible = usuario.email || 'Sin email';
+        const rolActual = usuario.rol || 'usuario';
+
+        const esMiUsuario = usuarioActual && usuario.id === usuarioActual.id;
+
+        html += `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                <td style="padding:10px; color:white;">${nombreVisible}</td>
+                <td style="padding:10px; color:#aaa;">${emailVisible}</td>
+                <td style="padding:10px;">
+                    <span style="color:${rolActual === 'admin' ? '#d4af37' : '#ccc'}; font-weight:bold;">
+                        ${rolActual}
+                    </span>
+                </td>
+                <td style="padding:10px;">
+                    ${
+                        esMiUsuario
+                            ? `<span style="color:#777;">Tu usuario</span>`
+                            : `
+                                <button 
+                                    onclick="cambiarRolUsuario('${usuario.id}', '${rolActual === 'admin' ? 'usuario' : 'admin'}')"
+                                    style="
+                                        background:${rolActual === 'admin' ? '#333' : '#d4af37'};
+                                        color:${rolActual === 'admin' ? '#fff' : '#000'};
+                                        border:1px solid rgba(212,175,55,0.5);
+                                        padding:8px 12px;
+                                        border-radius:4px;
+                                        cursor:pointer;
+                                        font-weight:bold;
+                                    "
+                                >
+                                    ${rolActual === 'admin' ? 'Quitar admin' : 'Hacer admin'}
+                                </button>
+                            `
+                    }
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    contenedor.innerHTML = html;
+}
+
+async function cambiarRolUsuario(idUsuario, nuevoRol) {
+    if (!idUsuario || !nuevoRol) {
+        alert('Datos de usuario no válidos.');
+        return;
+    }
+
+    if (!['usuario', 'admin'].includes(nuevoRol)) {
+        alert('Rol no permitido.');
+        return;
+    }
+
+    const confirmar = confirm(`¿Seguro que quieres cambiar este usuario a rol "${nuevoRol}"?`);
+
+    if (!confirmar) {
+        return;
+    }
+
+    const { error } = await clienteSupabase
+        .from('perfiles')
+        .update({
+            rol: nuevoRol,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', idUsuario);
+
+    if (error) {
+        console.error('Error cambiando rol:', error);
+        alert('No se ha podido cambiar el rol.');
+        return;
+    }
+
+    alert('Rol actualizado correctamente.');
+    await cargarUsuariosAdmin();
 }
 
 /* ------------------------------------------------------------

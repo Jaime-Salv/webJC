@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página no encontrada - Julián Cerdán</title>
+
+    <link rel="icon" type="image/png" href="img/escudo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-oro: #d4af37;
+            --color-negro: #050505;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                linear-gradient(to bottom, rgba(5,5,5,0.75), rgba(5,5,5,0.98)),
+                url('img/foto-dashboard.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .box {
+            max-width: 620px;
+            background: rgba(18, 18, 18, 0.88);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            border-radius: 10px;
+            padding: 35px 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        img {
+            width: 90px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--color-oro);
+            font-size: 4rem;
+            margin: 0;
+            font-weight: 900;
+        }
+
+        h2 {
+            margin: 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p {
+            color: #bbb;
+            line-height: 1.6;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            background: var(--color-oro);
+            color: black;
+            text-decoration: none;
+            padding: 14px 22px;
+            border-radius: 4px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        a:hover {
+            opacity: 0.85;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <img src="img/escudo.png" alt="Escudo Julián Cerdán">
+        <h1>404</h1>
+        <h2>Página no encontrada</h2>
+        <p>
+            La página que buscas no existe o ha cambiado de ubicación.
+            Puedes volver al inicio para seguir navegando por la web.
+        </p>
+        <a href="index.html">Volver al inicio</a>
+    </div>
+</body>
+</html>
