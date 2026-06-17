@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programa de concierto - Julián Cerdán</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-oro: #d4af37;
+            --color-oro-hover: #b5952f;
+            --color-negro: #050505;
+            --color-panel: #111111;
+            --color-texto: #f4f4f4;
+            --color-muted: #aaaaaa;
+            --font-main: 'Montserrat', sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            padding-top: 96px;
+            font-family: var(--font-main);
+            background:
+                linear-gradient(to bottom, rgba(5,5,5,0.82), rgba(5,5,5,0.98)),
+                url('../img/zona1.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--color-texto);
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .main-header-concierto {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 96px;
+            z-index: 1000;
+            background: rgba(5, 5, 5, 0.96);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.24);
+            backdrop-filter: blur(14px);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 24px;
+            padding: 0 42px;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-decoration: none;
+        }
+
+        .header-logo img {
+            height: 62px;
+            width: auto;
+        }
+
+        .header-logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .header-logo-text strong {
+            color: white;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-size: 0.86rem;
+        }
+
+        .header-logo-text span {
+            color: var(--color-oro);
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 1.2px;
+            font-size: 0.62rem;
+            margin-top: 4px;
+        }
+
+        .header-title {
+            text-align: center;
+        }
+
+        .header-title h2 {
+            margin: 0;
+            color: white;
+            text-transform: uppercase;
+            font-size: 1rem;
+            letter-spacing: 3px;
+            font-weight: 900;
+        }
+
+        .header-title span {
+            display: block;
+            color: var(--color-oro);
+            font-size: 0.64rem;
+            letter-spacing: 1.5px;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .btn-volver {
+            color: var(--color-oro);
+            border: 1px solid rgba(212,175,55,0.45);
+            border-radius: 999px;
+            padding: 10px 16px;
+            text-decoration: none;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            transition: 0.25s ease;
+        }
+
+        .btn-volver:hover {
+            background: var(--color-oro);
+            color: #000;
+        }
+
+        .page-shell {
+            width: min(1180px, calc(100vw - 32px));
+            margin: 0 auto;
+        }
+
+        .estado-carga {
+            min-height: 50vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .hero-concierto {
+            display: grid;
+            grid-template-columns: 0.86fr 1.14fr;
+            gap: 36px;
+            align-items: stretch;
+            padding: 52px 0 40px;
+        }
+
+        .cartel-box {
+            background: rgba(10,10,10,0.82);
+            border: 1px solid rgba(212,175,55,0.24);
+            border-radius: 18px;
+            overflow: hidden;
+            min-height: 460px;
+            box-shadow: 0 24px 70px rgba(0,0,0,0.45);
+        }
+
+        .cartel-box img {
+            width: 100%;
+            height: 100%;
+            min-height: 460px;
+            object-fit: cover;
+            display: block;
+            background: #111;
+        }
+
+        .concierto-info {
+            background: rgba(10,10,10,0.78);
+            border: 1px solid rgba(212,175,55,0.24);
+            border-radius: 18px;
+            padding: 34px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            backdrop-filter: blur(12px);
+        }
+
+        .eyebrow {
+            color: var(--color-oro);
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            font-weight: 900;
+            font-size: 0.76rem;
+            margin-bottom: 18px;
+        }
+
+        .concierto-info h1 {
+            color: white;
+            margin: 0;
+            text-transform: uppercase;
+            font-size: clamp(2rem, 5vw, 4.2rem);
+            line-height: 0.98;
+            letter-spacing: 1px;
+            font-weight: 900;
+        }
+
+        .meta-concierto {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 26px 0;
+        }
+
+        .meta-pill {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #ddd;
+            border-radius: 999px;
+            padding: 9px 13px;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .descripcion-concierto {
+            color: #cfcfcf;
+            line-height: 1.75;
+            font-size: 0.98rem;
+            margin: 0 0 28px;
+            white-space: pre-line;
+        }
+
+        .acciones-concierto {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 0 20px;
+            border-radius: 999px;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-weight: 900;
+            letter-spacing: 0.8px;
+            font-size: 0.76rem;
+            cursor: pointer;
+            border: none;
+            font-family: var(--font-main);
+            transition: 0.25s ease;
+        }
+
+        .btn-primary {
+            background: var(--color-oro);
+            color: #000;
+        }
+
+        .btn-secondary {
+            border: 1px solid rgba(212,175,55,0.55);
+            color: var(--color-oro);
+            background: rgba(0,0,0,0.20);
+        }
+
+        .btn-primary:hover,
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+        }
+
+        .section-programa {
+            padding: 28px 0 70px;
+        }
+
+        .section-heading {
+            margin-bottom: 26px;
+            border-left: 4px solid var(--color-oro);
+            padding-left: 18px;
+        }
+
+        .section-heading span {
+            color: var(--color-oro);
+            font-size: 0.72rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .section-heading h2 {
+            color: white;
+            margin: 8px 0 0;
+            text-transform: uppercase;
+            font-size: clamp(1.5rem, 3vw, 2.35rem);
+            letter-spacing: 1.5px;
+        }
+
+        .programa-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .obra-card {
+            display: grid;
+            grid-template-columns: 74px 1fr;
+            gap: 20px;
+            background: rgba(10,10,10,0.78);
+            border: 1px solid rgba(212,175,55,0.18);
+            border-radius: 16px;
+            padding: 22px;
+            backdrop-filter: blur(10px);
+        }
+
+        .obra-numero {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            border: 1px solid rgba(212,175,55,0.5);
+            color: var(--color-oro);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.05rem;
+            background: rgba(212,175,55,0.08);
+        }
+
+        .obra-contenido h3 {
+            color: white;
+            margin: 0 0 6px;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+        }
+
+        .obra-compositor {
+            color: var(--color-oro);
+            font-weight: 800;
+            font-size: 0.86rem;
+            margin-bottom: 14px;
+        }
+
+        .obra-descripcion {
+            color: #cfcfcf;
+            line-height: 1.7;
+            font-size: 0.92rem;
+            margin: 0;
+            white-space: pre-line;
+        }
+
+        .obra-extra {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .obra-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 7px 11px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #ddd;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .obra-link {
+            color: var(--color-oro);
+            border-color: rgba(212,175,55,0.35);
+        }
+
+        .obra-link:hover {
+            background: var(--color-oro);
+            color: #000;
+        }
+
+        .empty-state {
+            color: #888;
+            background: rgba(10,10,10,0.72);
+            border: 1px dashed rgba(212,175,55,0.25);
+            border-radius: 14px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .footer-concierto {
+            border-top: 1px solid rgba(212,175,55,0.16);
+            padding: 26px 0 40px;
+            color: #777;
+            text-align: center;
+            font-size: 0.78rem;
+        }
+
+        @media (max-width: 920px) {
+            body {
+                padding-top: 80px;
+                background-attachment: scroll;
+            }
+
+            .main-header-concierto {
+                height: 80px;
+                grid-template-columns: auto 1fr;
+                padding: 0 18px;
+            }
+
+            .header-title {
+                display: none;
+            }
+
+            .header-logo-text {
+                display: none;
+            }
+
+            .header-logo img {
+                height: 54px;
+            }
+
+            .btn-volver {
+                justify-self: end;
+                padding: 9px 12px;
+                font-size: 0.66rem;
+            }
+
+            .hero-concierto {
+                grid-template-columns: 1fr;
+                padding-top: 34px;
+            }
+
+            .cartel-box {
+                min-height: auto;
+            }
+
+            .cartel-box img {
+                min-height: 280px;
+                max-height: 520px;
+            }
+
+            .concierto-info {
+                padding: 26px;
+            }
+
+            .obra-card {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .obra-numero {
+                width: 48px;
+                height: 48px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .page-shell {
+                width: min(100vw - 22px, 1180px);
+            }
+
+            .acciones-concierto {
+                flex-direction: column;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+            }
+
+            .concierto-info h1 {
+                font-size: 2rem;
+            }
+
+            .meta-pill {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="main-header-concierto">
+    <a href="../index.html" class="header-logo">
+        <img src="../img/escudo.png" alt="Escudo Julián Cerdán">
+
+        <div class="header-logo-text">
+            <strong>Banda de Música</strong>
+            <span>Julián Cerdán</span>
+        </div>
+    </a>
+
+    <div class="header-title">
+        <h2>Programa de concierto</h2>
+        <span>Archivo musical Julián Cerdán</span>
+    </div>
+
+    <a href="../index.html#actuaciones" class="btn-volver">← Volver</a>
+</header>
+
+<main id="contenido-concierto">
+    <div class="estado-carga">
+        <p>Cargando programa del concierto...</p>
+    </div>
+</main>
+
+<footer class="page-shell footer-concierto">
+    Banda de Música Julián Cerdán · Programa digital de concierto
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="../js/concierto.js"></script>
+</body>
+</html>

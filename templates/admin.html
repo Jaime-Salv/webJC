@@ -338,6 +338,141 @@
             margin-top: 10px;
         }
 
+
+        .panel-conciertos-admin {
+            grid-column: 1 / -1;
+        }
+
+        .admin-grid-doble {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .admin-actions-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .admin-actions-row .btn-send,
+        .admin-actions-row .btn-secundario {
+            width: auto;
+            margin-bottom: 0;
+            flex: 1 1 180px;
+        }
+
+        .textarea-admin {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .concierto-box-actual {
+            padding: 14px;
+            background: rgba(212, 175, 55, 0.06);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        .concierto-box-actual strong {
+            color: var(--color-oro);
+        }
+
+        .obras-admin-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .obra-admin-item {
+            display: grid;
+            grid-template-columns: 42px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .obra-admin-num {
+            color: var(--color-oro);
+            font-weight: 900;
+            text-align: center;
+        }
+
+        .obra-admin-titulo {
+            color: white;
+            font-weight: 900;
+            font-size: 0.88rem;
+        }
+
+        .obra-admin-sub {
+            color: #aaa;
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+
+        .btn-mini-danger {
+            background: transparent;
+            color: #ff7070;
+            border: 1px solid rgba(255, 112, 112, 0.45);
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 900;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .qr-admin-box {
+            display: none;
+            margin-top: 16px;
+            padding: 15px;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .qr-admin-box.activo {
+            display: block;
+        }
+
+        .qr-admin-box canvas {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 100%;
+        }
+
+        .url-publica-admin {
+            color: #aaa;
+            font-size: 0.78rem;
+            word-break: break-all;
+            margin: 10px 0 0;
+        }
+
+        @media (min-width: 1024px) {
+            .admin-grid-doble {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .obra-admin-item {
+                grid-template-columns: 34px 1fr;
+            }
+
+            .obra-admin-item .btn-mini-danger {
+                grid-column: 1 / -1;
+                width: 100%;
+            }
+        }
+
         @media (min-width: 1024px) {
             .global-container {
                 display: grid;
@@ -648,9 +783,189 @@
             </div>
         </section>
 
+
+        <section class="card-admin panel-conciertos-admin" id="panel-conciertos-admin">
+            <h3>5. Gestión de conciertos</h3>
+
+            <p style="color:#aaa; font-size:0.9rem; margin-top:0;">
+                Crea conciertos independientes de las procesiones. Cada concierto tendrá su propio programa de obras,
+                enlace público y QR para insertar en carteles.
+            </p>
+
+            <div class="admin-grid-doble">
+                <div>
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Conciertos existentes
+                    </label>
+
+                    <select id="select-concierto-admin" class="input-admin" onchange="seleccionarConciertoAdmin()">
+                        <option value="">Cargando conciertos...</option>
+                    </select>
+
+                    <button type="button" class="btn-secundario" onclick="limpiarFormularioConciertoAdmin()">
+                        Nuevo concierto
+                    </button>
+
+                    <div id="concierto-actual-admin" class="concierto-box-actual">
+                        <strong>Concierto actual:</strong>
+                        <span id="concierto-actual-texto">Ninguno seleccionado.</span>
+                    </div>
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Título
+                    </label>
+                    <input type="text" id="concierto-titulo" class="input-admin" placeholder="Ejemplo: Concierto de Navidad">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Fecha
+                    </label>
+                    <input type="date" id="concierto-fecha" class="input-admin">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Hora
+                    </label>
+                    <input type="time" id="concierto-hora" class="input-admin">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Lugar
+                    </label>
+                    <input type="text" id="concierto-lugar" class="input-admin" placeholder="Teatro, auditorio, iglesia...">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Localidad
+                    </label>
+                    <input type="text" id="concierto-localidad" class="input-admin" placeholder="Sanlúcar de Barrameda">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        URL actual del cartel
+                    </label>
+                    <input
+                        type="url"
+                        id="concierto-cartel-url"
+                        class="input-admin"
+                        placeholder="Se rellenará automáticamente al subir un cartel"
+                    >
+
+                    <div class="input-file-container">
+                        <label>Subir cartel del concierto</label>
+                        <input type="file" id="concierto-cartel-archivo" accept="image/*">
+                        <p style="color:#777; font-size:0.75rem; margin:10px 0 0;">
+                            Si subes un archivo nuevo, sustituirá la URL actual del cartel al guardar.
+                        </p>
+                    </div>
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Estado
+                    </label>
+                    <select id="concierto-estado" class="input-admin">
+                        <option value="Borrador">Borrador</option>
+                        <option value="Publicado">Publicado</option>
+                        <option value="Oculto">Oculto</option>
+                    </select>
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Descripción general
+                    </label>
+                    <textarea id="concierto-descripcion" class="input-admin textarea-admin" placeholder="Texto introductorio del concierto..."></textarea>
+
+                    <div class="admin-actions-row">
+                        <button type="button" class="btn-send" onclick="guardarConciertoAdmin()">
+                            Guardar concierto
+                        </button>
+
+                        <button type="button" class="btn-secundario" onclick="abrirProgramaConciertoAdmin()">
+                            Ver programa
+                        </button>
+
+                        <button type="button" class="btn-secundario" onclick="copiarEnlaceConciertoAdmin()">
+                            Copiar enlace
+                        </button>
+
+                        <button type="button" class="btn-secundario" onclick="generarQRConciertoAdmin()">
+                            Generar QR
+                        </button>
+                    </div>
+
+                    <div id="qr-concierto-admin" class="qr-admin-box">
+                        <canvas id="qr-concierto-canvas"></canvas>
+                        <p id="url-publica-concierto-admin" class="url-publica-admin"></p>
+                    </div>
+
+                    <p id="estado-concierto-admin" style="color:#888; font-size:0.85rem; margin-top:12px;">
+                        Crea o selecciona un concierto.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 style="color:var(--color-oro); text-transform:uppercase; margin-top:0;">
+                        Programa de obras
+                    </h4>
+
+                    <p style="color:#aaa; font-size:0.85rem;">
+                        Primero guarda o selecciona un concierto. Después añade las obras en el orden en el que se interpretarán.
+                    </p>
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Orden
+                    </label>
+                    <input type="number" id="obra-orden" class="input-admin" placeholder="1">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Título de la obra
+                    </label>
+                    <input type="text" id="obra-titulo" class="input-admin" placeholder="Título de la obra">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Compositor
+                    </label>
+                    <input type="text" id="obra-compositor" class="input-admin" placeholder="Compositor">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Duración aproximada
+                    </label>
+                    <input type="text" id="obra-duracion" class="input-admin" placeholder="Ejemplo: 7 min">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Descripción de la obra
+                    </label>
+                    <textarea id="obra-descripcion" class="input-admin textarea-admin" placeholder="Descripción para el público..."></textarea>
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        YouTube
+                    </label>
+                    <input type="url" id="obra-youtube" class="input-admin" placeholder="https://www.youtube.com/...">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Spotify
+                    </label>
+                    <input type="text" id="obra-spotify" class="input-admin" placeholder="URL o spotify:track:...">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Enlace externo
+                    </label>
+                    <input type="url" id="obra-enlace-externo" class="input-admin" placeholder="https://...">
+
+                    <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
+                        Notas
+                    </label>
+                    <input type="text" id="obra-notas" class="input-admin" placeholder="Opcional">
+
+                    <button type="button" class="btn-send" onclick="guardarObraConciertoAdmin()">
+                        Añadir obra al programa
+                    </button>
+
+                    <div id="lista-obras-concierto-admin" class="obras-admin-lista">
+                        <p style="color:#888;">Selecciona un concierto para ver sus obras.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/admin.js"></script>
 

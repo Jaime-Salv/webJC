@@ -3,391 +3,973 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard Institucional - Julián Cerdán</title>
-    
+
+    <title>Banda de Música Julián Cerdán</title>
+
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" type="image/png" href="img/escudo.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
-    
+
     <style>
-        /* =========================================
-             DISEÑO BASE Y VARIABLES
-         ========================================= */
         *, *::before, *::after { box-sizing: border-box; }
 
         :root {
             --color-oro: #d4af37;
             --color-oro-hover: #b5952f;
             --color-negro: #050505;
+            --color-panel: #111111;
             --color-texto: #f4f4f4;
+            --color-muted: #aaaaaa;
             --font-main: 'Montserrat', sans-serif;
         }
 
+        html { scroll-behavior: smooth; }
+
         body {
-            padding-top: 100px;
             margin: 0;
+            padding-top: 92px;
             font-family: var(--font-main);
-            background-color: var(--color-negro);
+            background:
+                linear-gradient(to bottom, rgba(5,5,5,0.82), rgba(5,5,5,0.98)),
+                url('img/zona1.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             color: var(--color-texto);
-            overflow-x: hidden; 
-            width: 100%;
+            overflow-x: hidden;
         }
 
-        /* =========================================
-             CABECERA INTELIGENTE PRO
-         ========================================= */
+        a { color: inherit; }
+
         .main-header {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100px;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr; 
-            align-items: center;
-            padding: 0 50px;
-            background: rgba(5, 5, 5, 0.95);
-            backdrop-filter: blur(15px);
-            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 92px;
             z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.3, 1, 0.2, 1);
+            background: rgba(5, 5, 5, 0.96);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.24);
+            backdrop-filter: blur(14px);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 25px;
+            padding: 0 42px;
+            transition: transform 0.3s ease;
         }
 
         .main-header.oculta { transform: translateY(-100%); }
-        .logo-side img { height: 75px; width: auto; transition: 0.3s; }
-        .logo-side img:hover { transform: scale(1.05); }
 
-        .header-nav { display: flex; gap: 30px; justify-content: center; align-items: center; }
-        .header-nav a {
-            color: var(--color-texto); text-decoration: none; font-weight: 700;
-            text-transform: uppercase; font-size: 0.85rem; letter-spacing: 2px;
-            transition: color 0.3s;
+        .logo-side {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 0;
         }
+
+        .logo-side img {
+            height: 64px;
+            width: auto;
+            display: block;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .brand-text strong {
+            color: white;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            font-size: 0.9rem;
+        }
+
+        .brand-text span {
+            color: var(--color-oro);
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 1.2px;
+            font-size: 0.62rem;
+            margin-top: 4px;
+        }
+
+        .header-nav {
+            display: flex;
+            justify-content: center;
+            gap: 26px;
+            align-items: center;
+        }
+
+        .header-nav a {
+            color: #ddd;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-weight: 800;
+            font-size: 0.72rem;
+            letter-spacing: 1.5px;
+            transition: color 0.2s ease;
+        }
+
         .header-nav a:hover { color: var(--color-oro); }
 
-        .auth-side { 
-            display: flex; gap: 20px; justify-content: flex-end; 
-            align-items: center; justify-self: end;
+        .auth-side {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 14px;
         }
-        
+
         .btn-google-pro {
-            background-color: white; color: black; border: none;
-            padding: 10px 20px; border-radius: 4px; font-weight: 800;
-            font-family: var(--font-main); font-size: 0.75rem;
-            text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
-            display: flex; align-items: center; gap: 10px;
-            transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            white-space: nowrap;
-        }
-        .btn-google-pro:hover {
-            background-color: #f1f1f1; transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(212, 175, 55, 0.3);
-        }
-
-        .btn-logout { 
-            background: transparent; color: white; border: 1px solid rgba(255,255,255,0.4); 
-            padding: 10px 20px; border-radius: 4px; font-weight: 700; cursor: pointer; 
-            font-family: var(--font-main); font-size: 0.7rem; text-transform: uppercase;
-            transition: 0.3s;
-        }
-        .btn-logout:hover { border-color: var(--color-oro); color: var(--color-oro); }
-
-        .admin-link { 
-            color: rgba(212, 175, 55, 0.6); text-decoration: none; 
-            font-size: 0.75rem; font-weight: 800; text-transform: uppercase; transition: 0.3s;
+            background: white;
+            color: black;
+            border: none;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-family: var(--font-main);
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            letter-spacing: 0.8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
         }
 
-        /* =========================================
-             SCROLL INMERSIVO Y SECCIONES
-         ========================================= */
-        .scroll-section {
-            min-height: 100vh; display: flex; flex-direction: column; justify-content: center; 
-            padding: 100px 5%; position: relative; background-size: cover; 
-            background-position: center; background-attachment: fixed;
-            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
-            transition: background 0.8s ease-in-out;
-        }
-
-        #fase-actualidad { background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('img/zona1.jpg'); }
-        #fase-catalogo { background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.9)), url('img/zona2.jpg'); }
-        #fase-herramientas { background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('img/zona3.jpg'); }
-
-        .seccion-titulo-jc {
-            color: var(--color-oro); font-size: 2.2rem; text-transform: uppercase;
-            letter-spacing: 4px; margin-bottom: 40px; border-left: 4px solid var(--color-oro); padding-left: 20px;
-        }
-
-        /* =========================================
-             DASHBOARD HORIZONTAL (REPERTORIOS)
-         ========================================= */
-        .dashboard-horizontal {
-            display: flex; gap: 25px; width: 100%; padding: 20px 0;
-            overflow-x: auto; scrollbar-width: thin; 
-            scrollbar-color: var(--color-oro) rgba(0,0,0,0.2);
-            -webkit-overflow-scrolling: touch; 
-        }
-
-        .dashboard-horizontal::-webkit-scrollbar { height: 6px; }
-        .dashboard-horizontal::-webkit-scrollbar-thumb { background-color: var(--color-oro); border-radius: 10px; }
-
-        .dashboard-horizontal .tarjeta-procesion { flex: 0 0 280px; height: 350px; }
-        
-        .tarjeta-procesion { 
-            display: block; background-size: cover; background-position: center; 
-            border-radius: 12px; position: relative; text-decoration: none; 
-            border: none !important; outline: none; 
-            transition: transform 0.3s ease; overflow: hidden;
-        }
-        .tarjeta-procesion:hover { transform: translateY(-5px); }
-
-        /* ESTADÍSTICAS EN TARJETA */
-        .tp-stats-badge {
-            position: absolute; top: 15px; right: 15px; display: flex; gap: 10px;
-            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
-            padding: 6px 12px; border-radius: 20px; z-index: 3;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        .tp-stat-item { color: white; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 5px; }
-
-        .tp-gradiente-inmersivo {
-            position: absolute; inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, transparent 100%);
-            display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; z-index: 2;
-        }
-
-        .tp-badge-fecha {
-            position: absolute; top: 15px; left: 15px; background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(5px); color: white; padding: 5px 12px; border-radius: 4px;
-            font-size: 0.7rem; font-weight: 700; z-index: 3;
-        }
-
-        .tp-titulo-bmm { color: white; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; text-align: center; }
-        .tp-subtitulo-bmm { color: rgba(255,255,255,0.7); font-size: 0.8rem; text-align: center; }
-
-        /* =========================================
-             ADAPTACIÓN MÓVIL
-         ========================================= */
-        @media (max-width: 1024px) {
-            .main-header { padding: 0 20px; height: 80px; grid-template-columns: auto 1fr; }
-            .header-nav { display: none; } 
-            .logo-side img { height: 60px; }
-            body { padding-top: 80px; }
-            .scroll-section { padding: 80px 5%; background-attachment: scroll; } 
-        }
-
-        /* FIX PARA CUADRAR LAS HERRAMIENTAS EN MÓVIL (APILAR EN 1 COLUMNA) */
-        @media (max-width: 768px) {
-            #grid-herramientas {
-                grid-template-columns: 1fr !important;
-                gap: 20px !important;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .seccion-titulo-jc { font-size: 1.4rem; letter-spacing: 2px; }
-            .auth-side { gap: 10px; }
-            .btn-google-pro { padding: 8px 12px; font-size: 0.65rem; }
-            .dashboard-horizontal .tarjeta-procesion { flex: 0 0 240px; height: 320px; }
-            .user-header-label { display: none; }
-
-            /* FIX: ZONA DIRECTO */
-            #zona-directo {
-                flex-direction: column !important;
-                padding: 15px !important;
-                text-align: center;
-                gap: 15px;
-            }
-            #zona-directo div { display: flex; flex-direction: column; gap: 5px; }
-            #texto-directo { margin-left: 0 !important; }
-
-            /* FIX: CATÁLOGO MAESTRO */
-            #fase-catalogo > div { padding: 40px 20px !important; width: 100%; }
-            #fase-catalogo h2 { font-size: 2rem !important; }
-            #fase-catalogo p { font-size: 1rem !important; margin-bottom: 25px !important; }
-            #fase-catalogo a { padding: 15px 20px !important; font-size: 1rem !important; width: 100%; box-sizing: border-box; }
-        }
-
-        .btn-gold-pro {
-            background: var(--color-oro); color: black; border: none;
-            padding: 12px 25px; border-radius: 4px; font-weight: 900;
-            text-transform: uppercase; cursor: pointer; text-decoration: none;
-            font-size: 0.85rem; transition: 0.3s;
-        }
-        .btn-gold-pro:hover { background: white; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+        .btn-google-pro img { height: 14px; }
 
         .header-user-side {
-            display: flex; align-items: center; justify-content: flex-end;
-            min-width: 50px; gap: 25px; 
+            display: none;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .admin-link {
+            display: none;
+            color: var(--color-oro);
+            text-decoration: none;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            border: 1px solid rgba(212,175,55,0.35);
+            padding: 8px 10px;
+            border-radius: 999px;
+        }
+
+        .profile-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
         }
 
         .user-header-label {
-            color: white; font-size: 0.75rem; font-weight: 800;
-            text-transform: uppercase; letter-spacing: 1px; margin-right: 12px; 
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: white;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .avatar-mini {
-            width: 35px; height: 35px; border-radius: 50%;
-            border: 1.5px solid var(--color-oro); object-fit: cover;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid var(--color-oro);
         }
 
-        .avatar-mini:hover { transform: scale(1.1); box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
-        .profile-link { display: flex; align-items: center; text-decoration: none; }
-
-        /* Efecto Hover extra para las tarjetas de herramientas respetando sus estilos en línea */
-        #grid-herramientas a:hover {
-            border-color: var(--color-oro) !important;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
-            transform: translateY(-5px);
-        }
-        /* Estilo base del botón Web Oficial */
-        .btn-web-ext {
-            text-decoration: none;
-            color: var(--color-oro);
-            border: 1px solid rgba(212, 175, 55, 0.5);
-            padding: 8px 15px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 800;
+        .btn-logout {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            border-radius: 999px;
+            padding: 9px 12px;
+            font-family: var(--font-main);
+            font-size: 0.65rem;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-web-ext {
+            color: var(--color-oro);
+            text-decoration: none;
+            border: 1px solid rgba(212,175,55,0.35);
+            border-radius: 999px;
+            padding: 9px 13px;
+            font-size: 0.68rem;
+            font-weight: 900;
+            text-transform: uppercase;
             white-space: nowrap;
         }
 
-        /* Efecto al pasar el ratón por encima (Hover) */
-        .btn-web-ext:hover {
-            background: var(--color-oro);
-            color: black;
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        .page-shell {
+            width: min(1280px, calc(100vw - 32px));
+            margin: 0 auto;
         }
 
-        /* Ajuste para que se vea bien en móviles pequeños */
-        @media (max-width: 600px) {
-            .btn-web-ext { 
-                font-size: 0.6rem; 
-                padding: 5px 10px; 
-            }
+        .hero-home {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 44px;
+            align-items: center;
+            padding: 46px 0 70px;
         }
 
-                /* Ajuste para alinear verticalmente escudo y botón */
-        .logo-side { 
-            display: flex; 
-            align-items: center; /* Centra verticalmente los elementos internos */
-            gap: 20px; 
-            height: 100%; /* Asegura que use todo el alto del header */
+        .bloque-principal-actuaciones {
+            padding-top: 46px;
         }
 
-        /* El botón Web Oficial con un pequeño ajuste de línea para el texto */
-        .btn-web-ext {
-            text-decoration: none;
+        .eyebrow {
             color: var(--color-oro);
-            border: 1px solid rgba(212, 175, 55, 0.5);
-            padding: 10px 18px; /* Un poco más de aire */
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: 0.3s;
-            white-space: nowrap;
+            letter-spacing: 2.5px;
+            font-weight: 900;
+            font-size: 0.76rem;
+            margin-bottom: 18px;
+        }
+
+        .hero-title {
+            font-size: clamp(2.25rem, 5vw, 5rem);
+            line-height: 0.95;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 900;
+        }
+
+        .hero-title span {
+            color: var(--color-oro);
+            display: block;
+        }
+
+        .hero-subtitle {
+            color: #d2d2d2;
+            font-size: 1.05rem;
+            line-height: 1.75;
+            max-width: 680px;
+            margin: 26px 0 34px;
+        }
+
+        .hero-actions {
             display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            line-height: 1; /* Evita que el texto parezca bajado o subido */
+            min-height: 48px;
+            padding: 0 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-weight: 900;
+            letter-spacing: 0.8px;
+            font-size: 0.78rem;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--color-oro);
+            color: #000;
+        }
+
+        .btn-secondary {
+            border: 1px solid rgba(212,175,55,0.55);
+            color: var(--color-oro);
+            background: rgba(0,0,0,0.22);
+        }
+
+        .btn-primary:hover,
+        .btn-secondary:hover { transform: translateY(-2px); }
+
+        .hero-card {
+            background: rgba(8, 8, 8, 0.78);
+            border: 1px solid rgba(212,175,55,0.24);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 24px 70px rgba(0,0,0,0.45);
+            backdrop-filter: blur(12px);
+        }
+
+        .hero-card img {
+            width: 100%;
+            height: 320px;
+            object-fit: cover;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 18px;
+            background: #111;
+        }
+
+        .hero-card h3 {
+            margin: 0 0 8px;
+            color: var(--color-oro);
+            text-transform: uppercase;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        .hero-card p {
+            margin: 0;
+            color: #bbb;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .directo-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin: 0 0 34px;
+            padding: 18px 22px;
+            border: 1px solid rgba(255,59,59,0.55);
+            background: rgba(255,59,59,0.10);
+            border-radius: 14px;
+        }
+
+        .directo-banner.activo { display: flex; }
+
+        .directo-label {
+            color: #ff3b3b;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.78rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .directo-title {
+            color: white;
+            font-weight: 900;
+            font-size: 1rem;
+        }
+
+        .section-block { padding: 46px 0; }
+
+        .section-heading {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 22px;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+            color: var(--color-oro);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: clamp(1.35rem, 2.8vw, 2.15rem);
+        }
+
+        .section-heading p {
+            margin: 8px 0 0;
+            color: #aaa;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .latest-card {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 24px;
+            background: rgba(10,10,10,0.78);
+            border: 1px solid rgba(212,175,55,0.22);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .latest-image {
+            min-height: 260px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .latest-content {
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .latest-content h3 {
+            color: white;
+            margin: 0 0 8px;
+            font-size: 1.55rem;
+            text-transform: uppercase;
+        }
+
+        .latest-meta {
+            color: var(--color-oro);
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+        }
+
+        .latest-stats {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .stat-pill {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 999px;
+            padding: 8px 12px;
+            color: #ddd;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+
+        .quick-card {
+            min-height: 210px;
+            background: rgba(12,12,12,0.80);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 24px;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .quick-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(212,175,55,0.5);
+        }
+
+        .quick-icon {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .quick-card h3 {
+            margin: 0 0 10px;
+            color: white;
+            text-transform: uppercase;
+            font-size: 1rem;
+        }
+
+        .quick-card p {
+            margin: 0;
+            color: #aaa;
+            line-height: 1.55;
+            font-size: 0.85rem;
+        }
+
+        .quick-card span {
+            color: var(--color-oro);
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            margin-top: 22px;
+        }
+
+        .catalog-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .summary-box {
+            background: rgba(10,10,10,0.78);
+            border: 1px solid rgba(212,175,55,0.18);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .summary-box span {
+            display: block;
+            color: #aaa;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            font-weight: 900;
+            margin-bottom: 9px;
+        }
+
+        .summary-box strong {
+            color: var(--color-oro);
+            font-size: 2rem;
+            font-weight: 900;
+        }
+
+        .bloque-actuaciones-tipo { margin-top: 34px; }
+
+        .titulo-actuaciones-linea {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .titulo-actuaciones-linea h3 {
+            color: var(--color-oro);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 1.15rem;
+            margin: 0;
+        }
+
+        .btn-ciclo-completo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(212, 175, 55, 0.08);
+            color: var(--color-oro);
+            border: 1px solid rgba(212, 175, 55, 0.6);
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.25s ease;
+        }
+
+        .btn-ciclo-completo:hover {
+            background: var(--color-oro);
+            color: #000;
+        }
+
+        .recent-carousel {
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 6px 2px 18px;
+            scroll-snap-type: x proximity;
+            scrollbar-width: thin;
+            scrollbar-color: var(--color-oro) rgba(255,255,255,0.08);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .recent-carousel::-webkit-scrollbar { height: 7px; }
+        .recent-carousel::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.06);
+            border-radius: 999px;
+        }
+        .recent-carousel::-webkit-scrollbar-thumb {
+            background: var(--color-oro);
+            border-radius: 999px;
+        }
+
+        .recent-carousel .tarjeta-procesion-home {
+            flex: 0 0 310px;
+            scroll-snap-align: start;
+        }
+
+        .tarjeta-procesion-home {
+            min-height: 290px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            text-decoration: none;
+            display: flex;
+            align-items: flex-end;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: transform 0.2s ease;
+        }
+
+        .tarjeta-procesion-home:hover { transform: translateY(-4px); }
+
+        .card-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.94), rgba(0,0,0,0.25), transparent);
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .card-date {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            z-index: 3;
+            background: rgba(0,0,0,0.58);
+            border: 1px solid rgba(255,255,255,0.10);
+            color: white;
+            border-radius: 999px;
+            padding: 6px 11px;
+            font-size: 0.68rem;
+            font-weight: 900;
+        }
+
+        .card-content h3 {
+            color: white;
+            margin: 0 0 6px;
+            text-transform: uppercase;
+            font-size: 1rem;
+        }
+
+        .card-content p {
+            color: #bbb;
+            margin: 0;
+            font-size: 0.78rem;
+        }
+
+        .admin-access {
+            padding: 30px 0 60px;
+            text-align: center;
+        }
+
+        .admin-access a {
+            display: inline-flex;
+            color: rgba(212,175,55,0.65);
+            border: 1px solid rgba(212,175,55,0.22);
+            border-radius: 999px;
+            padding: 10px 16px;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        .empty-state {
+            color: #777;
+            background: rgba(10,10,10,0.7);
+            border: 1px dashed rgba(212,175,55,0.25);
+            border-radius: 14px;
+            padding: 22px;
+            text-align: center;
+            min-width: 280px;
+        }
+
+        @media (max-width: 1050px) {
+            .header-nav { display: none; }
+            .main-header {
+                grid-template-columns: auto 1fr;
+                padding: 0 18px;
+                height: 80px;
+            }
+            .auth-side { justify-self: end; }
+            .brand-text { display: none; }
+            .logo-side img { height: 54px; }
+            body {
+                padding-top: 80px;
+                background-attachment: scroll;
+            }
+            .hero-home {
+                grid-template-columns: 1fr;
+                min-height: auto;
+                padding-top: 46px;
+            }
+            .hero-card img { height: 230px; }
+            .latest-card { grid-template-columns: 1fr; }
+            .latest-image { min-height: 220px; }
+            .quick-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 680px) {
+            .page-shell { width: min(100vw - 22px, 1280px); }
+            .btn-web-ext { display: none; }
+            .btn-google-pro {
+                padding: 8px 11px;
+                font-size: 0.62rem;
+            }
+            .user-header-label,
+            .btn-logout { display: none; }
+            .hero-title { font-size: 2.35rem; }
+            .hero-subtitle {
+                font-size: 0.92rem;
+                line-height: 1.65;
+            }
+            .hero-actions { flex-direction: column; }
+            .btn-primary,
+            .btn-secondary { width: 100%; }
+            .directo-banner {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            .section-heading {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+            .quick-grid,
+            .catalog-summary { grid-template-columns: 1fr; }
+            .recent-carousel .tarjeta-procesion-home { flex-basis: 82vw; }
+            .btn-ciclo-completo { width: 100%; }
+            .quick-card { min-height: 170px; }
+            .latest-content { padding: 22px; }
+            .latest-content h3 { font-size: 1.2rem; }
+        }
+
+        .tag-concierto {
+            display: inline-flex;
+            margin-top: 12px;
+            color: var(--color-oro);
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.66rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .tarjeta-concierto-home {
+            border-color: rgba(212, 175, 55, 0.28);
         }
     </style>
 </head>
+
 <body>
 
-    <header class="main-header" id="cabecera-principal">
-        <div class="logo-side">
-            <a href="index.html"><img src="img/escudo.png" alt="Logo Julián Cerdán"></a>
-            <a href="https://bandajuliancerdan.com/" target="_blank" class="btn-web-ext">Web Oficial</a>
+<header class="main-header" id="cabecera-principal">
+    <div class="logo-side">
+        <a href="index.html"><img src="img/escudo.png" alt="Escudo Julián Cerdán"></a>
+        <div class="brand-text"><strong>Banda de Música</strong><span>Julián Cerdán</span></div>
+        <a href="https://bandajuliancerdan.com/" target="_blank" rel="noopener noreferrer" class="btn-web-ext">Home</a>
+    </div>
+
+    <nav class="header-nav">
+        <a href="#actuaciones">Actuaciones</a>
+        <a href="templates/catalogo.html">Catálogo</a>
+        <a href="templates/comunidad.html">Comunidad</a>
+        <a href="templates/simulacion.html">Simulador</a>
+    </nav>
+
+    <div class="auth-side" id="auth-container">
+        <button class="btn-google-pro" id="btn-login-google">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G">
+            Entrar
+        </button>
+
+        <div class="header-user-side" id="user-header-zone">
+            <a href="templates/admin.html" id="link-admin" class="admin-link">Admin</a>
+            <a href="templates/perfil.html" class="profile-link">
+                <span id="user-header-name" class="user-header-label">Músico</span>
+                <img src="img/escudo.png" id="header-avatar-img" class="avatar-mini" alt="Avatar">
+            </a>
+            <button class="btn-logout" id="btn-logout">Salir</button>
         </div>
-        
-        <nav class="header-nav">
-            <a href="#fase-actualidad">Actualidad</a>
-            <a href="#fase-catalogo">Catálogo Maestro</a>
-            <a href="#fase-herramientas">Herramientas</a>
-        </nav>
-        <div class="auth-side" id="auth-container">
-            <button class="btn-google-pro" id="btn-login-google">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G" style="height:14px;">
-                Entrar
-            </button>
+    </div>
+</header>
 
-            <div class="header-user-side" id="user-header-zone" style="display: none;">
-                <a href="templates/admin.html" id="link-admin" class="admin-link" style="display:none; margin-right: 15px;">ADMIN</a>
-                
-                <a href="templates/perfil.html" class="profile-link">
-                    <span id="user-header-name" class="user-header-label">Músico</span>
-                    <img src="img/escudo.png" id="header-avatar-img" class="avatar-mini">
-                </a>
+<main>
 
-                <button class="btn-logout" id="btn-logout">Salir</button>
+    <section class="page-shell">
+        <div id="zona-directo" class="directo-banner">
+            <div>
+                <span class="directo-label">🔴 Directo activo</span>
+                <div id="texto-directo" class="directo-title">Sincronizando...</div>
+            </div>
+
+            <a href="#" id="btn-acceso-directo" class="btn-primary">Ver seguimiento en vivo</a>
+        </div>
+    </section>
+
+    <section id="actuaciones" class="page-shell section-block bloque-principal-actuaciones">
+        <div class="section-heading">
+            <div>
+                <h2>Actuaciones recientes</h2>
+                <p>Consulta los repertorios publicados, separados por Semana Santa y Glorias.</p>
             </div>
         </div>
-    </header>
 
-    <main>
-        <section id="fase-actualidad" class="scroll-section">
-            <div style="max-width: 1400px; width: 100%; margin: 0 auto;">
-                
-                <div id="zona-directo" style="display: none; background: rgba(255, 59, 59, 0.1); border: 1px solid #ff3b3b; border-radius: 8px; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px;">
-                    <div>
-                        <span style="color: #ff3b3b; font-weight: 900; letter-spacing: 2px;">🔴 EN DIRECTO:</span>
-                        <span id="texto-directo" style="color: white; margin-left: 10px; font-weight: bold;">Sincronizando...</span>
-                    </div>
-                    <a href="#" id="btn-acceso-directo" class="btn-gold-pro" style="text-decoration: none;">Ver Repertorio Live</a>
+        <div class="bloque-actuaciones-tipo">
+            <div class="titulo-actuaciones-linea">
+                <h3>Semana Santa</h3>
+
+                <a
+                    href="templates/analisis_general.html?tipo=Semana Santa&year=2026"
+                    class="btn-ciclo-completo"
+                >
+                    Analizar ciclo completo 📊
+                </a>
+            </div>
+
+            <div id="grid-semana-santa-home" class="recent-carousel">
+                <div class="empty-state">Cargando actuaciones de Semana Santa...</div>
+            </div>
+        </div>
+
+        <div class="bloque-actuaciones-tipo">
+            <div class="titulo-actuaciones-linea">
+                <h3>Glorias y Extraordinarias</h3>
+            </div>
+
+            <div id="grid-glorias-home" class="recent-carousel">
+                <div class="empty-state">Cargando Glorias y Extraordinarias...</div>
+            </div>
+        </div>
+
+        <div class="bloque-actuaciones-tipo">
+            <div class="titulo-actuaciones-linea">
+                <h3>Conciertos</h3>
+            </div>
+
+            <div id="grid-conciertos-home" class="recent-carousel">
+                <div class="empty-state">Cargando conciertos...</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="ultima-actuacion" class="page-shell section-block">
+        <div class="section-heading">
+            <div>
+                <h2>Última actuación destacada</h2>
+                <p>Accede rápidamente al último repertorio registrado y a su análisis completo.</p>
+            </div>
+        </div>
+
+        <div id="contenedor-ultima-actuacion">
+            <div class="empty-state">Cargando última actuación...</div>
+        </div>
+    </section>
+
+    <section class="page-shell section-block">
+        <div class="section-heading">
+            <div>
+                <h2>Accesos principales</h2>
+                <p>Navega rápidamente por las herramientas principales de la plataforma.</p>
+            </div>
+        </div>
+
+        <div class="quick-grid">
+            <a href="#actuaciones" class="quick-card">
+                <div>
+                    <div class="quick-icon">🎼</div>
+                    <h3>Actuaciones</h3>
+                    <p>Consulta históricos, repertorios interpretados y análisis de cada procesión.</p>
                 </div>
+                <span>Ver actuaciones</span>
+            </a>
 
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
-                    <h3 class="seccion-titulo-jc" style="margin-bottom: 0;">Semana Santa</h3>
-                    <a href="templates/analisis_general.html?tipo=Semana Santa&year=2026" 
-                    style="background: rgba(212, 175, 55, 0.1); color: var(--color-oro); border: 1px solid var(--color-oro); text-decoration: none; padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; display: flex; align-items: center; gap: 8px;"
-                    onmouseover="this.style.background='var(--color-oro)'; this.style.color='black';"
-                    onmouseout="this.style.background='rgba(212, 175, 55, 0.1)'; this.style.color='var(--color-oro)';"
-                    >
-                        <span>Analizar Ciclo Completo 📊</span>
-                    </a>
+            <a href="templates/catalogo.html" class="quick-card">
+                <div>
+                    <div class="quick-icon">📚</div>
+                    <h3>Repertorio</h3>
+                    <p>Busca marchas, escucha audios y abre enlaces de YouTube, Spotify y Patrimonio Musical.</p>
                 </div>
+                <span>Explorar catálogo</span>
+            </a>
 
-                <div id="grid-semana-santa" class="dashboard-horizontal"></div>
+            <a href="templates/comunidad.html" class="quick-card">
+                <div>
+                    <div class="quick-icon">👥</div>
+                    <h3>Comunidad</h3>
+                    <p>Descubre repertorios compartidos y participa con tus comentarios.</p>
+                </div>
+                <span>Entrar</span>
+            </a>
 
-                <h3 class="seccion-titulo-jc" style="margin-top: 80px;">Glorias y Extraordinarias</h3>
-                <div id="grid-glorias" class="dashboard-horizontal"></div>
-                
+            <a href="templates/simulacion.html" class="quick-card">
+                <div>
+                    <div class="quick-icon">📝</div>
+                    <h3>Simulador</h3>
+                    <p>Crea propuestas de repertorio para hermandades, glorias o actuaciones especiales.</p>
+                </div>
+                <span>Crear repertorio</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="page-shell section-block">
+        <div class="section-heading">
+            <div>
+                <h2>Resumen del catálogo</h2>
+                <p>Estado general del archivo musical conectado a Supabase.</p>
             </div>
-        </section>
 
-        <section id="fase-catalogo" class="scroll-section">
-            <div style="background: rgba(18, 18, 18, 0.6); border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 12px; padding: 80px 40px; text-align: center; backdrop-filter: blur(15px); max-width: 1000px; margin: 0 auto;">
-                <h2 style="color: var(--color-oro); font-size: 3rem; text-transform: uppercase; letter-spacing: 5px; margin: 0 0 20px 0;">Repertorio Maestro</h2>
-                <p style="color: #ddd; margin-bottom: 40px; font-size: 1.2rem;">Repertorio completo de nuestra formación para las procesiones. Entra y descubre sus secretos</p>
-                <a href="templates/catalogo.html" class="btn-gold-pro" style="font-size: 1.2rem; padding: 20px 45px; display: inline-block;">
-                    ABRIR REPERTORIO
-                </a>
+            <a href="templates/catalogo.html" class="btn-secondary">Abrir catálogo</a>
+        </div>
+
+        <div class="catalog-summary">
+            <div class="summary-box">
+                <span>Marchas registradas</span>
+                <strong id="resumen-total-marchas">--</strong>
             </div>
-        </section>
 
-        <section id="fase-herramientas" class="scroll-section">
-            <h3 class="seccion-titulo-jc" style="text-align: center; border: none; margin-bottom: 60px;">Laboratorio Técnico</h3>
-            <div id="grid-herramientas" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1200px; margin: 0 auto; width: 100%;">
-                <a href="templates/simulacion.html" style="background: rgba(18, 18, 18, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); padding: 50px; border-radius: 16px; text-align: center; text-decoration: none; transition: 0.4s; display: block;">
-                    <div style="font-size: 3.5rem; margin-bottom: 20px;">📝</div>
-                    <h3 style="color: white; text-transform: uppercase; margin: 0 0 10px 0;">Simulador</h3>
-                    <p style="color: #aaa; margin: 0; font-size: 0.9rem;">Crea tu propio callejero para una de nuestras hermandades o la suya propia.</p>
-                </a>
-                <a href="templates/comunidad.html" style="background: rgba(18, 18, 18, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); padding: 50px; border-radius: 16px; text-align: center; text-decoration: none; transition: 0.4s; display: block;">
-                    <div style="font-size: 3.5rem; margin-bottom: 20px;">👥</div>
-                    <h3 style="color: white; text-transform: uppercase; margin: 0 0 10px 0;">Comunidad</h3>
-                    <p style="color: #aaa; margin: 0; font-size: 0.9rem;">Repositorio de repertorios aportados por la comunidad.</p>
-                </a>
+            <div class="summary-box">
+                <span>Con audio interno</span>
+                <strong id="resumen-marchas-audio">--</strong>
             </div>
-        </section>
-    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js"></script>
-    <script src="js/hub.js"></script>
+            <div class="summary-box">
+                <span>Con enlace externo</span>
+                <strong id="resumen-marchas-enlaces">--</strong>
+            </div>
+        </div>
+    </section>
+
+    <section class="page-shell hero-home">
+        <div>
+            <div class="eyebrow">Archivo musical · Repertorios · Análisis</div>
+
+            <h1 class="hero-title">
+                Banda de Música
+                <span>Julián Cerdán</span>
+            </h1>
+
+            <p class="hero-subtitle">
+                Plataforma musical para reunir actuaciones, repertorios, análisis de crucetas,
+                audios internos, enlaces externos y aportaciones de la comunidad.
+            </p>
+
+            <div class="hero-actions">
+                <a href="templates/catalogo.html" class="btn-primary">Explorar catálogo</a>
+                <a href="templates/comunidad.html" class="btn-secondary">Ir a comunidad</a>
+            </div>
+        </div>
+
+        <aside class="hero-card">
+            <img src="img/escudo.png" alt="Escudo Julián Cerdán">
+            <h3>Archivo vivo de la banda</h3>
+            <p>
+                Una plataforma para reunir repertorios, análisis de crucetas, enlaces externos,
+                audios internos y aportaciones de la comunidad musical.
+            </p>
+        </aside>
+    </section>
+
+    <section class="page-shell admin-access">
+        <a href="templates/admin.html" id="link-admin-footer">Acceso administración</a>
+    </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/hub.js"></script>
 </body>
 </html>

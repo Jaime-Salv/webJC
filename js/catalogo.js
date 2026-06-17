@@ -307,14 +307,10 @@ function rellenarFichaMarcha(marcha) {
     setText('modal-localidad', marcha.localidad || '--');
     setText('modal-dedicatoria', marcha.dedicatoria || '--');
 
-    pintarTextoLargo('modal-historia', marcha.ficha_historia, 'Sin información histórica disponible.');
-    pintarTextoLargo('modal-analisis', marcha.ficha_analisis, 'Sin análisis musical disponible.');
-    pintarTextoLargo('modal-descripcion', marcha.descripcion_ia, 'Sin descripción disponible.');
-
     pintarAudioWeb(marcha);
     pintarYoutube(marcha.url_youtube);
     pintarSpotify(marcha.spotify_uri);
-    pintarFuentes(marcha.fuentes_ia);
+    pintarPatrimonioMusical(marcha);
 }
 
 function pintarAudioWeb(marcha) {
@@ -413,44 +409,19 @@ function pintarSpotify(spotifyUri) {
     texto.textContent = 'También puedes abrir esta marcha en Spotify:';
 
     const enlace = document.createElement('a');
+    enlace.className = 'btn-spotify';
     enlace.href = urlSpotify;
     enlace.target = '_blank';
     enlace.rel = 'noopener noreferrer';
     enlace.textContent = 'Abrir en Spotify';
-    enlace.style.display = 'inline-block';
-    enlace.style.background = '#1DB954';
-    enlace.style.color = '#000';
-    enlace.style.textDecoration = 'none';
-    enlace.style.fontWeight = '900';
-    enlace.style.textTransform = 'uppercase';
-    enlace.style.padding = '12px 16px';
-    enlace.style.borderRadius = '6px';
-    enlace.style.fontSize = '0.8rem';
 
     bloque.appendChild(texto);
     bloque.appendChild(enlace);
     contenedor.appendChild(bloque);
 }
 
-function pintarTextoLargo(idElemento, contenido, mensajeVacio) {
-    const elemento = document.getElementById(idElemento);
-
-    if (!elemento) {
-        return;
-    }
-
-    if (!contenido || String(contenido).trim() === '') {
-        elemento.classList.add('sin-dato');
-        elemento.textContent = mensajeVacio;
-        return;
-    }
-
-    elemento.classList.remove('sin-dato');
-    elemento.textContent = contenido;
-}
-
-function pintarFuentes(fuentes) {
-    const contenedor = document.getElementById('modal-fuentes');
+function pintarPatrimonioMusical(marcha) {
+    const contenedor = document.getElementById('modal-patrimonio');
 
     if (!contenedor) {
         return;
@@ -458,68 +429,36 @@ function pintarFuentes(fuentes) {
 
     contenedor.innerHTML = '';
 
-    if (!fuentes || fuentes.length === 0) {
-        const p = document.createElement('p');
-        p.className = 'sin-dato';
-        p.textContent = 'Sin fuentes registradas.';
-        contenedor.appendChild(p);
-        return;
+    const urlGuardada = marcha.url_patrimonio && String(marcha.url_patrimonio).trim() !== ''
+        ? String(marcha.url_patrimonio).trim()
+        : null;
+
+    const urlBusqueda = crearUrlBusquedaPatrimonio(marcha);
+
+    const texto = document.createElement('p');
+    texto.style.marginBottom = '10px';
+    texto.style.color = '#ccc';
+
+    if (urlGuardada) {
+        texto.textContent = 'Ficha externa recomendada:';
+    } else {
+        texto.textContent = 'No hay ficha enlazada todavía. Puedes buscar esta marcha en Patrimonio Musical:';
     }
 
-    let listaFuentes = fuentes;
+    const enlace = document.createElement('a');
+    enlace.className = 'btn-patrimonio';
+    enlace.href = urlGuardada || urlBusqueda;
+    enlace.target = '_blank';
+    enlace.rel = 'noopener noreferrer';
+    enlace.textContent = urlGuardada ? 'Ver ficha en Patrimonio Musical' : 'Buscar en Patrimonio Musical';
 
-    if (typeof fuentes === 'string') {
-        try {
-            listaFuentes = JSON.parse(fuentes);
-        } catch (error) {
-            listaFuentes = [fuentes];
-        }
-    }
+    const aviso = document.createElement('p');
+    aviso.className = 'nota-fuente-externa';
+    aviso.textContent = 'Enlace externo. La información pertenece a su fuente original.';
 
-    if (!Array.isArray(listaFuentes) || listaFuentes.length === 0) {
-        const p = document.createElement('p');
-        p.className = 'sin-dato';
-        p.textContent = 'Sin fuentes registradas.';
-        contenedor.appendChild(p);
-        return;
-    }
-
-    const ul = document.createElement('ul');
-    ul.className = 'fuentes-lista';
-
-    listaFuentes.forEach((fuente) => {
-        const li = document.createElement('li');
-
-        if (typeof fuente === 'string') {
-            if (fuente.startsWith('http')) {
-                const a = document.createElement('a');
-                a.href = fuente;
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-                a.textContent = fuente;
-                li.appendChild(a);
-            } else {
-                li.textContent = fuente;
-            }
-        } else if (fuente && typeof fuente === 'object') {
-            const texto = fuente.titulo || fuente.nombre || fuente.url || JSON.stringify(fuente);
-
-            if (fuente.url) {
-                const a = document.createElement('a');
-                a.href = fuente.url;
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-                a.textContent = texto;
-                li.appendChild(a);
-            } else {
-                li.textContent = texto;
-            }
-        }
-
-        ul.appendChild(li);
-    });
-
-    contenedor.appendChild(ul);
+    contenedor.appendChild(texto);
+    contenedor.appendChild(enlace);
+    contenedor.appendChild(aviso);
 }
 
 /* ============================================================
@@ -643,6 +582,15 @@ function convertirSpotifyUriAUrl(spotifyUri) {
     }
 
     return `https://open.spotify.com/track/${trackId}`;
+}
+
+function crearUrlBusquedaPatrimonio(marcha) {
+    const titulo = marcha?.titulo || '';
+    const autor = marcha?.autor || '';
+
+    const consulta = `site:patrimoniomusical.com/bd-marcha "${titulo}" "${autor}"`;
+
+    return `https://www.google.com/search?q=${encodeURIComponent(consulta)}`;
 }
 
 function gestionarHeaderSmart() {

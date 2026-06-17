@@ -11,6 +11,9 @@ let usuarioActual = null;
 let perfilActual = null;
 let marchaFichaActual = null;
 
+let conciertoAdminActual = null;
+let conciertosAdminCache = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
     const accesoPermitido = await comprobarAccesoAdmin();
 
@@ -21,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await cargarCatalogoEnMemoria();
     await comprobarEstadoSistema();
     await cargarUsuariosAdmin();
+    await cargarConciertosAdmin();
 
     const inputIdMarcha = document.getElementById('inp-id-marcha');
     const btnFinalizarEvento = document.getElementById('btn-finalizar-evento');
@@ -995,6 +999,563 @@ async function finalizarEvento() {
 
     } catch (error) {
         alert('Error al finalizar: ' + error.message);
+    }
+}
+
+/* ------------------------------------------------------------
+   MÓDULO 8: GESTIÓN DE CONCIERTOS
+------------------------------------------------------------ */
+
+async function cargarConciertosAdmin() {
+    const selector = document.getElementById('select-concierto-admin');
+
+    if (!selector) {
+        return;
+    }
+
+    selector.innerHTML = `<option value="">Cargando conciertos...</option>`;
+
+    try {
+        const { data, error } = await clienteSupabase
+            .from('conciertos')
+            .select('*')
+            .order('fecha', { ascending: false });
+
+        if (error) {
+            throw error;
+        }
+
+        conciertosAdminCache = data || [];
+
+        selector.innerHTML = `<option value="">Seleccionar concierto existente...</option>`;
+
+        conciertosAdminCache.forEach((concierto) => {
+            const option = document.createElement('option');
+            option.value = concierto.id_concierto;
+
+            const fecha = concierto.fecha || 'Sin fecha';
+            const estado = concierto.estado || 'Sin estado';
+
+            option.textContent = `${concierto.titulo} · ${fecha} · ${estado}`;
+            selector.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error('Error cargando conciertos:', error);
+        selector.innerHTML = `<option value="">Error cargando conciertos</option>`;
+    }
+}
+
+function nuevoConciertoAdmin() {
+    conciertoAdminActual = null;
+
+    const campos = [
+        'concierto-id',
+        'concierto-titulo',
+        'concierto-fecha',
+        'concierto-hora',
+        'concierto-lugar',
+        'concierto-localidad',
+        'concierto-cartel-url',
+        'concierto-descripcion'
+    ];
+
+    campos.forEach((id) => {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = '';
+    });
+
+    const estado = document.getElementById('concierto-estado');
+    if (estado) estado.value = 'Borrador';
+
+    const selector = document.getElementById('select-concierto-admin');
+    if (selector) selector.value = '';
+
+    const estadoTexto = document.getElementById('estado-concierto-admin');
+    if (estadoTexto) {
+        estadoTexto.style.color = '#aaa';
+        estadoTexto.textContent = 'Nuevo concierto. Rellena los datos y guarda.';
+    }
+
+    limpiarFormularioObraConciertoAdmin();
+    limpiarQRConciertoAdmin();
+
+    const listaObras = document.getElementById('lista-obras-concierto-admin');
+    if (listaObras) {
+        listaObras.innerHTML = `<p style="color:#888;">Guarda el concierto antes de añadir obras.</p>`;
+    }
+
+    setSiguienteOrdenObra(1);
+}
+
+function seleccionarConciertoAdmin() {
+    const selector = document.getElementById('select-concierto-admin');
+
+    if (!selector || !selector.value) {
+        nuevoConciertoAdmin();
+        return;
+    }
+
+    const idConcierto = Number(selector.value);
+    const concierto = conciertosAdminCache.find((item) => Number(item.id_concierto) === idConcierto);
+
+    if (!concierto) {
+        alert('No se ha encontrado el concierto seleccionado.');
+        return;
+    }
+
+    conciertoAdminActual = concierto;
+    pintarConciertoAdmin(concierto);
+    cargarObrasConciertoAdmin();
+    limpiarQRConciertoAdmin();
+}
+
+function pintarConciertoAdmin(concierto) {
+    setValorAdmin('concierto-id', concierto.id_concierto || '');
+    setValorAdmin('concierto-titulo', concierto.titulo || '');
+    setValorAdmin('concierto-fecha', concierto.fecha || '');
+    setValorAdmin('concierto-hora', concierto.hora ? String(concierto.hora).slice(0, 5) : '');
+    setValorAdmin('concierto-lugar', concierto.lugar || '');
+    setValorAdmin('concierto-localidad', concierto.localidad || '');
+    setValorAdmin('concierto-cartel-url', concierto.cartel_url || '');
+    setValorAdmin('concierto-estado', concierto.estado || 'Borrador');
+    setValorAdmin('concierto-descripcion', concierto.descripcion || '');
+
+    const estadoTexto = document.getElementById('estado-concierto-admin');
+
+    if (estadoTexto) {
+        estadoTexto.style.color = '#d4af37';
+        estadoTexto.textContent = `Concierto cargado: ${concierto.titulo}`;
+    }
+}
+
+async function guardarConciertoAdmin() {
+    const titulo = document.getElementById('concierto-titulo')?.value.trim();
+    const fecha = document.getElementById('concierto-fecha')?.value || null;
+    const hora = document.getElementById('concierto-hora')?.value || null;
+    const lugar = document.getElementById('concierto-lugar')?.value.trim() || null;
+    const localidad = document.getElementById('concierto-localidad')?.value.trim() || null;
+    let cartelUrl = document.getElementById('concierto-cartel-url')?.value.trim() || null;
+    const archivoCartel = document.getElementById('concierto-cartel-archivo')?.files?.[0] || null;
+    const estado = document.getElementById('concierto-estado')?.value || 'Borrador';
+    const descripcion = document.getElementById('concierto-descripcion')?.value.trim() || null;
+
+    const estadoTexto = document.getElementById('estado-concierto-admin');
+
+    if (!titulo) {
+        alert('El concierto necesita un título.');
+        return;
+    }
+
+    if (!['Borrador', 'Publicado', 'Oculto'].includes(estado)) {
+        alert('Estado no válido.');
+        return;
+    }
+
+    if (archivoCartel) {
+        if (!archivoCartel.type.startsWith('image/')) {
+            alert('El cartel debe ser un archivo de imagen.');
+            return;
+        }
+
+        cartelUrl = await subirCartelConciertoAdmin(archivoCartel, titulo);
+    }
+    const datosGuardar = {
+        titulo,
+        fecha,
+        hora,
+        lugar,
+        localidad,
+        descripcion,
+        cartel_url: cartelUrl,
+        estado,
+        actualizado_en: new Date().toISOString()
+    };
+
+    if (estadoTexto) {
+        estadoTexto.style.color = '#aaa';
+        estadoTexto.textContent = 'Guardando concierto...';
+    }
+
+    try {
+        let data = null;
+        let error = null;
+
+        if (conciertoAdminActual?.id_concierto) {
+            const respuesta = await clienteSupabase
+                .from('conciertos')
+                .update(datosGuardar)
+                .eq('id_concierto', conciertoAdminActual.id_concierto)
+                .select()
+                .single();
+
+            data = respuesta.data;
+            error = respuesta.error;
+        } else {
+            const respuesta = await clienteSupabase
+                .from('conciertos')
+                .insert([datosGuardar])
+                .select()
+                .single();
+
+            data = respuesta.data;
+            error = respuesta.error;
+        }
+
+        if (error) {
+            throw error;
+        }
+
+        conciertoAdminActual = data;
+
+        if (estadoTexto) {
+            estadoTexto.style.color = '#27ae60';
+            estadoTexto.textContent = 'Concierto guardado correctamente.';
+        }
+
+        await cargarConciertosAdmin();
+
+        const selector = document.getElementById('select-concierto-admin');
+        if (selector && conciertoAdminActual?.id_concierto) {
+            selector.value = conciertoAdminActual.id_concierto;
+        }
+
+        pintarConciertoAdmin(conciertoAdminActual);
+        await cargarObrasConciertoAdmin();
+
+        const inputCartelArchivo = document.getElementById('concierto-cartel-archivo');
+        if (inputCartelArchivo) {
+            inputCartelArchivo.value = '';
+        }
+
+    } catch (error) {
+        console.error('Error guardando concierto:', error);
+
+        if (estadoTexto) {
+            estadoTexto.style.color = '#ff7070';
+            estadoTexto.textContent = 'No se ha podido guardar el concierto.';
+        }
+
+        alert('Error guardando concierto: ' + error.message);
+    }
+}
+
+async function cargarObrasConciertoAdmin() {
+    const lista = document.getElementById('lista-obras-concierto-admin');
+
+    if (!lista) {
+        return;
+    }
+
+    if (!conciertoAdminActual?.id_concierto) {
+        lista.innerHTML = `<p style="color:#888;">Selecciona o guarda un concierto para ver sus obras.</p>`;
+        return;
+    }
+
+    lista.innerHTML = `<p style="color:#888;">Cargando obras...</p>`;
+
+    const { data, error } = await clienteSupabase
+        .from('concierto_obras')
+        .select('*')
+        .eq('id_concierto', conciertoAdminActual.id_concierto)
+        .order('orden', { ascending: true });
+
+    if (error) {
+        console.error('Error cargando obras:', error);
+        lista.innerHTML = `<p style="color:#ff7070;">No se han podido cargar las obras.</p>`;
+        return;
+    }
+
+    const obras = data || [];
+
+    if (obras.length === 0) {
+        lista.innerHTML = `<p style="color:#888;">Este concierto todavía no tiene obras añadidas.</p>`;
+        setSiguienteOrdenObra(1);
+        return;
+    }
+
+    lista.innerHTML = obras.map((obra) => `
+        <div class="obra-admin-item">
+            <div class="obra-admin-num">#${escaparHTML(obra.orden)}</div>
+
+            <div>
+                <div class="obra-admin-titulo">${escaparHTML(obra.titulo || 'Obra sin título')}</div>
+                <div class="obra-admin-sub">
+                    ${escaparHTML(obra.compositor || 'Compositor no indicado')}
+                    ${obra.duracion_aprox ? ' · ' + escaparHTML(obra.duracion_aprox) : ''}
+                </div>
+            </div>
+
+            <button type="button" class="btn-mini-danger" onclick="eliminarObraConciertoAdmin(${obra.id_obra})">
+                Eliminar
+            </button>
+        </div>
+    `).join('');
+
+    const ultimoOrden = Math.max(...obras.map((obra) => Number(obra.orden) || 0));
+    setSiguienteOrdenObra(ultimoOrden + 1);
+}
+
+async function guardarObraConciertoAdmin() {
+    if (!conciertoAdminActual?.id_concierto) {
+        alert('Primero guarda o selecciona un concierto.');
+        return;
+    }
+
+    const orden = Number(document.getElementById('obra-orden')?.value);
+    const titulo = document.getElementById('obra-titulo')?.value.trim();
+    const compositor = document.getElementById('obra-compositor')?.value.trim() || null;
+    const duracion = document.getElementById('obra-duracion')?.value.trim() || null;
+    const descripcion = document.getElementById('obra-descripcion')?.value.trim() || null;
+    const youtube = document.getElementById('obra-youtube')?.value.trim() || null;
+    const spotify = document.getElementById('obra-spotify')?.value.trim() || null;
+    const enlaceExterno = document.getElementById('obra-enlace-externo')?.value.trim() || null;
+    const notas = document.getElementById('obra-notas')?.value.trim() || null;
+
+    if (!orden || orden <= 0) {
+        alert('Introduce un orden válido.');
+        return;
+    }
+
+    if (!titulo) {
+        alert('La obra necesita un título.');
+        return;
+    }
+
+    try {
+        const { error } = await clienteSupabase
+            .from('concierto_obras')
+            .insert([{
+                id_concierto: conciertoAdminActual.id_concierto,
+                orden,
+                titulo,
+                compositor,
+                descripcion,
+                duracion_aprox: duracion,
+                enlace_youtube: youtube,
+                enlace_spotify: spotify,
+                enlace_externo: enlaceExterno,
+                notas,
+                actualizado_en: new Date().toISOString()
+            }]);
+
+        if (error) {
+            throw error;
+        }
+
+        limpiarFormularioObraConciertoAdmin();
+        await cargarObrasConciertoAdmin();
+
+    } catch (error) {
+        console.error('Error guardando obra:', error);
+        alert('Error guardando obra: ' + error.message);
+    }
+}
+
+async function eliminarObraConciertoAdmin(idObra) {
+    if (!idObra) {
+        return;
+    }
+
+    const confirmar = confirm('¿Eliminar esta obra del programa?');
+
+    if (!confirmar) {
+        return;
+    }
+
+    try {
+        const { error } = await clienteSupabase
+            .from('concierto_obras')
+            .delete()
+            .eq('id_obra', idObra);
+
+        if (error) {
+            throw error;
+        }
+
+        await cargarObrasConciertoAdmin();
+
+    } catch (error) {
+        console.error('Error eliminando obra:', error);
+        alert('No se ha podido eliminar la obra: ' + error.message);
+    }
+}
+
+function limpiarFormularioObraConciertoAdmin() {
+    const ids = [
+        'obra-orden',
+        'obra-titulo',
+        'obra-compositor',
+        'obra-duracion',
+        'obra-descripcion',
+        'obra-youtube',
+        'obra-spotify',
+        'obra-enlace-externo',
+        'obra-notas'
+    ];
+
+    ids.forEach((id) => {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = '';
+    });
+}
+
+function setSiguienteOrdenObra(orden) {
+    const inputOrden = document.getElementById('obra-orden');
+
+    if (inputOrden) {
+        inputOrden.value = orden;
+    }
+}
+
+function obtenerUrlPublicaConciertoAdmin() {
+    if (!conciertoAdminActual?.id_concierto) {
+        return null;
+    }
+
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/templates/concierto.html?id=${conciertoAdminActual.id_concierto}`;
+}
+
+function abrirProgramaConciertoAdmin() {
+    const url = obtenerUrlPublicaConciertoAdmin();
+
+    if (!url) {
+        alert('Primero guarda o selecciona un concierto.');
+        return;
+    }
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function copiarEnlaceConciertoAdmin() {
+    const url = obtenerUrlPublicaConciertoAdmin();
+
+    if (!url) {
+        alert('Primero guarda o selecciona un concierto.');
+        return;
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url)
+            .then(() => alert('Enlace público copiado.'))
+            .catch(() => fallbackCopiarTextoAdmin(url));
+    } else {
+        fallbackCopiarTextoAdmin(url);
+    }
+}
+
+function fallbackCopiarTextoAdmin(texto) {
+    const inputTemporal = document.createElement('input');
+    inputTemporal.value = texto;
+    document.body.appendChild(inputTemporal);
+    inputTemporal.select();
+
+    try {
+        document.execCommand('copy');
+        alert('Enlace copiado.');
+    } catch (error) {
+        alert('No se ha podido copiar. Copia manualmente: ' + texto);
+    }
+
+    document.body.removeChild(inputTemporal);
+}
+
+async function generarQRConciertoAdmin() {
+    const url = obtenerUrlPublicaConciertoAdmin();
+
+    if (!url) {
+        alert('Primero guarda o selecciona un concierto.');
+        return;
+    }
+
+    const box = document.getElementById('qr-concierto-admin');
+    const canvas = document.getElementById('qr-concierto-canvas');
+    const textoUrl = document.getElementById('url-publica-concierto-admin');
+
+    if (!box || !canvas) {
+        alert('No se encuentra el contenedor del QR.');
+        return;
+    }
+
+    if (typeof QRCode === 'undefined') {
+        alert('No se ha cargado la librería de QR. Revisa la conexión o el script qrcode.min.js.');
+        return;
+    }
+
+    try {
+        await QRCode.toCanvas(canvas, url, {
+            width: 260,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#ffffff'
+            }
+        });
+
+        box.classList.add('activo');
+
+        if (textoUrl) {
+            textoUrl.textContent = url;
+        }
+
+    } catch (error) {
+        console.error('Error generando QR:', error);
+        alert('No se ha podido generar el QR.');
+    }
+}
+
+function limpiarQRConciertoAdmin() {
+    const box = document.getElementById('qr-concierto-admin');
+    const canvas = document.getElementById('qr-concierto-canvas');
+    const textoUrl = document.getElementById('url-publica-concierto-admin');
+
+    if (box) box.classList.remove('activo');
+    if (textoUrl) textoUrl.textContent = '';
+
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+}
+
+async function subirCartelConciertoAdmin(archivoCartel, tituloConcierto) {
+    const extension = obtenerExtensionArchivo(archivoCartel.name) || 'jpg';
+    const nombreBase = normalizarNombreArchivo(`concierto-${tituloConcierto || 'cartel'}-${Date.now()}`);
+    const rutaArchivo = `conciertos/${nombreBase}.${extension}`;
+
+    const { error: errorUpload } = await clienteSupabase
+        .storage
+        .from('carteles')
+        .upload(rutaArchivo, archivoCartel, {
+            cacheControl: '3600',
+            upsert: true,
+            contentType: archivoCartel.type || 'image/jpeg'
+        });
+
+    if (errorUpload) {
+        throw errorUpload;
+    }
+
+    const { data } = clienteSupabase
+        .storage
+        .from('carteles')
+        .getPublicUrl(rutaArchivo);
+
+    if (!data || !data.publicUrl) {
+        throw new Error('No se ha podido obtener la URL pública del cartel.');
+    }
+
+    return data.publicUrl;
+}
+
+function setValorAdmin(id, valor) {
+    const campo = document.getElementById(id);
+
+    if (campo) {
+        campo.value = valor;
     }
 }
 

@@ -317,6 +317,100 @@
         }
 
     
+
+    .cabecera-repertorio-paginado {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 22px;
+    }
+
+    .timeline-resumen {
+        color: #888;
+        font-size: 0.82rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .badge-paginacion-repertorio {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        color: var(--color-oro);
+        background: rgba(212, 175, 55, 0.06);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 0.68rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .timeline-paginacion {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(212, 175, 55, 0.18);
+        flex-wrap: wrap;
+    }
+
+    .btn-pagina-timeline {
+        border: 1px solid rgba(212, 175, 55, 0.55);
+        background: rgba(212, 175, 55, 0.08);
+        color: var(--color-oro);
+        border-radius: 999px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 900;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        transition: 0.2s;
+    }
+
+    .btn-pagina-timeline:hover:not(:disabled) {
+        background: var(--color-oro);
+        color: #000;
+    }
+
+    .btn-pagina-timeline:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+    }
+
+    .indicador-pagina-timeline {
+        color: #aaa;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .btn-patrimonio-analisis {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 92px;
+        height: 32px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--color-oro);
+        border: 1px solid rgba(212, 175, 55, 0.55);
+        text-decoration: none;
+        font-size: 0.64rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .btn-patrimonio-analisis:hover {
+        background: var(--color-oro);
+        color: #000;
+    }
+
     .acciones-marcha-analisis {
         display: flex;
         flex-direction: column;
@@ -346,7 +440,101 @@
     }
 
     @media (max-width: 720px) {
-        .acciones-marcha-analisis {
+    
+    .cabecera-repertorio-paginado {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 22px;
+    }
+
+    .timeline-resumen {
+        color: #888;
+        font-size: 0.82rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .badge-paginacion-repertorio {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        color: var(--color-oro);
+        background: rgba(212, 175, 55, 0.06);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 0.68rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .timeline-paginacion {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(212, 175, 55, 0.18);
+        flex-wrap: wrap;
+    }
+
+    .btn-pagina-timeline {
+        border: 1px solid rgba(212, 175, 55, 0.55);
+        background: rgba(212, 175, 55, 0.08);
+        color: var(--color-oro);
+        border-radius: 999px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 900;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        transition: 0.2s;
+    }
+
+    .btn-pagina-timeline:hover:not(:disabled) {
+        background: var(--color-oro);
+        color: #000;
+    }
+
+    .btn-pagina-timeline:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+    }
+
+    .indicador-pagina-timeline {
+        color: #aaa;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .btn-patrimonio-analisis {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 92px;
+        height: 32px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--color-oro);
+        border: 1px solid rgba(212, 175, 55, 0.55);
+        text-decoration: none;
+        font-size: 0.64rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .btn-patrimonio-analisis:hover {
+        background: var(--color-oro);
+        color: #000;
+    }
+
+    .acciones-marcha-analisis {
             gap: 7px;
         }
 
@@ -355,6 +543,32 @@
             height: 34px;
             font-size: 0.66rem;
         }
+
+        .cabecera-repertorio-paginado {
+            flex-direction: column;
+            margin-bottom: 16px;
+        }
+
+        .badge-paginacion-repertorio {
+            font-size: 0.62rem;
+            padding: 7px 10px;
+        }
+
+        .timeline-paginacion {
+            gap: 8px;
+        }
+
+        .btn-pagina-timeline {
+            padding: 10px 12px;
+            font-size: 0.66rem;
+        }
+
+        .btn-patrimonio-analisis {
+            min-width: 86px;
+            height: 34px;
+            font-size: 0.6rem;
+        }
+
     }  
     </style>
 </head>
@@ -469,8 +683,16 @@
             </div>
 
             <div class="panel-repertorio">
-                <h3 class="seccion-titulo-jc" style="border:none; margin-bottom: 30px; font-size: 1.4rem;">Cronología</h3>
+                <div class="cabecera-repertorio-paginado">
+                    <div>
+                        <h3 class="seccion-titulo-jc" style="border:none; margin-bottom: 8px; font-size: 1.4rem;">Cronología</h3>
+                        <p id="timeline-resumen" class="timeline-resumen">Cargando repertorio...</p>
+                    </div>
+                    <span class="badge-paginacion-repertorio">15 por página</span>
+                </div>
+
                 <div id="timeline-contenedor" class="timeline"></div>
+                <div id="timeline-paginacion" class="timeline-paginacion"></div>
             </div>
         </div>
     </main>
