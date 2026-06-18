@@ -14,7 +14,7 @@ exports.handler = async (event) => {
         if (!admin) return response(403, { error: 'Acceso denegado' });
         configureWebPush();
 
-        const { idProcesion, hermandad, localidad } = JSON.parse(event.body || '{}');
+        const { idProcesion, hermandad, localidad, prueba } = JSON.parse(event.body || '{}');
         if (!idProcesion || !hermandad) return response(400, { error: 'Datos del directo incompletos' });
 
         const subscriptionsResponse = await supabaseRequest(
@@ -32,6 +32,8 @@ exports.handler = async (event) => {
 
         let sent = 0;
         let removed = 0;
+        let failed = 0;
+        const errors = [];
 
         await Promise.all(subscriptions.map(async (item) => {
             try {
@@ -49,13 +51,31 @@ exports.handler = async (event) => {
                     );
                     return;
                 }
-                console.error('Error enviando push:', error.message);
+
+                failed += 1;
+                const detail = {
+                    statusCode: error.statusCode || null,
+                    message: error.body || error.message || 'Error desconocido'
+                };
+                errors.push(detail);
+                console.error('Error enviando push:', detail);
             }
         }));
 
-        return response(200, { ok: true, sent, removed });
+        return response(200, {
+            ok: true,
+            test: Boolean(prueba),
+            totalSubscriptions: subscriptions.length,
+            sent,
+            removed,
+            failed,
+            errors: errors.slice(0, 5)
+        });
     } catch (error) {
         console.error(error);
-        return response(500, { error: 'No se han podido enviar los avisos' });
+        return response(500, {
+            error: 'No se han podido enviar los avisos',
+            detail: error.message || 'Error desconocido'
+        });
     }
 };

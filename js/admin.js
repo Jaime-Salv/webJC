@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const inputIdMarcha = document.getElementById('inp-id-marcha');
     const btnFinalizarEvento = document.getElementById('btn-finalizar-evento');
     const btnDescartarEvento = document.getElementById('btn-descartar-evento');
+    const btnProbarNotificacion = document.getElementById('btn-probar-notificacion');
     const inputFichaIdMarcha = document.getElementById('ficha-id-marcha');
 
     if (inputIdMarcha) {
@@ -43,6 +44,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnDescartarEvento) {
         btnDescartarEvento.addEventListener('click', descartarEvento);
+    }
+
+    if (btnProbarNotificacion) {
+        btnProbarNotificacion.addEventListener('click', probarNotificacionDirecto);
     }
 
     if (inputFichaIdMarcha) {
@@ -455,6 +460,8 @@ async function iniciarNuevaProcesion() {
 }
 
 async function enviarAvisoInicioDirecto(procesion) {
+    const estado = document.getElementById('estado-push-admin');
+
     try {
         const { data: sesionData } = await clienteSupabase.auth.getSession();
         const token = sesionData.session?.access_token;
@@ -473,17 +480,112 @@ async function enviarAvisoInicioDirecto(procesion) {
             })
         });
 
+        const resultado = await respuesta.json().catch(() => ({}));
+
         if (!respuesta.ok) {
-            console.warn('El directo se activó, pero no se pudieron enviar los avisos.');
+            const detalle = resultado.detail || resultado.error || `Error HTTP ${respuesta.status}`;
+            actualizarEstadoPushAdmin(`El directo se activó, pero el aviso falló: ${detalle}`, true);
             return;
         }
 
-        const resultado = await respuesta.json();
-        console.log(`Avisos de directo enviados: ${resultado.sent || 0}`);
+        mostrarResultadoEnvioPush(resultado, 'Aviso de directo');
     } catch (error) {
         // La activación del directo no debe fallar si el servicio push no está disponible.
         console.warn('No se han podido enviar los avisos de directo:', error);
+        actualizarEstadoPushAdmin(`No se ha podido contactar con el servicio de avisos: ${error.message}`, true);
     }
+}
+
+async function probarNotificacionDirecto() {
+    const boton = document.getElementById('btn-probar-notificacion');
+
+    try {
+        if (boton) {
+            boton.disabled = true;
+            boton.textContent = 'Enviando prueba...';
+        }
+
+        actualizarEstadoPushAdmin('Contactando con el servicio de notificaciones...');
+
+        const { data: sesionData } = await clienteSupabase.auth.getSession();
+        const token = sesionData.session?.access_token;
+
+        if (!token) {
+            throw new Error('No hay una sesión de administrador válida.');
+        }
+
+        const respuesta = await fetch('/.netlify/functions/push-live', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                idProcesion: 'prueba',
+                hermandad: 'Notificación de prueba',
+                localidad: 'Banda de Música Julián Cerdán',
+                prueba: true
+            })
+        });
+
+        const resultado = await respuesta.json().catch(() => ({}));
+
+        if (!respuesta.ok) {
+            throw new Error(resultado.detail || resultado.error || `Error HTTP ${respuesta.status}`);
+        }
+
+        mostrarResultadoEnvioPush(resultado, 'Prueba');
+    } catch (error) {
+        actualizarEstadoPushAdmin(`Prueba fallida: ${error.message}`, true);
+    } finally {
+        if (boton) {
+            boton.disabled = false;
+            boton.textContent = 'Probar notificación';
+        }
+    }
+}
+
+function mostrarResultadoEnvioPush(resultado, prefijo) {
+    const total = Number(resultado.totalSubscriptions) || 0;
+    const enviados = Number(resultado.sent) || 0;
+    const fallidos = Number(resultado.failed) || 0;
+    const eliminados = Number(resultado.removed) || 0;
+
+    if (total === 0) {
+        actualizarEstadoPushAdmin(
+            `${prefijo}: no hay suscripciones guardadas en Supabase. Activa primero los avisos desde el móvil.`,
+            true
+        );
+        return;
+    }
+
+    if (enviados > 0 && fallidos === 0) {
+        actualizarEstadoPushAdmin(
+            `${prefijo}: ${enviados} notificación${enviados === 1 ? '' : 'es'} enviada${enviados === 1 ? '' : 's'} correctamente.`,
+            false,
+            true
+        );
+        return;
+    }
+
+    const primerError = resultado.errors?.[0];
+    const detalle = primerError
+        ? ` Código ${primerError.statusCode || '--'}: ${primerError.message}`
+        : '';
+
+    actualizarEstadoPushAdmin(
+        `${prefijo}: ${enviados} enviadas, ${fallidos} fallidas y ${eliminados} suscripciones caducadas eliminadas.${detalle}`,
+        true
+    );
+}
+
+function actualizarEstadoPushAdmin(mensaje, esError = false, esCorrecto = false) {
+    const estado = document.getElementById('estado-push-admin');
+    if (!estado) return;
+
+    estado.textContent = mensaje;
+    estado.classList.toggle('error', esError);
+    estado.classList.toggle('correcto', esCorrecto);
 }
 
 /* ------------------------------------------------------------

@@ -801,6 +801,44 @@
             background: rgba(39,174,96,0.08);
         }
 
+        .btn-test-push {
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px 12px;
+            border: 1px solid rgba(212,175,55,0.45);
+            border-radius: 999px;
+            background: transparent;
+            color: var(--color-oro);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.56rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .estado-push-admin {
+            margin: -8px 0 20px;
+            padding: 12px 14px;
+            border: 1px solid #282828;
+            border-radius: 8px;
+            background: #0c0c0c;
+            color: #888;
+            font-size: 0.68rem;
+            line-height: 1.5;
+        }
+
+        .estado-push-admin.correcto {
+            color: #79dda0;
+            border-color: rgba(39,174,96,0.45);
+            background: rgba(39,174,96,0.07);
+        }
+
+        .estado-push-admin.error {
+            color: #ff9990;
+            border-color: rgba(231,76,60,0.45);
+            background: rgba(231,76,60,0.07);
+        }
+
         .header-admin-actions {
             display: flex;
             align-items: center;
@@ -1005,7 +1043,16 @@
                         <span>Operación en tiempo real</span>
                         <h1>Directo</h1>
                     </div>
-                    <div id="admin-live-status" class="live-status-pill">● Sin señal activa</div>
+                    <div>
+                        <div id="admin-live-status" class="live-status-pill">● Sin señal activa</div>
+                        <button type="button" id="btn-probar-notificacion" class="btn-test-push">
+                            Probar notificación
+                        </button>
+                    </div>
+                </div>
+
+                <div id="estado-push-admin" class="estado-push-admin">
+                    Envía un aviso de prueba al móvil antes de iniciar una actuación real.
                 </div>
 
                 <div class="admin-module-grid">
