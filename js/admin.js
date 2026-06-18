@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await comprobarEstadoSistema();
     await cargarUsuariosAdmin();
     await cargarConciertosAdmin();
+    prepararNavegacionAdmin();
+    await actualizarResumenAdmin();
 
     const inputIdMarcha = document.getElementById('inp-id-marcha');
     const btnFinalizarEvento = document.getElementById('btn-finalizar-evento');
@@ -46,6 +48,104 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
+
+/* ------------------------------------------------------------
+   NAVEGACIÓN Y RESUMEN DE LA CONSOLA
+------------------------------------------------------------ */
+
+function prepararNavegacionAdmin() {
+    const botones = document.querySelectorAll('[data-admin-target]');
+    const accesosRapidos = document.querySelectorAll('[data-admin-go]');
+
+    botones.forEach((boton) => {
+        boton.addEventListener('click', () => mostrarVistaAdmin(boton.dataset.adminTarget));
+    });
+
+    accesosRapidos.forEach((boton) => {
+        boton.addEventListener('click', () => mostrarVistaAdmin(boton.dataset.adminGo));
+    });
+
+    const nombreAdmin = perfilActual?.username || usuarioActual?.email?.split('@')[0] || 'Administrador';
+    const etiquetaNombre = document.getElementById('admin-sidebar-name');
+    if (etiquetaNombre) etiquetaNombre.textContent = nombreAdmin;
+
+    const vistaInicial = window.location.hash.replace('#', '');
+    const vistaValida = document.querySelector(`[data-admin-view="${vistaInicial}"]`);
+
+    if (vistaInicial && vistaValida) {
+        mostrarVistaAdmin(vistaInicial, false);
+    }
+}
+
+function mostrarVistaAdmin(nombreVista, actualizarHash = true) {
+    const vista = document.querySelector(`[data-admin-view="${nombreVista}"]`);
+    if (!vista) return;
+
+    document.querySelectorAll('[data-admin-view]').forEach((seccion) => {
+        seccion.classList.toggle('activa', seccion === vista);
+    });
+
+    document.querySelectorAll('[data-admin-target]').forEach((boton) => {
+        boton.classList.toggle('activo', boton.dataset.adminTarget === nombreVista);
+    });
+
+    if (actualizarHash) {
+        window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}#${nombreVista}`);
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function actualizarResumenAdmin() {
+    const resumenCatalogo = document.getElementById('resumen-catalogo');
+    const resumenConciertos = document.getElementById('resumen-conciertos');
+    const detalleConciertos = document.getElementById('resumen-conciertos-detalle');
+    const resumenUsuarios = document.getElementById('resumen-usuarios');
+
+    if (resumenCatalogo) resumenCatalogo.textContent = catalogoCache.length;
+    if (resumenConciertos) resumenConciertos.textContent = conciertosAdminCache.length;
+
+    const publicados = conciertosAdminCache.filter((concierto) => concierto.estado === 'Publicado').length;
+    const borradores = conciertosAdminCache.filter((concierto) => concierto.estado === 'Borrador').length;
+
+    if (detalleConciertos) {
+        detalleConciertos.textContent = `${publicados} publicados · ${borradores} borradores`;
+    }
+
+    try {
+        const { count } = await clienteSupabase
+            .from('perfiles')
+            .select('*', { count: 'exact', head: true });
+
+        if (resumenUsuarios) resumenUsuarios.textContent = count || 0;
+    } catch (error) {
+        if (resumenUsuarios) resumenUsuarios.textContent = '--';
+    }
+
+    actualizarEstadoDirectoAdmin();
+}
+
+function actualizarEstadoDirectoAdmin() {
+    const resumen = document.getElementById('resumen-directo');
+    const detalle = document.getElementById('resumen-directo-detalle');
+    const estado = document.getElementById('admin-live-status');
+
+    if (procesionActiva) {
+        if (resumen) resumen.textContent = 'Activo';
+        if (detalle) detalle.textContent = `${procesionActiva.hermandad} · ${procesionActiva.localidad}`;
+        if (estado) {
+            estado.textContent = `● ${procesionActiva.hermandad}`;
+            estado.classList.add('activo');
+        }
+    } else {
+        if (resumen) resumen.textContent = 'Inactivo';
+        if (detalle) detalle.textContent = 'No hay ninguna actuación activa.';
+        if (estado) {
+            estado.textContent = '● Sin señal activa';
+            estado.classList.remove('activo');
+        }
+    }
+}
 
 /* ------------------------------------------------------------
    MÓDULO 0: SEGURIDAD DE ACCESO ADMIN
@@ -241,6 +341,7 @@ function activarModoInyeccion() {
     }
 
     cargarHistorialTransaccional();
+    actualizarEstadoDirectoAdmin();
 }
 
 function desactivarModoInyeccion() {
@@ -257,6 +358,8 @@ function desactivarModoInyeccion() {
         panelInyeccion.style.opacity = '0.5';
         panelInyeccion.style.pointerEvents = 'none';
     }
+
+    actualizarEstadoDirectoAdmin();
 }
 
 /* ------------------------------------------------------------
@@ -325,6 +428,7 @@ async function iniciarNuevaProcesion() {
 
         procesionActiva = data;
         activarModoInyeccion();
+        await enviarAvisoInicioDirecto(data);
 
     } catch (error) {
         alert('Fallo al iniciar directo: ' + error.message);
@@ -335,6 +439,38 @@ async function iniciarNuevaProcesion() {
             btnSend.innerText = 'ACTIVAR DIRECTO';
             btnSend.disabled = false;
         }
+    }
+}
+
+async function enviarAvisoInicioDirecto(procesion) {
+    try {
+        const { data: sesionData } = await clienteSupabase.auth.getSession();
+        const token = sesionData.session?.access_token;
+        if (!token) return;
+
+        const respuesta = await fetch('/.netlify/functions/push-live', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                idProcesion: procesion.id_procesion,
+                hermandad: procesion.hermandad,
+                localidad: procesion.localidad
+            })
+        });
+
+        if (!respuesta.ok) {
+            console.warn('El directo se activó, pero no se pudieron enviar los avisos.');
+            return;
+        }
+
+        const resultado = await respuesta.json();
+        console.log(`Avisos de directo enviados: ${resultado.sent || 0}`);
+    } catch (error) {
+        // La activación del directo no debe fallar si el servicio push no está disponible.
+        console.warn('No se han podido enviar los avisos de directo:', error);
     }
 }
 

@@ -2,11 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comunidad - Julián Cerdán</title>
     
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../img/icon-192.png">
+    <meta name="theme-color" content="#050505">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -94,10 +97,79 @@
         .comentario-item { font-size: 0.85rem; background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-bottom: 1px solid #222; line-height: 1.5; }
         .input-comentario { width: 100%; padding: 15px; background: #0a0a0a; border: 1px solid #333; color: white; border-radius: 8px; font-family: 'Montserrat'; font-size: 0.9rem; }
 
+        /* EXPLORACIÓN DEL FEED */
+        .feed-principal { min-width: 0; }
+        .feed-toolbar { background: rgba(18,18,18,0.92); border: 1px solid #222; border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+        .feed-toolbar h1 { color: white; font-size: 1.3rem; margin: 0 0 6px; }
+        .feed-toolbar p { color: #777; font-size: 0.75rem; margin: 0 0 16px; line-height: 1.5; }
+        .feed-controles { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 10px; }
+        .feed-input { width: 100%; min-width: 0; padding: 13px 14px; border-radius: 7px; border: 1px solid #333; background: #090909; color: white; font-family: 'Montserrat'; }
+        .feed-input:focus { outline: none; border-color: var(--color-oro); }
+        .feed-resumen { color: #777; font-size: 0.68rem; margin-top: 12px; }
+        .post-description { color: #aaa; font-size: 0.78rem; line-height: 1.55; margin: 0 0 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .post-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 17px; }
+        .post-tag { border: 1px solid #303030; background: #0c0c0c; color: #999; border-radius: 999px; padding: 6px 9px; font-size: 0.56rem; font-weight: 800; text-transform: uppercase; }
+        .post-social { display: flex; align-items: center; gap: 8px; }
+        .post-social-count { color: #777; border: 1px solid #292929; border-radius: 999px; padding: 8px 11px; font-size: 0.67rem; }
+        .post-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 14px; }
+        .btn-post-secundario { border: 1px solid #333; background: #101010; color: #bbb; border-radius: 6px; padding: 12px 8px; font-size: 0.62rem; font-weight: 900; text-transform: uppercase; cursor: pointer; }
+        .btn-post-secundario:hover { border-color: var(--color-oro); color: var(--color-oro); }
+        .estado-feed { text-align: center; color: #777; padding: 65px 25px; border: 1px dashed #333; border-radius: 12px; background: rgba(10,10,10,0.7); line-height: 1.6; }
+
+        /* DETALLE Y COMPARADOR */
+        .modal-project-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
+        .modal-summary-box { background: #090909; border: 1px solid #222; border-radius: 7px; padding: 12px 8px; text-align: center; }
+        .modal-summary-box strong { display: block; color: var(--color-oro); font-size: 0.92rem; }
+        .modal-summary-box span { color: #666; font-size: 0.52rem; text-transform: uppercase; }
+        .item-marcha-info { min-width: 0; flex: 1; }
+        .item-marcha-info strong { display: block; color: white; font-size: 0.82rem; margin-top: 4px; }
+        .item-marcha-info small { color: #777; font-size: 0.62rem; display: block; margin-top: 4px; }
+        .item-marcha-actions { display: flex; gap: 6px; }
+        .btn-media { border: 1px solid #333; background: #0b0b0b; color: #aaa; border-radius: 5px; padding: 7px 9px; cursor: pointer; font-size: 0.58rem; font-weight: 800; }
+        .btn-media:hover { color: var(--color-oro); border-color: var(--color-oro); }
+        .btn-media:disabled { opacity: 0.25; cursor: not-allowed; }
+        .mejora-card { border-left: 3px solid var(--color-azul); padding: 13px; background: rgba(52,152,219,0.06); margin-bottom: 10px; border-radius: 0 7px 7px 0; }
+        .mejora-card-header { color: #67b7ec; font-size: 0.64rem; }
+        .mejora-card h5 { margin: 6px 0 10px; font-size: 0.82rem; }
+        .comparador-resumen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 15px 0; }
+        .comparador-dato { background: #090909; border-radius: 6px; padding: 10px; text-align: center; border: 1px solid #222; }
+        .comparador-dato strong { display: block; color: #67b7ec; font-size: 1rem; }
+        .comparador-dato span { color: #666; font-size: 0.5rem; text-transform: uppercase; }
+        .cambio-lista { display: flex; flex-direction: column; gap: 6px; margin: 12px 0 18px; }
+        .cambio-item { padding: 9px 11px; border-radius: 6px; font-size: 0.67rem; line-height: 1.4; }
+        .cambio-anadida { background: rgba(46,204,113,0.08); border: 1px solid rgba(46,204,113,0.25); color: #7fdda6; }
+        .cambio-eliminada { background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.25); color: #ef9a91; }
+        .cambio-movida { background: rgba(52,152,219,0.08); border: 1px solid rgba(52,152,219,0.25); color: #8bc9f1; }
+        .cambio-ubicacion { background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.25); color: #dbc36f; }
+        .comentario-meta { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 5px; }
+        .comentario-meta time { color: #666; font-size: 0.62rem; }
+
+        /* REPRODUCTOR */
+        .community-player { display: none; position: fixed; left: 18px; right: 18px; bottom: 16px; z-index: 3500; max-width: 850px; margin: auto; background: rgba(7,7,7,0.98); border: 1px solid rgba(212,175,55,0.5); border-radius: 11px; padding: 13px 15px; align-items: center; gap: 14px; box-shadow: 0 18px 45px rgba(0,0,0,0.75); }
+        .community-player.activo { display: flex; }
+        .community-player-info { min-width: 160px; max-width: 240px; }
+        .community-player-info strong, .community-player-info span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .community-player-info strong { color: var(--color-oro); font-size: 0.75rem; }
+        .community-player-info span { color: #777; font-size: 0.62rem; margin-top: 3px; }
+        .community-player audio { flex: 1; min-width: 0; height: 38px; }
+
         @media (min-width: 1024px) {
             .main-header-pro { padding: 0 50px; height: 100px; }
             body { padding-top: 120px; }
             .modal-content { padding: 50px; }
+        }
+
+        @media (max-width: 700px) {
+            .feed-controles { grid-template-columns: 1fr; }
+            .post-card { padding: 19px; }
+            .post-actions { grid-template-columns: 1fr; }
+            .modal-content { padding: 22px; }
+            .modal-project-summary, .comparador-resumen { grid-template-columns: repeat(2, 1fr); }
+            .item-marcha { align-items: flex-start; gap: 12px; }
+            .item-marcha-actions { flex-direction: column; }
+            .community-player { left: 9px; right: 9px; bottom: 9px; flex-wrap: wrap; }
+            .community-player-info { flex: 1; max-width: calc(100% - 45px); }
+            .community-player audio { order: 3; flex-basis: 100%; }
         }
     </style>
 </head>
@@ -138,9 +210,26 @@
             </div>
         </aside>
 
-        <div id="feed-contenedor">
-            <p style="text-align: center; color: #666; padding: 100px; font-size: 0.9rem;">Sincronizando con la base de datos de Supabase...</p>
-        </div>
+        <section class="feed-principal">
+            <div class="feed-toolbar">
+                <h1>Propuestas de repertorio</h1>
+                <p>Descubre crucetas, escucha sus marchas y participa en la evolución de cada propuesta.</p>
+                <div class="feed-controles">
+                    <input type="search" id="filtro-comunidad" class="feed-input" placeholder="Buscar proyecto, autor o marcha...">
+                    <select id="orden-comunidad" class="feed-input">
+                        <option value="recientes">Más recientes</option>
+                        <option value="valorados">Más valorados</option>
+                        <option value="comentados">Más comentados</option>
+                        <option value="mejoras">Con más mejoras</option>
+                    </select>
+                </div>
+                <div id="feed-resumen" class="feed-resumen">Cargando propuestas...</div>
+            </div>
+
+            <div id="feed-contenedor">
+                <div class="estado-feed">Sincronizando con la comunidad...</div>
+            </div>
+        </section>
         
     </main>
 
@@ -181,9 +270,22 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../js/config.js"></script>
-    <script src="../js/comunidad.js"></script>
+    <div id="community-player" class="community-player">
+        <div class="community-player-info">
+            <strong id="community-player-title">Marcha</strong>
+            <span id="community-player-author">Autor</span>
+        </div>
+        <audio id="community-player-audio" controls preload="none"></audio>
+        <button type="button" class="btn-cerrar-modal" style="font-size:1.5rem; margin:0;" onclick="cerrarReproductorComunidad()" aria-label="Cerrar reproductor">&times;</button>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/consent.js"></script>
+<script src="../js/analytics.js"></script>
+<script src="../js/share.js"></script>
+<script src="../js/pwa.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/comunidad.js"></script>
 
 </body>
 </html>

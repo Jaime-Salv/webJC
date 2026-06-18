@@ -102,6 +102,7 @@ function renderizarConcierto(concierto, obras) {
 
                 <div class="acciones-concierto">
                     <a href="#programa" class="btn-primary">Ver programa</a>
+                    <button type="button" class="btn-secondary" onclick="compartirConcierto()">Compartir</button>
                     <button type="button" class="btn-secondary" onclick="copiarEnlaceConcierto()">Copiar enlace</button>
                 </div>
             </article>
@@ -186,8 +187,19 @@ function renderizarObra(obra) {
     `;
 }
 
+function compartirConcierto() {
+    const titulo = document.querySelector('.concierto-info h1')?.textContent?.trim() || 'Programa de concierto';
+    const url = obtenerUrlCanonicaConcierto();
+
+    abrirCompartir({
+        titulo,
+        url,
+        texto: `🎼 Mira este programa de concierto de la Banda de Música Julián Cerdán:\n\n${titulo}`
+    });
+}
+
 function copiarEnlaceConcierto() {
-    const urlActual = window.location.href;
+    const urlActual = obtenerUrlCanonicaConcierto();
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(urlActual)
@@ -311,4 +323,12 @@ function escaparHTML(valor) {
 
 function escaparAtributo(valor) {
     return escaparHTML(valor).replaceAll('`', '&#096;');
+}
+
+function obtenerUrlCanonicaConcierto() {
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = '';
+    url.searchParams.set('id', idConcierto);
+    return url.href;
 }

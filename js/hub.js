@@ -399,16 +399,21 @@ function crearTarjetaConcierto(concierto) {
     ].filter(Boolean).join(' · ');
 
     return `
-        <a href="templates/concierto.html?id=${concierto.id_concierto}" class="tarjeta-procesion-home tarjeta-concierto-home" style="background-image: url('${escaparAtributo(foto)}')">
-            <div class="card-date">${escaparHTML(fecha)}</div>
-            <div class="card-gradient"></div>
+        <article class="tarjeta-compartible">
+            <a href="templates/concierto.html?id=${concierto.id_concierto}" class="tarjeta-procesion-home tarjeta-concierto-home" style="background-image: url('${escaparAtributo(foto)}')">
+                <div class="card-date">${escaparHTML(fecha)}</div>
+                <div class="card-gradient"></div>
 
-            <div class="card-content">
-                <h3>${escaparHTML(concierto.titulo || 'Concierto')}</h3>
-                <p>${escaparHTML(lugar || 'Programa de concierto')}</p>
-                <span class="tag-concierto">Ver programa</span>
-            </div>
-        </a>
+                <div class="card-content">
+                    <h3>${escaparHTML(concierto.titulo || 'Concierto')}</h3>
+                    <p>${escaparHTML(lugar || 'Programa de concierto')}</p>
+                    <span class="tag-concierto">Ver programa</span>
+                </div>
+            </a>
+            <button type="button" class="btn-compartir-card" title="Compartir repertorio" aria-label="Compartir repertorio"
+                data-tipo="concierto" data-id="${escaparAtributo(concierto.id_concierto)}" data-titulo="${escaparAtributo(concierto.titulo || 'Concierto')}"
+                onclick="compartirRepertorio(this.dataset.tipo, this.dataset.id, this.dataset.titulo)">Compartir</button>
+        </article>
     `;
 }
 
@@ -417,16 +422,35 @@ function crearTarjetaActuacion(procesion) {
     const fecha = formatearFecha(procesion.fecha);
 
     return `
-        <a href="templates/analisis.html?id=${procesion.id_procesion}" class="tarjeta-procesion-home" style="background-image: url('${escaparAtributo(foto)}')">
-            <div class="card-date">${escaparHTML(fecha)}</div>
-            <div class="card-gradient"></div>
+        <article class="tarjeta-compartible">
+            <a href="templates/analisis.html?id=${procesion.id_procesion}" class="tarjeta-procesion-home" style="background-image: url('${escaparAtributo(foto)}')">
+                <div class="card-date">${escaparHTML(fecha)}</div>
+                <div class="card-gradient"></div>
 
-            <div class="card-content">
-                <h3>${escaparHTML(procesion.hermandad || 'Actuación')}</h3>
-                <p>${escaparHTML(procesion.localidad || '')} · ${escaparHTML(procesion.tipo || '')}</p>
-            </div>
-        </a>
+                <div class="card-content">
+                    <h3>${escaparHTML(procesion.hermandad || 'Actuación')}</h3>
+                    <p>${escaparHTML(procesion.localidad || '')} · ${escaparHTML(procesion.tipo || '')}</p>
+                </div>
+            </a>
+            <button type="button" class="btn-compartir-card" title="Compartir repertorio" aria-label="Compartir repertorio"
+                data-tipo="actuacion" data-id="${escaparAtributo(procesion.id_procesion)}" data-titulo="${escaparAtributo(procesion.hermandad || 'Actuación')}"
+                onclick="compartirRepertorio(this.dataset.tipo, this.dataset.id, this.dataset.titulo)">Compartir</button>
+        </article>
     `;
+}
+
+function compartirRepertorio(tipo, id, titulo) {
+    const ruta = tipo === 'concierto'
+        ? `templates/concierto.html?id=${encodeURIComponent(id)}`
+        : `templates/analisis.html?id=${encodeURIComponent(id)}`;
+    const url = new URL(ruta, window.location.href).href;
+    const etiqueta = tipo === 'concierto' ? 'programa de concierto' : 'repertorio';
+
+    abrirCompartir({
+        titulo,
+        url,
+        texto: `🎼 Mira este ${etiqueta} de la Banda de Música Julián Cerdán:\n\n${titulo}`
+    });
 }
 
 /* ------------------------------------------------------------

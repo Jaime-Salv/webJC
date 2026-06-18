@@ -118,6 +118,24 @@ function renderizarCabecera(data) {
     }
 }
 
+function compartirActuacion() {
+    if (!datosProcesion) return;
+
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = '';
+    url.searchParams.set('id', idProcesion);
+
+    const tipo = datosProcesion.tipo || 'Actuación';
+    const titulo = datosProcesion.hermandad || 'Repertorio';
+    const localidad = datosProcesion.localidad ? ` · ${datosProcesion.localidad}` : '';
+    abrirCompartir({
+        titulo: `${titulo}${localidad}`,
+        url: url.href,
+        texto: `🎼 Mira este repertorio de ${tipo} de la Banda de Música Julián Cerdán:\n\n${titulo}${localidad}`
+    });
+}
+
 /* ------------------------------------------------------------
    MÓDULO 2: KPIS Y ESTADÍSTICAS MATEMÁTICAS
 ------------------------------------------------------------ */

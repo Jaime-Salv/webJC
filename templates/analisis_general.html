@@ -7,6 +7,9 @@
     
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../img/icon-192.png">
+    <meta name="theme-color" content="#050505">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -129,6 +132,29 @@
             .span-8, .span-4, .kpi-card-pro { grid-column: span 12; }
             .modal-content { height: 95vh; }
         }
+
+        @media (max-width: 680px) {
+            body { padding-top: 82px; }
+            .main-header-pro { height: 72px; padding: 0 10px; }
+            .header-left-side img { height: 42px; }
+            .header-title-side h2 { font-size: 0.66rem; letter-spacing: 1px; }
+            .header-title-side h2 span { font-size: 0.48rem; }
+            .btn-volver-pro { padding: 8px 9px; font-size: 0.55rem; }
+            .global-container { padding-left: 10px; padding-right: 10px; }
+            .hero-global h1 { font-size: 1.55rem; }
+            .kpi-grid-master { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .charts-grid-master,
+            .charts-grid,
+            .grid-graficos { grid-template-columns: 1fr !important; }
+            .chart-card,
+            .card-chart,
+            canvas { min-width: 0 !important; max-width: 100% !important; }
+            .modal-overlay { padding: 8px; }
+            .modal-content { height: 92vh; padding: 0; }
+            .modal-header { padding: 15px; }
+            .modal-header h3 { font-size: 0.84rem; letter-spacing: 1px; }
+            .modal-body { padding: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -250,6 +276,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/pwa.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/analisis_general.js"></script>
 </body>

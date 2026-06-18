@@ -1,257 +1,638 @@
 /* ============================================================
-   COMUNIDAD CON ESTADÍSTICAS Y PERFIL (Jaime Rubiales)
+   COMUNIDAD Y DEBATE MUSICAL
+   Feed, escucha, comparación de versiones e interacción segura
    ============================================================ */
 
 let proyectosRaiz = [];
+let proyectosVisibles = [];
+let mejorasPorProyecto = {};
+let comentariosPorProyecto = {};
+let votosPorProyecto = {};
+let votosUsuario = new Set();
+let sesionActual = null;
 let idAbierto = null;
+let modoVotosPersistentes = true;
+
+document.addEventListener('DOMContentLoaded', inicializarComunidad);
 
 async function inicializarComunidad() {
+    prepararEventosComunidad();
+    await cargarComunidad();
+}
+
+function prepararEventosComunidad() {
+    document.getElementById('filtro-comunidad')?.addEventListener('input', aplicarFiltrosFeed);
+    document.getElementById('orden-comunidad')?.addEventListener('change', aplicarFiltrosFeed);
+    document.getElementById('feed-contenedor')?.addEventListener('click', gestionarAccionFeed);
+    document.getElementById('modal-cruceta')?.addEventListener('click', gestionarAccionModal);
+    document.getElementById('input-comentario')?.addEventListener('keydown', (evento) => {
+        if (evento.key === 'Enter') enviarComentario();
+    });
+}
+
+async function cargarComunidad() {
+    mostrarEstadoFeed('Cargando propuestas y conversaciones...');
+
     try {
-        // 1. Cargamos el Feed Principal
-        const { data, error } = await clienteSupabase
+        const { data: { session } } = await clienteSupabase.auth.getSession();
+        sesionActual = session;
+
+        const { data: proyectos, error } = await clienteSupabase
             .from('comunidad_repertorios')
             .select('*')
             .is('respuesta_a_id', null)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        proyectosRaiz = data;
-        renderizarFeed();
 
-        // 2. Comprobamos sesión para cargar el Sidebar de Usuario
-        const { data: { session } } = await clienteSupabase.auth.getSession();
-        if (session) {
-            cargarDatosSidebar(session.user);
+        proyectosRaiz = proyectos || [];
+        await cargarMetricasFeed();
+
+        if (sesionActual) {
+            await Promise.all([
+                cargarDatosSidebar(sesionActual.user),
+                cargarVotosUsuario(sesionActual.user.id)
+            ]);
         }
-    } catch (err) { console.error("Error:", err); }
+
+        aplicarFiltrosFeed();
+        await abrirProyectoCompartido();
+    } catch (error) {
+        console.error('Error cargando Comunidad:', error);
+        mostrarEstadoFeed('No se ha podido cargar la comunidad. Inténtalo de nuevo dentro de unos instantes.');
+    }
 }
 
-// --- CARGA DE PERFIL Y ESTADÍSTICAS EN EL SIDEBAR ---
-async function cargarDatosSidebar(user) {
-    const userEmailPrefix = user.email.split('@')[0];
+async function cargarMetricasFeed() {
+    mejorasPorProyecto = {};
+    comentariosPorProyecto = {};
+    votosPorProyecto = {};
 
-    // Obtener datos del perfil personalizado
-    const { data: perfil } = await clienteSupabase
-        .from('perfiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
+    if (proyectosRaiz.length === 0) return;
 
-    if (perfil) {
-        document.getElementById('user-name').innerText = perfil.username || userEmailPrefix;
-        document.getElementById('user-bio').innerText = perfil.descripcion || "Músico de la familia Julián Cerdán.";
-        document.getElementById('user-fav').innerText = perfil.marcha_favorita || "No definida";
-        if (perfil.avatar_url) document.getElementById('user-avatar').src = perfil.avatar_url;
+    const ids = proyectosRaiz.map((proyecto) => proyecto.id);
+    const [mejorasRes, comentariosRes, votosRes] = await Promise.all([
+        clienteSupabase
+            .from('comunidad_repertorios')
+            .select('id, respuesta_a_id')
+            .in('respuesta_a_id', ids),
+        clienteSupabase
+            .from('comunidad_comentarios')
+            .select('id, repertorio_id')
+            .in('repertorio_id', ids),
+        clienteSupabase
+            .from('comunidad_valoraciones')
+            .select('repertorio_id')
+            .in('repertorio_id', ids)
+    ]);
+
+    (mejorasRes.data || []).forEach((mejora) => {
+        mejorasPorProyecto[mejora.respuesta_a_id] = (mejorasPorProyecto[mejora.respuesta_a_id] || 0) + 1;
+    });
+
+    (comentariosRes.data || []).forEach((comentario) => {
+        comentariosPorProyecto[comentario.repertorio_id] = (comentariosPorProyecto[comentario.repertorio_id] || 0) + 1;
+    });
+
+    if (votosRes.error) {
+        modoVotosPersistentes = false;
+        proyectosRaiz.forEach((proyecto) => {
+            votosPorProyecto[proyecto.id] = Number(proyecto.likes) || 0;
+        });
     } else {
-        document.getElementById('user-name').innerText = userEmailPrefix;
+        modoVotosPersistentes = true;
+        (votosRes.data || []).forEach((voto) => {
+            votosPorProyecto[voto.repertorio_id] = (votosPorProyecto[voto.repertorio_id] || 0) + 1;
+        });
     }
-
-    // CALCULO DE ESTADÍSTICAS EN TIEMPO REAL (Filtramos por usuario_id que es el UUID)
-    // 1. Proyectos
-    const { count: nProyectos } = await clienteSupabase
-        .from('comunidad_repertorios')
-        .select('*', { count: 'exact', head: true })
-        .eq('usuario_id', user.id) 
-        .is('respuesta_a_id', null);
-
-    // 2. Mejoras
-    const { count: nMejoras } = await clienteSupabase
-        .from('comunidad_repertorios')
-        .select('*', { count: 'exact', head: true })
-        .eq('usuario_id', user.id)
-        .not('respuesta_a_id', 'is', null);
-
-    // 3. Debates
-    const { count: nDebates } = await clienteSupabase
-        .from('comunidad_comentarios')
-        .select('*', { count: 'exact', head: true })
-        .eq('usuario_id', user.id);
-
-    // Inyectar resultados en el DOM
-    document.getElementById('stat-proyectos').innerText = nProyectos || 0;
-    document.getElementById('stat-mejoras').innerText = nMejoras || 0;
-    document.getElementById('stat-debates').innerText = nDebates || 0;
 }
 
-// --- SISTEMA DE INVITACIÓN VISUAL ---
-async function obtenerUsuario() {
-    const { data: { session } } = await clienteSupabase.auth.getSession();
-    
-    if (!session) {
-        document.getElementById('modal-auth-invitation').style.display = 'flex';
-        return null;
+async function cargarVotosUsuario(usuarioId) {
+    votosUsuario = new Set();
+
+    if (modoVotosPersistentes) {
+        const { data, error } = await clienteSupabase
+            .from('comunidad_valoraciones')
+            .select('repertorio_id')
+            .eq('usuario_id', usuarioId);
+
+        if (!error) {
+            votosUsuario = new Set((data || []).map((voto) => String(voto.repertorio_id)));
+            return;
+        }
+
+        modoVotosPersistentes = false;
     }
-    return session.user;
+
+    const votosLocales = JSON.parse(localStorage.getItem('jc_votos_realizados') || '[]');
+    votosUsuario = new Set(votosLocales.map(String));
 }
 
-function cerrarInvitacion() {
-    document.getElementById('modal-auth-invitation').style.display = 'none';
+async function cargarDatosSidebar(user) {
+    const nombreEmail = user.email.split('@')[0];
+
+    const [perfilRes, proyectosRes, mejorasRes, debatesRes] = await Promise.all([
+        clienteSupabase.from('perfiles').select('*').eq('id', user.id).maybeSingle(),
+        clienteSupabase
+            .from('comunidad_repertorios')
+            .select('*', { count: 'exact', head: true })
+            .eq('usuario_id', user.id)
+            .is('respuesta_a_id', null),
+        clienteSupabase
+            .from('comunidad_repertorios')
+            .select('*', { count: 'exact', head: true })
+            .eq('usuario_id', user.id)
+            .not('respuesta_a_id', 'is', null),
+        clienteSupabase
+            .from('comunidad_comentarios')
+            .select('*', { count: 'exact', head: true })
+            .eq('usuario_id', user.id)
+    ]);
+
+    const perfil = perfilRes.data;
+    asignarTexto('user-name', perfil?.username || nombreEmail);
+    asignarTexto('user-bio', perfil?.descripcion || 'Músico de la familia Julián Cerdán.');
+    asignarTexto('user-fav', perfil?.marcha_favorita || 'No definida');
+    asignarTexto('stat-proyectos', proyectosRes.count || 0);
+    asignarTexto('stat-mejoras', mejorasRes.count || 0);
+    asignarTexto('stat-debates', debatesRes.count || 0);
+
+    if (perfil?.avatar_url && esUrlWebValida(perfil.avatar_url)) {
+        document.getElementById('user-avatar').src = perfil.avatar_url;
+    }
+}
+
+function aplicarFiltrosFeed() {
+    const termino = normalizarTexto(document.getElementById('filtro-comunidad')?.value || '');
+    const orden = document.getElementById('orden-comunidad')?.value || 'recientes';
+
+    proyectosVisibles = proyectosRaiz.filter((proyecto) => {
+        if (!termino) return true;
+
+        const marchas = repertorioSeguro(proyecto)
+            .map((marcha) => `${marcha.titulo || ''} ${marcha.autor || ''}`)
+            .join(' ');
+        const contenido = normalizarTexto([
+            proyecto.proyecto_nombre,
+            proyecto.usuario_nombre,
+            proyecto.descripcion,
+            marchas
+        ].join(' '));
+
+        return contenido.includes(termino);
+    });
+
+    proyectosVisibles.sort((a, b) => {
+        if (orden === 'valorados') return obtenerVotos(b.id) - obtenerVotos(a.id);
+        if (orden === 'comentados') return obtenerComentarios(b.id) - obtenerComentarios(a.id);
+        if (orden === 'mejoras') return obtenerMejoras(b.id) - obtenerMejoras(a.id);
+        return new Date(b.created_at) - new Date(a.created_at);
+    });
+
+    renderizarFeed();
 }
 
 function renderizarFeed() {
     const contenedor = document.getElementById('feed-contenedor');
-    contenedor.innerHTML = '';
-    const votosRealizados = JSON.parse(localStorage.getItem('jc_votos_realizados') || "[]");
+    if (!contenedor) return;
 
-    proyectosRaiz.forEach(post => {
-        const yaVotado = votosRealizados.includes(post.id);
-        const card = document.createElement('div');
-        card.className = 'post-card';
-        
-        card.innerHTML = `
+    asignarTexto(
+        'feed-resumen',
+        `${proyectosVisibles.length} ${proyectosVisibles.length === 1 ? 'propuesta encontrada' : 'propuestas encontradas'}`
+    );
+
+    if (proyectosVisibles.length === 0) {
+        mostrarEstadoFeed(
+            proyectosRaiz.length
+                ? 'No hay propuestas que coincidan con la búsqueda.'
+                : 'Todavía no hay repertorios publicados. Puedes inaugurar la comunidad creando el primero.'
+        );
+        return;
+    }
+
+    contenedor.innerHTML = proyectosVisibles.map(crearTarjetaProyecto).join('');
+}
+
+function crearTarjetaProyecto(proyecto) {
+    const repertorio = repertorioSeguro(proyecto);
+    const estadisticas = calcularEstadisticas(repertorio);
+    const etiquetas = generarEtiquetas(estadisticas);
+    const proyectoId = escaparAtributo(proyecto.id);
+    const yaVotado = votosUsuario.has(String(proyecto.id));
+
+    return `
+        <article class="post-card">
             <div class="post-header">
                 <div class="autor-info">
-                    <strong>${post.usuario_nombre}</strong>
-                    <span>${new Date(post.created_at).toLocaleDateString()}</span>
+                    <strong>${escaparHTML(proyecto.usuario_nombre || 'Miembro de la comunidad')}</strong>
+                    <span title="${escaparAtributo(formatearFechaCompleta(proyecto.created_at))}">
+                        ${escaparHTML(formatearFechaRelativa(proyecto.created_at))}
+                    </span>
                 </div>
-                <button class="btn-like ${yaVotado ? 'liked' : ''}" 
-                        onclick="darLike('${post.id}', ${post.likes})">
-                    ♥ ${post.likes || 0}
+                <button type="button" class="btn-like ${yaVotado ? 'liked' : ''}" data-accion="like" data-id="${proyectoId}">
+                    ♥ ${obtenerVotos(proyecto.id)}
                 </button>
             </div>
-            <h3 style="margin:0 0 10px 0;">${post.proyecto_nombre}</h3>
-            <div class="post-stats">
-                <div class="stat-item"><span>Obras</span><strong>${post.repertorio_json.length}</strong></div>
-                <div class="stat-item"><span>Horas</span><strong>${post.horas_estimadas}h</strong></div>
-                <div class="stat-item"><span>Densidad</span><strong>${post.densidad_musical}%</strong></div>
+
+            <h3 style="margin:0 0 9px;">${escaparHTML(proyecto.proyecto_nombre || 'Proyecto sin título')}</h3>
+            <p class="post-description">${escaparHTML(proyecto.descripcion || 'Sin argumentación técnica publicada.')}</p>
+
+            <div class="post-tags">
+                ${etiquetas.map((etiqueta) => `<span class="post-tag">${escaparHTML(etiqueta)}</span>`).join('')}
             </div>
-            <button class="btn-ver-cruceta" onclick="abrirModal('${post.id}')">Ver Proyecto e Hilo de Mejoras</button>
-        `;
-        contenedor.appendChild(card);
+
+            <div class="post-stats">
+                <div class="stat-item"><span>Obras</span><strong>${repertorio.length}</strong></div>
+                <div class="stat-item"><span>Tiempo musical</span><strong>${formatearDuracion(estadisticas.totalSegundos)}</strong></div>
+                <div class="stat-item"><span>Autores</span><strong>${estadisticas.autores}</strong></div>
+            </div>
+
+            <div class="post-social">
+                <span class="post-social-count">💬 ${obtenerComentarios(proyecto.id)}</span>
+                <span class="post-social-count">🛠 ${obtenerMejoras(proyecto.id)}</span>
+                <span class="post-social-count">Densidad ${Number(proyecto.densidad_musical) || 0}%</span>
+            </div>
+
+            <div class="post-actions">
+                <button type="button" class="btn-post-secundario" data-accion="comentar" data-id="${proyectoId}">Comentar</button>
+                <button type="button" class="btn-post-secundario" data-accion="mejorar" data-id="${proyectoId}">Proponer mejora</button>
+                <button type="button" class="btn-post-secundario" data-accion="compartir" data-id="${proyectoId}">Compartir</button>
+                <button type="button" class="btn-ver-cruceta" data-accion="ver" data-id="${proyectoId}">Ver repertorio</button>
+            </div>
+        </article>
+    `;
+}
+
+async function gestionarAccionFeed(evento) {
+    const boton = evento.target.closest('[data-accion][data-id]');
+    if (!boton) return;
+
+    const { accion, id } = boton.dataset;
+
+    if (accion === 'like') await darLike(id);
+    if (accion === 'ver') await abrirModal(id);
+    if (accion === 'comentar') {
+        await abrirModal(id);
+        document.getElementById('input-comentario')?.focus();
+        document.getElementById('contenedor-comentarios')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (accion === 'mejorar') await prepararMejora(id);
+    if (accion === 'compartir') compartirProyecto(id);
+}
+
+async function abrirModal(id, actualizarUrl = true) {
+    idAbierto = id;
+    const proyecto = proyectosRaiz.find((item) => String(item.id) === String(id));
+    if (!proyecto) return;
+
+    asignarTexto('modal-titulo', proyecto.proyecto_nombre || 'Proyecto');
+    renderizarDetalleProyecto(proyecto, false);
+
+    const botonMejorar = document.getElementById('btn-mejorar');
+    botonMejorar.onclick = () => prepararMejora(proyecto.id);
+
+    document.getElementById('modal-cruceta').style.display = 'flex';
+    await Promise.all([cargarHiloMejoras(id), cargarComentarios(id)]);
+
+    if (actualizarUrl) {
+        const url = obtenerUrlProyecto(id);
+        window.history.replaceState({}, '', url);
+    }
+}
+
+async function abrirProyectoCompartido() {
+    const id = new URLSearchParams(window.location.search).get('proyecto');
+    if (!id) return;
+
+    const existe = proyectosRaiz.some((proyecto) => String(proyecto.id) === String(id));
+    if (existe) await abrirModal(id, false);
+}
+
+function compartirProyecto(id) {
+    const proyecto = proyectosRaiz.find((item) => String(item.id) === String(id));
+    if (!proyecto) return;
+
+    const repertorio = repertorioSeguro(proyecto);
+    const titulo = proyecto.proyecto_nombre || 'Proyecto de repertorio';
+
+    abrirCompartir({
+        titulo,
+        url: obtenerUrlProyecto(id),
+        texto: `🎼 Mira este repertorio propuesto en la Comunidad de la Banda de Música Julián Cerdán:\n\n${titulo}\n${repertorio.length} obras · por ${proyecto.usuario_nombre || 'un miembro de la comunidad'}`
     });
 }
 
-async function abrirModal(id) {
-    idAbierto = id;
-    const post = proyectosRaiz.find(p => p.id == id);
-    if (!post) return;
+function obtenerUrlProyecto(id) {
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = '';
+    url.searchParams.set('proyecto', id);
+    return url.href;
+}
 
-    document.getElementById('modal-titulo').innerText = post.proyecto_nombre;
+function renderizarDetalleProyecto(proyecto, esMejora) {
+    const repertorio = repertorioSeguro(proyecto);
+    const estadisticas = calcularEstadisticas(repertorio);
     const lista = document.getElementById('modal-lista-marchas');
+    const color = esMejora ? '#3498db' : 'var(--color-oro)';
+
     lista.innerHTML = `
-        <div style="background: rgba(212, 175, 55, 0.1); border: 1px dashed var(--color-oro); padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.4; color: #ccc;">
-            <strong style="color:var(--color-oro); display:block; margin-bottom:5px;">NOTAS DEL AUTOR:</strong>
-            ${post.descripcion || "Sin descripción proporcionada."}
+        <div style="background:${esMejora ? 'rgba(52,152,219,0.1)' : 'rgba(212,175,55,0.1)'}; border:1px dashed ${color}; padding:15px; border-radius:6px; margin-bottom:16px; font-size:0.82rem; line-height:1.55; color:#ccc;">
+            <strong style="color:${color}; display:block; margin-bottom:5px;">
+                ${esMejora ? 'ARGUMENTO DE LA MEJORA' : 'NOTAS DEL AUTOR'}
+            </strong>
+            ${escaparHTML(proyecto.descripcion || 'Sin descripción proporcionada.')}
         </div>
-        <h4 style="color:#888; font-size:0.7rem; text-transform:uppercase;">Cruceta Original</h4>
-    ` + post.repertorio_json.map((m, i) => `
-        <div class="item-marcha">
-            <span style="color:var(--color-oro); font-size:0.6rem;">#${i+1} - ${m.calle || 'S/E'}</span>
-            <strong>${m.titulo}</strong>
+        <div class="modal-project-summary">
+            <div class="modal-summary-box"><strong>${repertorio.length}</strong><span>Obras</span></div>
+            <div class="modal-summary-box"><strong>${formatearDuracion(estadisticas.totalSegundos)}</strong><span>Tiempo</span></div>
+            <div class="modal-summary-box"><strong>${estadisticas.autores}</strong><span>Autores</span></div>
+            <div class="modal-summary-box"><strong>${Math.round(estadisticas.porcentajeCornetas)}%</strong><span>Cornetas</span></div>
         </div>
-    `).join('');
+        <h4 style="color:#888; font-size:0.7rem; text-transform:uppercase;">${esMejora ? 'Versión propuesta' : 'Cruceta original'}</h4>
+        ${repertorio.map((marcha, indice) => crearFilaMarcha(marcha, indice, color)).join('')}
+    `;
+}
 
-    document.getElementById('btn-mejorar').onclick = async () => {
-        const usuario = await obtenerUsuario();
-        if (!usuario) return;
+function crearFilaMarcha(marcha, indice, color) {
+    const tieneAudio = campoRelleno(marcha.url_audio);
+    const tieneYoutube = esUrlWebValida(marcha.url_youtube);
 
-        localStorage.setItem('jc_simulacion_borrador', JSON.stringify(post.repertorio_json));
-        localStorage.setItem('jc_simulacion_nombre', "Mejora de: " + post.proyecto_nombre);
-        localStorage.setItem('jc_simulacion_parent_id', post.id); 
-        window.location.href = "simulacion.html";
-    };
+    return `
+        <div class="item-marcha" style="border-left-color:${color}; margin-bottom:8px;">
+            <div class="item-marcha-info">
+                <span style="color:${color}; font-size:0.6rem;">#${indice + 1} · ${escaparHTML(marcha.calle || 'S/E')}</span>
+                <strong>${escaparHTML(marcha.titulo || 'Marcha sin título')}</strong>
+                <small>${escaparHTML(marcha.autor || 'Autor desconocido')} · ${formatearDuracion(marcha.duracion_seg)}</small>
+            </div>
+            <div class="item-marcha-actions">
+                <button type="button" class="btn-media" data-modal-accion="audio" data-indice="${indice}" ${tieneAudio ? '' : 'disabled'}>▶ Oír</button>
+                <button type="button" class="btn-media" data-modal-accion="youtube" data-indice="${indice}" ${tieneYoutube ? '' : 'disabled'}>YouTube</button>
+            </div>
+        </div>
+    `;
+}
 
-    cargarHiloMejoras(id);
-    cargarComentarios(id);
-    document.getElementById('modal-cruceta').style.display = 'flex';
+function gestionarAccionModal(evento) {
+    const boton = evento.target.closest('[data-modal-accion]');
+    if (!boton) return;
+
+    const proyecto = obtenerProyectoVisibleModal();
+    const marcha = repertorioSeguro(proyecto)[Number(boton.dataset.indice)];
+    if (!marcha) return;
+
+    if (boton.dataset.modalAccion === 'audio') reproducirEnComunidad(marcha);
+    if (boton.dataset.modalAccion === 'youtube') abrirYoutube(marcha);
+}
+
+function obtenerProyectoVisibleModal() {
+    const mejoraId = document.getElementById('modal-lista-marchas')?.dataset.mejoraId;
+
+    if (mejoraId && window.mejoraComunidadActiva && String(window.mejoraComunidadActiva.id) === mejoraId) {
+        return window.mejoraComunidadActiva;
+    }
+
+    return proyectosRaiz.find((proyecto) => String(proyecto.id) === String(idAbierto));
 }
 
 async function cargarHiloMejoras(idPadre) {
-    const { data } = await clienteSupabase.from('comunidad_repertorios').select('*').eq('respuesta_a_id', idPadre).order('created_at', { ascending: true });
-    const seccionComentarios = document.getElementById('contenedor-comentarios');
-    
-    const viejoHilo = document.getElementById('contenedor-hilo-mejoras');
-    if(viejoHilo) viejoHilo.remove();
+    const contenedor = document.getElementById('contenedor-hilo-mejoras');
+    if (!contenedor) return;
 
-    const contenedorMejoras = document.createElement('div');
-    contenedorMejoras.id = "contenedor-hilo-mejoras";
-    contenedorMejoras.innerHTML = `<h4 style="color:#3498db; font-size:0.7rem; text-transform:uppercase; margin-top:20px;">Hilo de Mejoras Propuestas</h4>`;
+    const { data, error } = await clienteSupabase
+        .from('comunidad_repertorios')
+        .select('*')
+        .eq('respuesta_a_id', idPadre)
+        .order('created_at', { ascending: true });
 
-    if (data && data.length > 0) {
-        data.forEach(mejora => {
-            contenedorMejoras.innerHTML += `
-                <div style="border-left: 2px solid #3498db; margin-left:10px; padding:10px; background:rgba(52, 152, 219, 0.05); margin-bottom:10px; border-radius:0 4px 4px 0;">
-                    <div style="font-size:0.65rem; color:#3498db;">Propuesta por ${mejora.usuario_nombre} el ${new Date(mejora.created_at).toLocaleDateString()}</div>
-                    <div style="font-size:0.8rem; font-weight:bold; margin:5px 0;">${mejora.proyecto_nombre}</div>
-                    <button onclick="verDetalleMejora('${mejora.id}')" style="background:none; border:1px solid #3498db; color:#3498db; font-size:0.6rem; padding:3px 8px; border-radius:3px; cursor:pointer;">Ver esta versión</button>
-                </div>`;
-        });
-    } else {
-        contenedorMejoras.innerHTML += `<p style="font-size:0.7rem; color:#444;">Nadie ha propuesto mejoras todavía.</p>`;
+    if (error) {
+        contenedor.innerHTML = '<p style="font-size:0.7rem; color:#777;">No se han podido cargar las mejoras.</p>';
+        return;
     }
-    seccionComentarios.parentNode.insertBefore(contenedorMejoras, seccionComentarios);
+
+    contenedor.innerHTML = '<h4 style="color:#3498db; font-size:0.7rem; text-transform:uppercase; margin-top:20px;">Hilo de mejoras propuestas</h4>';
+
+    if (!data?.length) {
+        contenedor.innerHTML += '<p style="font-size:0.7rem; color:#555;">Nadie ha propuesto mejoras todavía.</p>';
+        return;
+    }
+
+    contenedor.innerHTML += data.map((mejora) => `
+        <article class="mejora-card">
+            <div class="mejora-card-header">
+                ${escaparHTML(mejora.usuario_nombre || 'Miembro')} · ${escaparHTML(formatearFechaRelativa(mejora.created_at))}
+            </div>
+            <h5>${escaparHTML(mejora.proyecto_nombre || 'Propuesta de mejora')}</h5>
+            <button type="button" class="btn-media" onclick="verDetalleMejora('${escaparAtributo(mejora.id)}')">Comparar versión</button>
+        </article>
+    `).join('');
 }
 
 async function verDetalleMejora(idMejora) {
-    const { data } = await clienteSupabase.from('comunidad_repertorios').select('*').eq('id', idMejora).single();
-    if(data) {
-        const lista = document.getElementById('modal-lista-marchas');
-        lista.innerHTML = `
-            <div style="background: rgba(52, 152, 219, 0.1); border: 1px dashed #3498db; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.4; color: #ccc;">
-                <strong style="color:#3498db; display:block; margin-bottom:5px;">ARGUMENTO DE LA MEJORA:</strong>
-                ${data.descripcion || "Sin explicación."}
-            </div>` + data.repertorio_json.map((m, i) => `<div class="item-marcha" style="border-left-color:#3498db;"><strong>${m.titulo}</strong></div>`).join('') + 
-        `<button onclick="abrirModal('${idAbierto}')" style="width:100%; margin-top:10px; background:#444; color:white; border:none; padding:8px; border-radius:4px; font-size:0.7rem; cursor:pointer; font-weight:bold;">VOLVER A LA ORIGINAL</button>`;
-    }
+    const original = proyectosRaiz.find((proyecto) => String(proyecto.id) === String(idAbierto));
+    if (!original) return;
+
+    const { data: mejora, error } = await clienteSupabase
+        .from('comunidad_repertorios')
+        .select('*')
+        .eq('id', idMejora)
+        .single();
+
+    if (error || !mejora) return;
+
+    window.mejoraComunidadActiva = mejora;
+    const comparacion = compararRepertorios(repertorioSeguro(original), repertorioSeguro(mejora));
+
+    renderizarDetalleProyecto(mejora, true);
+    const lista = document.getElementById('modal-lista-marchas');
+    lista.dataset.mejoraId = String(mejora.id);
+    lista.insertAdjacentHTML('afterbegin', crearResumenComparacion(comparacion));
+    lista.insertAdjacentHTML(
+        'beforeend',
+        '<button type="button" onclick="volverAOriginal()" style="width:100%; margin-top:12px; background:#333; color:white; border:none; padding:11px; border-radius:5px; cursor:pointer; font-weight:bold;">VOLVER A LA ORIGINAL</button>'
+    );
 }
 
-async function darLike(id, likesActuales) {
+function crearResumenComparacion(comparacion) {
+    const cambios = [
+        ...comparacion.anadidas.map((texto) => `<div class="cambio-item cambio-anadida">+ Añadida: ${escaparHTML(texto)}</div>`),
+        ...comparacion.eliminadas.map((texto) => `<div class="cambio-item cambio-eliminada">− Eliminada: ${escaparHTML(texto)}</div>`),
+        ...comparacion.movidas.map((texto) => `<div class="cambio-item cambio-movida">↕ Reordenada: ${escaparHTML(texto)}</div>`),
+        ...comparacion.ubicaciones.map((texto) => `<div class="cambio-item cambio-ubicacion">📍 Nueva ubicación: ${escaparHTML(texto)}</div>`)
+    ];
+
+    return `
+        <section style="margin-bottom:20px;">
+            <h4 style="color:#67b7ec; margin:0; font-size:0.75rem; text-transform:uppercase;">Comparación con la original</h4>
+            <div class="comparador-resumen">
+                <div class="comparador-dato"><strong>${comparacion.anadidas.length}</strong><span>Añadidas</span></div>
+                <div class="comparador-dato"><strong>${comparacion.eliminadas.length}</strong><span>Eliminadas</span></div>
+                <div class="comparador-dato"><strong>${comparacion.movidas.length}</strong><span>Movidas</span></div>
+                <div class="comparador-dato"><strong>${comparacion.ubicaciones.length}</strong><span>Ubicaciones</span></div>
+            </div>
+            <div class="cambio-lista">
+                ${cambios.length ? cambios.join('') : '<div class="cambio-item cambio-movida">La propuesta conserva la estructura musical original.</div>'}
+            </div>
+        </section>
+    `;
+}
+
+function volverAOriginal() {
+    const original = proyectosRaiz.find((proyecto) => String(proyecto.id) === String(idAbierto));
+    if (!original) return;
+
+    window.mejoraComunidadActiva = null;
+    const lista = document.getElementById('modal-lista-marchas');
+    delete lista.dataset.mejoraId;
+    renderizarDetalleProyecto(original, false);
+}
+
+function compararRepertorios(original, propuesta) {
+    const mapaOriginal = new Map(original.map((marcha, indice) => [claveMarcha(marcha), { marcha, indice }]));
+    const mapaPropuesta = new Map(propuesta.map((marcha, indice) => [claveMarcha(marcha), { marcha, indice }]));
+    const resultado = { anadidas: [], eliminadas: [], movidas: [], ubicaciones: [] };
+
+    mapaPropuesta.forEach(({ marcha, indice }, clave) => {
+        const anterior = mapaOriginal.get(clave);
+
+        if (!anterior) {
+            resultado.anadidas.push(marcha.titulo || 'Marcha sin título');
+            return;
+        }
+
+        if (anterior.indice !== indice) {
+            resultado.movidas.push(`${marcha.titulo}: posición ${anterior.indice + 1} → ${indice + 1}`);
+        }
+
+        if (normalizarTexto(anterior.marcha.calle || 'S/E') !== normalizarTexto(marcha.calle || 'S/E')) {
+            resultado.ubicaciones.push(`${marcha.titulo}: ${anterior.marcha.calle || 'S/E'} → ${marcha.calle || 'S/E'}`);
+        }
+    });
+
+    mapaOriginal.forEach(({ marcha }, clave) => {
+        if (!mapaPropuesta.has(clave)) {
+            resultado.eliminadas.push(marcha.titulo || 'Marcha sin título');
+        }
+    });
+
+    return resultado;
+}
+
+async function prepararMejora(id) {
     const usuario = await obtenerUsuario();
     if (!usuario) return;
 
-    let votosRealizados = JSON.parse(localStorage.getItem('jc_votos_realizados') || "[]");
-    const yaVotado = votosRealizados.includes(id);
-    let nuevoTotal = yaVotado ? Math.max(0, likesActuales - 1) : likesActuales + 1;
-    
+    const proyecto = proyectosRaiz.find((item) => String(item.id) === String(id));
+    if (!proyecto) return;
+
+    localStorage.setItem('jc_simulacion_borrador', JSON.stringify(repertorioSeguro(proyecto)));
+    localStorage.setItem('jc_simulacion_nombre', `Mejora de: ${proyecto.proyecto_nombre || 'Proyecto'}`);
+    localStorage.setItem('jc_simulacion_descripcion', '');
+    localStorage.setItem('jc_simulacion_horas', proyecto.horas_estimadas || 6);
+    localStorage.setItem('jc_simulacion_parent_id', proyecto.id);
+    window.location.href = 'simulacion.html';
+}
+
+async function darLike(id) {
+    const usuario = await obtenerUsuario();
+    if (!usuario) return;
+
+    const yaVotado = votosUsuario.has(String(id));
+
     try {
-        const { error } = await clienteSupabase.from('comunidad_repertorios').update({ likes: nuevoTotal }).eq('id', id);
-        if (error) throw error;
-        if (yaVotado) votosRealizados = votosRealizados.filter(vId => vId !== id);
-        else votosRealizados.push(id);
-        localStorage.setItem('jc_votos_realizados', JSON.stringify(votosRealizados));
-        inicializarComunidad();
-    } catch (err) { console.error(err); }
+        if (modoVotosPersistentes) {
+            const consulta = yaVotado
+                ? clienteSupabase
+                    .from('comunidad_valoraciones')
+                    .delete()
+                    .eq('repertorio_id', id)
+                    .eq('usuario_id', usuario.id)
+                : clienteSupabase
+                    .from('comunidad_valoraciones')
+                    .insert([{ repertorio_id: id, usuario_id: usuario.id }]);
+
+            const { error } = await consulta;
+            if (error) throw error;
+        } else {
+            await actualizarLikeLegacy(id, yaVotado);
+        }
+
+        if (yaVotado) {
+            votosUsuario.delete(String(id));
+            votosPorProyecto[id] = Math.max(0, obtenerVotos(id) - 1);
+        } else {
+            votosUsuario.add(String(id));
+            votosPorProyecto[id] = obtenerVotos(id) + 1;
+        }
+
+        guardarVotosLocales();
+        renderizarFeed();
+    } catch (error) {
+        console.error('Error actualizando valoración:', error);
+    }
+}
+
+async function actualizarLikeLegacy(id, yaVotado) {
+    const proyecto = proyectosRaiz.find((item) => String(item.id) === String(id));
+    const actual = Number(proyecto?.likes) || 0;
+    const nuevoTotal = yaVotado ? Math.max(0, actual - 1) : actual + 1;
+    const { error } = await clienteSupabase
+        .from('comunidad_repertorios')
+        .update({ likes: nuevoTotal })
+        .eq('id', id);
+
+    if (error) throw error;
+    if (proyecto) proyecto.likes = nuevoTotal;
+}
+
+function guardarVotosLocales() {
+    localStorage.setItem('jc_votos_realizados', JSON.stringify([...votosUsuario]));
 }
 
 async function enviarComentario() {
     const usuario = await obtenerUsuario();
-    if (!usuario) return;
+    if (!usuario || !idAbierto) return;
 
     const input = document.getElementById('input-comentario');
     const texto = input.value.trim();
     if (!texto) return;
 
-    const { data: perfil } = await clienteSupabase
-        .from('perfiles')
-        .select('username')
-        .eq('id', usuario.id)
-        .maybeSingle();
+    input.disabled = true;
 
-    const nombreAMostrar = (perfil && perfil.username) ? perfil.username : usuario.email.split('@')[0];
+    try {
+        const { data: perfil } = await clienteSupabase
+            .from('perfiles')
+            .select('username')
+            .eq('id', usuario.id)
+            .maybeSingle();
 
-   // INSERCIÓN SIN CONVERSIÓN NUMÉRICA
-    const { error } = await clienteSupabase
-        .from('comunidad_comentarios')
-        .insert([{ 
-            repertorio_id: idAbierto, // Lo mandamos tal cual (es un texto UUID)
-            usuario_id: usuario.id,    // El ID del autor (UUID)
-            comentario: texto, 
-            usuario_nombre: nombreAMostrar 
-        }]);
+        const nombre = perfil?.username || usuario.email.split('@')[0];
+        const { error } = await clienteSupabase
+            .from('comunidad_comentarios')
+            .insert([{
+                repertorio_id: idAbierto,
+                usuario_id: usuario.id,
+                comentario: texto,
+                usuario_nombre: nombre
+            }]);
 
-    if (error) {
-        console.error("Error al insertar:", error.message);
-        alert("Error al guardar el comentario: " + error.message);
-        return;
+        if (error) throw error;
+
+        input.value = '';
+        comentariosPorProyecto[idAbierto] = obtenerComentarios(idAbierto) + 1;
+        await Promise.all([cargarComentarios(idAbierto), cargarDatosSidebar(usuario)]);
+        renderizarFeed();
+    } catch (error) {
+        console.error('Error guardando comentario:', error);
+        alert(`No se ha podido guardar el comentario: ${error.message}`);
+    } finally {
+        input.disabled = false;
+        input.focus();
     }
-    
-    input.value = '';
-    await cargarComentarios(idAbierto);
-    cargarDatosSidebar(usuario);
 }
 
 async function cargarComentarios(id) {
-    // Asegúrate de que idAbierto sea tratado como número si tu DB usa bigint
+    const contenedor = document.getElementById('contenedor-comentarios');
     const { data, error } = await clienteSupabase
         .from('comunidad_comentarios')
         .select('*')
@@ -259,13 +640,210 @@ async function cargarComentarios(id) {
         .order('created_at', { ascending: true });
 
     if (error) {
-        console.error("Error al cargar comentarios:", error.message);
+        contenedor.innerHTML = '<p style="font-size:0.7rem; color:#777;">No se han podido cargar los comentarios.</p>';
         return;
     }
 
-    const cont = document.getElementById('contenedor-comentarios');
-    cont.innerHTML = data.length ? data.map(c => `<div class="comentario-item"><strong>${c.usuario_nombre}:</strong> ${c.comentario}</div>`).join('') : '<p style="font-size:0.7rem; color:#444;">Sin comentarios técnicos aún.</p>';
+    contenedor.innerHTML = data?.length
+        ? data.map((comentario) => `
+            <div class="comentario-item">
+                <div class="comentario-meta">
+                    <strong>${escaparHTML(comentario.usuario_nombre || 'Miembro')}</strong>
+                    <time>${escaparHTML(formatearFechaRelativa(comentario.created_at))}</time>
+                </div>
+                <span>${escaparHTML(comentario.comentario || '')}</span>
+            </div>
+        `).join('')
+        : '<p style="font-size:0.7rem; color:#555;">Sin comentarios técnicos aún.</p>';
 }
 
-function cerrarModal() { document.getElementById('modal-cruceta').style.display = 'none'; }
-window.onload = inicializarComunidad;
+function reproducirEnComunidad(marcha) {
+    if (!campoRelleno(marcha.url_audio)) return;
+
+    const contenedor = document.getElementById('community-player');
+    const audio = document.getElementById('community-player-audio');
+
+    asignarTexto('community-player-title', marcha.titulo || 'Marcha');
+    asignarTexto('community-player-author', marcha.autor || 'Autor desconocido');
+    if (audio.src !== marcha.url_audio) audio.src = marcha.url_audio;
+
+    contenedor.classList.add('activo');
+    audio.play().catch(() => {});
+}
+
+function cerrarReproductorComunidad() {
+    const audio = document.getElementById('community-player-audio');
+    audio.pause();
+    document.getElementById('community-player').classList.remove('activo');
+}
+
+function abrirYoutube(marcha) {
+    if (esUrlWebValida(marcha.url_youtube)) {
+        window.open(marcha.url_youtube, '_blank', 'noopener,noreferrer');
+    }
+}
+
+async function obtenerUsuario() {
+    if (sesionActual?.user) return sesionActual.user;
+
+    const { data: { session } } = await clienteSupabase.auth.getSession();
+    sesionActual = session;
+
+    if (!session) {
+        document.getElementById('modal-auth-invitation').style.display = 'flex';
+        return null;
+    }
+
+    return session.user;
+}
+
+function cerrarInvitacion() {
+    document.getElementById('modal-auth-invitation').style.display = 'none';
+}
+
+function cerrarModal() {
+    document.getElementById('modal-cruceta').style.display = 'none';
+    const lista = document.getElementById('modal-lista-marchas');
+    if (lista) delete lista.dataset.mejoraId;
+    window.mejoraComunidadActiva = null;
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('proyecto')) {
+        url.searchParams.delete('proyecto');
+        window.history.replaceState({}, '', url);
+    }
+}
+
+function generarEtiquetas(estadisticas) {
+    const etiquetas = [];
+
+    if (estadisticas.total > 0) {
+        if (estadisticas.porcentajeCornetas >= 70) etiquetas.push('Con cornetas');
+        else if (estadisticas.porcentajeCornetas <= 30) etiquetas.push('Predominio sin cornetas');
+        else etiquetas.push('Equilibrado');
+
+        if (estadisticas.autores / estadisticas.total >= 0.65) etiquetas.push('Alta variedad autoral');
+        if (estadisticas.anoMedio && estadisticas.anoMedio < 1975) etiquetas.push('Clásico');
+        if (estadisticas.anoMedio && estadisticas.anoMedio >= 2000) etiquetas.push('Contemporáneo');
+    }
+
+    return etiquetas.slice(0, 3);
+}
+
+function calcularEstadisticas(repertorio) {
+    const totalSegundos = repertorio.reduce((total, marcha) => total + (Number(marcha.duracion_seg) || 0), 0);
+    const autores = new Set(
+        repertorio.map((marcha) => normalizarTexto(marcha.autor || '')).filter(Boolean)
+    ).size;
+    const cornetas = repertorio.filter(tieneCornetas).length;
+    const anos = repertorio.map((marcha) => Number(marcha.ano)).filter((ano) => ano > 1800 && ano < 2200);
+
+    return {
+        total: repertorio.length,
+        totalSegundos,
+        autores,
+        porcentajeCornetas: repertorio.length ? (cornetas / repertorio.length) * 100 : 0,
+        anoMedio: anos.length ? anos.reduce((total, ano) => total + ano, 0) / anos.length : 0
+    };
+}
+
+function repertorioSeguro(proyecto) {
+    return Array.isArray(proyecto?.repertorio_json) ? proyecto.repertorio_json : [];
+}
+
+function claveMarcha(marcha) {
+    return campoRelleno(marcha.id_marcha)
+        ? `id:${marcha.id_marcha}`
+        : `titulo:${normalizarTexto(marcha.titulo || '')}`;
+}
+
+function obtenerVotos(id) {
+    return Number(votosPorProyecto[id]) || 0;
+}
+
+function obtenerComentarios(id) {
+    return Number(comentariosPorProyecto[id]) || 0;
+}
+
+function obtenerMejoras(id) {
+    return Number(mejorasPorProyecto[id]) || 0;
+}
+
+function mostrarEstadoFeed(mensaje) {
+    const contenedor = document.getElementById('feed-contenedor');
+    if (contenedor) contenedor.innerHTML = `<div class="estado-feed">${escaparHTML(mensaje)}</div>`;
+}
+
+function formatearFechaRelativa(valor) {
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return 'Fecha desconocida';
+
+    const diferencia = fecha.getTime() - Date.now();
+    const minutos = Math.round(diferencia / 60000);
+    const horas = Math.round(diferencia / 3600000);
+    const dias = Math.round(diferencia / 86400000);
+    const formato = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
+
+    if (Math.abs(minutos) < 60) return formato.format(minutos, 'minute');
+    if (Math.abs(horas) < 24) return formato.format(horas, 'hour');
+    if (Math.abs(dias) < 30) return formato.format(dias, 'day');
+    return formatearFechaCompleta(valor);
+}
+
+function formatearFechaCompleta(valor) {
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return '';
+    return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function formatearDuracion(segundos) {
+    const total = Math.max(0, Math.round(Number(segundos) || 0));
+    const minutos = Math.floor(total / 60);
+    const resto = total % 60;
+    return `${minutos}:${String(resto).padStart(2, '0')}`;
+}
+
+function tieneCornetas(marcha) {
+    return marcha.cornetas === 1 || marcha.cornetas === true || String(marcha.cornetas) === '1';
+}
+
+function campoRelleno(valor) {
+    return valor !== null && valor !== undefined && String(valor).trim() !== '';
+}
+
+function esUrlWebValida(valor) {
+    if (!campoRelleno(valor)) return false;
+
+    try {
+        const url = new URL(String(valor));
+        return url.protocol === 'https:' || url.protocol === 'http:';
+    } catch (error) {
+        return false;
+    }
+}
+
+function normalizarTexto(valor) {
+    return String(valor)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function asignarTexto(id, valor) {
+    const elemento = document.getElementById(id);
+    if (elemento) elemento.textContent = valor;
+}
+
+function escaparHTML(valor) {
+    return String(valor ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function escaparAtributo(valor) {
+    return escaparHTML(valor);
+}

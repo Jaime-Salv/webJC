@@ -7,6 +7,9 @@
     
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../img/icon-192.png">
+    <meta name="theme-color" content="#050505">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -113,6 +116,13 @@
             font-weight: 700;
             min-height: 20px;
         }
+
+        @media (max-width: 520px) {
+            body { padding: 14px; }
+            .login-card { padding: 34px 20px; border-radius: 13px; }
+            .login-card h2 { font-size: 1.15rem; letter-spacing: 2px; }
+            .login-card p { margin-bottom: 28px; }
+        }
     </style>
 </head>
 <body>
@@ -133,6 +143,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/pwa.js"></script>
     <script src="../js/config.js"></script>
     
 <script>

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Consola de Administración - Julián Cerdán</title>
 
@@ -542,6 +542,316 @@
                 font-size: 0.75rem;
             }
         }
+
+        /* =====================================================
+           NUEVA CONSOLA POR MÓDULOS
+        ===================================================== */
+        body { padding-top: 82px; background: #070707; }
+
+        .main-header {
+            height: 82px;
+            padding: 0 28px;
+        }
+
+        .header-center {
+            text-align: center;
+        }
+
+        .header-center span {
+            display: block;
+            margin-top: 4px;
+            color: #777;
+            font-size: 0.58rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .admin-shell {
+            width: min(100%, 1500px);
+            min-height: calc(100vh - 82px);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 250px minmax(0, 1fr);
+        }
+
+        .admin-sidebar {
+            position: sticky;
+            top: 82px;
+            height: calc(100vh - 82px);
+            padding: 24px 16px;
+            background: #0b0b0b;
+            border-right: 1px solid #202020;
+            overflow-y: auto;
+        }
+
+        .admin-profile {
+            padding: 15px;
+            margin-bottom: 22px;
+            border: 1px solid #242424;
+            border-radius: 10px;
+            background: #101010;
+        }
+
+        .admin-profile span,
+        .admin-profile strong { display: block; }
+        .admin-profile span { color: #666; font-size: 0.58rem; text-transform: uppercase; }
+        .admin-profile strong { color: var(--color-oro); margin-top: 5px; font-size: 0.78rem; }
+
+        .admin-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .admin-nav-button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 13px 14px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+            font-size: 0.72rem;
+            font-weight: 800;
+            transition: 0.2s;
+        }
+
+        .admin-nav-button:hover {
+            color: white;
+            background: #131313;
+        }
+
+        .admin-nav-button.activo {
+            color: #111;
+            background: var(--color-oro);
+            border-color: var(--color-oro);
+        }
+
+        .admin-nav-icon {
+            width: 22px;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+        .admin-sidebar-link {
+            display: block;
+            margin-top: 22px;
+            padding: 12px;
+            border-top: 1px solid #222;
+            color: #777;
+            text-decoration: none;
+            font-size: 0.66rem;
+            text-align: center;
+        }
+
+        .admin-content {
+            min-width: 0;
+            padding: 30px;
+        }
+
+        .admin-view { display: none; }
+        .admin-view.activa { display: block; }
+
+        .admin-view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .admin-view-header span {
+            color: var(--color-oro);
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            font-weight: 900;
+            letter-spacing: 1.2px;
+        }
+
+        .admin-view-header h1 {
+            margin: 5px 0 0;
+            font-size: clamp(1.55rem, 3vw, 2.4rem);
+        }
+
+        .admin-view-header p {
+            max-width: 630px;
+            margin: 0;
+            color: #777;
+            font-size: 0.78rem;
+            line-height: 1.5;
+            text-align: right;
+        }
+
+        .admin-module-grid {
+            display: grid;
+            grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.6fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .card-admin {
+            border-color: #252525;
+            border-radius: 12px;
+            padding: 24px;
+            background: #101010;
+            box-shadow: 0 14px 35px rgba(0,0,0,0.18);
+        }
+
+        .card-admin h3 {
+            margin-top: 0;
+            color: white;
+            border-bottom-color: #242424;
+            font-size: 0.83rem;
+        }
+
+        .admin-view > .card-admin,
+        .admin-view > .panel-usuarios-admin,
+        .admin-view > .panel-ficha-musical,
+        .admin-view > .panel-conciertos-admin {
+            margin: 0;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .dashboard-kpi {
+            min-height: 125px;
+            padding: 19px;
+            border: 1px solid #252525;
+            border-radius: 11px;
+            background: linear-gradient(145deg, #121212, #0b0b0b);
+        }
+
+        .dashboard-kpi span {
+            display: block;
+            color: #666;
+            font-size: 0.58rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .dashboard-kpi strong {
+            display: block;
+            margin-top: 13px;
+            color: var(--color-oro);
+            font-size: 1.65rem;
+        }
+
+        .dashboard-kpi small {
+            display: block;
+            margin-top: 7px;
+            color: #777;
+            font-size: 0.65rem;
+        }
+
+        .dashboard-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .dashboard-action {
+            padding: 20px;
+            border: 1px solid #282828;
+            border-radius: 11px;
+            background: #101010;
+            color: white;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+
+        .dashboard-action:hover {
+            border-color: var(--color-oro);
+            transform: translateY(-2px);
+        }
+
+        .dashboard-action strong,
+        .dashboard-action span { display: block; }
+        .dashboard-action strong { color: var(--color-oro); font-size: 0.82rem; }
+        .dashboard-action span { margin-top: 7px; color: #777; font-size: 0.68rem; line-height: 1.45; }
+
+        .live-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 12px;
+            border: 1px solid #333;
+            border-radius: 999px;
+            color: #888;
+            font-size: 0.62rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .live-status-pill.activo {
+            color: #74d99a;
+            border-color: rgba(39,174,96,0.5);
+            background: rgba(39,174,96,0.08);
+        }
+
+        @media (max-width: 1050px) {
+            .admin-shell { grid-template-columns: 1fr; }
+            .admin-sidebar {
+                position: sticky;
+                top: 82px;
+                z-index: 900;
+                height: auto;
+                padding: 10px 14px;
+                border-right: 0;
+                border-bottom: 1px solid #222;
+                overflow-x: auto;
+            }
+            .admin-profile,
+            .admin-sidebar-link { display: none; }
+            .admin-nav { flex-direction: row; min-width: max-content; }
+            .admin-nav-button { width: auto; padding: 10px 13px; }
+            .admin-content { padding: 22px 18px 40px; }
+            .admin-module-grid { grid-template-columns: 1fr; }
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 650px) {
+            .main-header { padding: 0 12px; }
+            .header-center span { display: none; }
+            .admin-content { padding: 18px 12px 35px; }
+            .admin-view-header { align-items: flex-start; flex-direction: column; }
+            .admin-view-header p { text-align: left; }
+            .dashboard-grid,
+            .dashboard-actions { grid-template-columns: 1fr; }
+            .dashboard-kpi { min-height: auto; }
+            .card-admin { padding: 18px; }
+            .admin-nav-button { font-size: 0.65rem; }
+            .admin-nav-icon { display: none; }
+            .tabla-usuarios-wrapper,
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .tabla-historial {
+                min-width: 520px;
+                table-layout: auto;
+            }
+            .admin-actions-row {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+            .admin-actions-row .btn-send,
+            .admin-actions-row .btn-secundario {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -555,7 +865,8 @@
         </div>
 
         <div class="header-center">
-            <h2>Consola Admin</h2>
+            <h2>Consola de Administración</h2>
+            <span>Banda de Música Julián Cerdán</span>
         </div>
 
         <div class="auth-side">
@@ -569,10 +880,96 @@
         </div>
     </header>
 
-    <main class="global-container">
+    <main class="admin-shell">
+        <aside class="admin-sidebar">
+            <div class="admin-profile">
+                <span>Sesión de administración</span>
+                <strong id="admin-sidebar-name">Administrador</strong>
+            </div>
+
+            <nav class="admin-nav" aria-label="Secciones de administración">
+                <button type="button" class="admin-nav-button activo" data-admin-target="resumen">
+                    <span class="admin-nav-icon">⌂</span>Resumen
+                </button>
+                <button type="button" class="admin-nav-button" data-admin-target="directo">
+                    <span class="admin-nav-icon">●</span>Directo
+                </button>
+                <button type="button" class="admin-nav-button" data-admin-target="catalogo">
+                    <span class="admin-nav-icon">♫</span>Catálogo musical
+                </button>
+                <button type="button" class="admin-nav-button" data-admin-target="conciertos">
+                    <span class="admin-nav-icon">▤</span>Conciertos
+                </button>
+                <button type="button" class="admin-nav-button" data-admin-target="usuarios">
+                    <span class="admin-nav-icon">♙</span>Usuarios
+                </button>
+            </nav>
+
+            <a href="../index.html" class="admin-sidebar-link">← Volver a la web pública</a>
+        </aside>
+
+        <div class="admin-content">
+            <section class="admin-view activa" data-admin-view="resumen">
+                <div class="admin-view-header">
+                    <div>
+                        <span>Vista general</span>
+                        <h1>Resumen</h1>
+                    </div>
+                    <p>Estado de la plataforma y accesos rápidos a las tareas habituales.</p>
+                </div>
+
+                <div class="dashboard-grid">
+                    <article class="dashboard-kpi">
+                        <span>Estado del directo</span>
+                        <strong id="resumen-directo">Inactivo</strong>
+                        <small id="resumen-directo-detalle">No hay ninguna actuación activa.</small>
+                    </article>
+                    <article class="dashboard-kpi">
+                        <span>Catálogo musical</span>
+                        <strong id="resumen-catalogo">--</strong>
+                        <small>Marchas registradas</small>
+                    </article>
+                    <article class="dashboard-kpi">
+                        <span>Conciertos</span>
+                        <strong id="resumen-conciertos">--</strong>
+                        <small id="resumen-conciertos-detalle">Cargando estados...</small>
+                    </article>
+                    <article class="dashboard-kpi">
+                        <span>Usuarios</span>
+                        <strong id="resumen-usuarios">--</strong>
+                        <small>Perfiles registrados</small>
+                    </article>
+                </div>
+
+                <div class="dashboard-actions">
+                    <button type="button" class="dashboard-action" data-admin-go="directo">
+                        <strong>Gestionar directo</strong>
+                        <span>Inicia una actuación o añade marchas al seguimiento activo.</span>
+                    </button>
+                    <button type="button" class="dashboard-action" data-admin-go="catalogo">
+                        <strong>Editar ficha musical</strong>
+                        <span>Actualiza audios y enlaces multimedia del catálogo.</span>
+                    </button>
+                    <button type="button" class="dashboard-action" data-admin-go="conciertos">
+                        <strong>Crear concierto</strong>
+                        <span>Gestiona datos, programa, publicación, enlace y código QR.</span>
+                    </button>
+                </div>
+            </section>
+
+            <section class="admin-view" data-admin-view="directo">
+                <div class="admin-view-header">
+                    <div>
+                        <span>Operación en tiempo real</span>
+                        <h1>Directo</h1>
+                    </div>
+                    <div id="admin-live-status" class="live-status-pill">● Sin señal activa</div>
+                </div>
+
+                <div class="admin-module-grid">
 
         <div class="card-admin" id="panel-configuracion">
-            <h3>1. Iniciar Señal</h3>
+            <h3>Configurar actuación</h3>
 
             <div
                 id="info-procesion-activa"
@@ -604,7 +1001,7 @@
         </div>
 
         <div class="card-admin" id="panel-inyeccion">
-            <h3>2. Inyección Live</h3>
+            <h3>Marchas del directo</h3>
 
             <div class="injection-row">
                 <div style="width: 100%;">
@@ -657,9 +1054,20 @@
                 </table>
             </div>
         </div>
+                </div>
+            </section>
 
-        <section class="card-admin panel-usuarios-admin" id="panel-usuarios-admin">
-            <h3>3. Gestión de usuarios</h3>
+        <section class="admin-view" data-admin-view="usuarios">
+            <div class="admin-view-header">
+                <div>
+                    <span>Permisos y perfiles</span>
+                    <h1>Usuarios</h1>
+                </div>
+                <p>Consulta los miembros registrados y administra sus permisos de acceso.</p>
+            </div>
+
+            <div class="card-admin panel-usuarios-admin" id="panel-usuarios-admin">
+            <h3>Gestión de usuarios</h3>
 
             <p style="color:#aaa; font-size:0.9rem; margin-top:0;">
                 Desde aquí puedes conceder o retirar permisos de administrador a los usuarios registrados.
@@ -669,10 +1077,20 @@
             <div id="tabla-usuarios-admin">
                 <p style="color:#999;">Cargando usuarios...</p>
             </div>
+            </div>
         </section>
 
-        <section class="card-admin panel-ficha-musical" id="panel-ficha-musical">
-            <h3>4. Gestión de ficha musical</h3>
+        <section class="admin-view" data-admin-view="catalogo">
+            <div class="admin-view-header">
+                <div>
+                    <span>Archivo y multimedia</span>
+                    <h1>Catálogo musical</h1>
+                </div>
+                <p>Localiza una marcha y completa sus recursos de audio, vídeo y plataformas musicales.</p>
+            </div>
+
+            <div class="card-admin panel-ficha-musical" id="panel-ficha-musical">
+            <h3>Ficha musical de una marcha</h3>
 
             <p style="color:#aaa; font-size:0.9rem; margin-top:0;">
                 Usa esta sección para subir el audio interno de una marcha y guardar su enlace de YouTube.
@@ -781,11 +1199,21 @@
                     </p>
                 </div>
             </div>
+            </div>
         </section>
 
 
-        <section class="card-admin panel-conciertos-admin" id="panel-conciertos-admin">
-            <h3>5. Gestión de conciertos</h3>
+        <section class="admin-view" data-admin-view="conciertos">
+            <div class="admin-view-header">
+                <div>
+                    <span>Programas y publicaciones</span>
+                    <h1>Conciertos</h1>
+                </div>
+                <p>Crea el concierto, compone su programa y controla su publicación desde un único espacio.</p>
+            </div>
+
+            <div class="card-admin panel-conciertos-admin" id="panel-conciertos-admin">
+            <h3>Datos y programa del concierto</h3>
 
             <p style="color:#aaa; font-size:0.9rem; margin-top:0;">
                 Crea conciertos independientes de las procesiones. Cada concierto tendrá su propio programa de obras,
@@ -959,9 +1387,11 @@
                     </div>
                 </div>
             </div>
+            </div>
         </section>
 
 
+        </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

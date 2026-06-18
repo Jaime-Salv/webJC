@@ -2,11 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador Cronométrico - Julián Cerdán</title>
     
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../img/icon-192.png">
+    <meta name="theme-color" content="#050505">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -52,20 +55,59 @@
         .btn-accion:hover { background: white; transform: translateY(-2px); }
         .btn-accion:active { transform: translateY(0); }
 
+        /* BUSCADOR VISUAL */
+        .buscador-ayuda { color: #777; font-size: 0.72rem; line-height: 1.5; margin: -8px 0 18px; }
+        .resultados-marchas { display: flex; flex-direction: column; gap: 10px; max-height: 440px; overflow-y: auto; padding-right: 5px; }
+        .resultado-marcha { background: #101010; border: 1px solid #222; border-radius: 10px; padding: 14px; transition: 0.2s; }
+        .resultado-marcha:hover { border-color: rgba(212, 175, 55, 0.65); background: #151515; }
+        .resultado-cabecera { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+        .resultado-info { min-width: 0; }
+        .resultado-info strong { display: block; color: white; font-size: 0.88rem; margin-bottom: 5px; }
+        .resultado-info span { display: block; color: #777; font-size: 0.66rem; line-height: 1.45; }
+        .resultado-etiquetas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .resultado-etiqueta { padding: 5px 7px; border-radius: 999px; background: #080808; border: 1px solid #252525; color: #999; font-size: 0.58rem; font-weight: 800; text-transform: uppercase; }
+        .resultado-acciones { display: flex; gap: 7px; margin-top: 12px; }
+        .btn-mini { flex: 1; min-height: 34px; border-radius: 6px; border: 1px solid #333; background: #181818; color: white; cursor: pointer; font-size: 0.61rem; font-weight: 900; text-transform: uppercase; transition: 0.2s; }
+        .btn-mini:hover { border-color: var(--color-oro); color: var(--color-oro); }
+        .btn-mini.btn-anadir { background: var(--color-oro); border-color: var(--color-oro); color: black; }
+        .btn-mini.btn-anadir:hover { background: white; border-color: white; }
+        .btn-mini:disabled { opacity: 0.3; cursor: not-allowed; }
+        .estado-busqueda { color: #666; font-size: 0.76rem; text-align: center; padding: 24px 10px; border: 1px dashed #292929; border-radius: 10px; }
+
         /* LISTA DE MARCHAS */
         .itinerario-lista { display: flex; flex-direction: column; gap: 15px; }
-        .item-marcha { background: #141414; border-radius: 10px; padding: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #1a1a1a; transition: 0.3s; }
+        .item-marcha { background: #141414; border-radius: 10px; padding: 18px; display: flex; justify-content: space-between; gap: 15px; align-items: center; border: 1px solid #1a1a1a; transition: 0.3s; }
         .item-marcha:hover { border-color: var(--color-oro); background: #1a1a1a; }
+        .item-posicion { width: 34px; height: 34px; display: grid; place-items: center; flex-shrink: 0; border-radius: 50%; background: rgba(212,175,55,0.12); color: var(--color-oro); font-weight: 900; font-size: 0.72rem; }
+        .item-cuerpo { display: flex; align-items: center; gap: 13px; min-width: 0; flex: 1; }
         .item-info strong { display: block; font-size: 1rem; color: white; margin-bottom: 4px; }
         .item-info span { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .item-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .item-meta small { color: #8a8a8a; font-size: 0.62rem; }
+        .item-acciones { display: grid; grid-template-columns: repeat(2, minmax(55px, 1fr)); gap: 5px; min-width: 120px; }
+        .btn-item { border: 1px solid #333; background: #111; color: #aaa; border-radius: 5px; padding: 7px; font-size: 0.56rem; font-weight: 900; cursor: pointer; }
+        .btn-item:hover { color: var(--color-oro); border-color: var(--color-oro); }
         .btn-eliminar { background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; padding: 8px 12px; border-radius: 6px; font-weight: 900; cursor: pointer; font-size: 0.6rem; transition: 0.3s; }
         .btn-eliminar:hover { background: #e74c3c; color: white; }
 
         /* AUDITORÍA (KPIs) */
-        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .kpi-box { background: #0a0a0a; padding: 20px; border-radius: 10px; border: 1px solid #1a1a1a; text-align: center; }
         .kpi-box span { display: block; font-size: 0.55rem; color: #555; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
         .kpi-box strong { display: block; font-size: 1.3rem; color: var(--color-oro); font-weight: 900; }
+        .auditoria-avisos { display: none; gap: 8px; flex-wrap: wrap; margin-top: 15px; }
+        .auditoria-avisos.activa { display: flex; }
+        .aviso-auditoria { border: 1px solid rgba(212,175,55,0.25); background: rgba(212,175,55,0.07); color: #bbb; border-radius: 7px; padding: 9px 11px; font-size: 0.67rem; line-height: 1.4; }
+
+        /* REPRODUCTOR */
+        .mini-player-sim { position: fixed; left: 20px; right: 20px; bottom: 18px; z-index: 2500; display: none; align-items: center; gap: 16px; max-width: 900px; margin: auto; padding: 13px 16px; background: rgba(7,7,7,0.97); border: 1px solid rgba(212,175,55,0.5); border-radius: 12px; box-shadow: 0 18px 45px rgba(0,0,0,0.7); backdrop-filter: blur(12px); }
+        .mini-player-sim.activo { display: flex; }
+        .mini-player-datos { min-width: 160px; max-width: 250px; }
+        .mini-player-datos strong, .mini-player-datos span { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .mini-player-datos strong { color: var(--color-oro); font-size: 0.78rem; }
+        .mini-player-datos span { color: #777; font-size: 0.64rem; margin-top: 4px; }
+        .mini-player-sim audio { flex: 1; min-width: 0; height: 38px; }
+        .mini-player-cerrar { border: 1px solid #444; background: transparent; color: #aaa; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; flex-shrink: 0; }
 
         /* MODAL DE INVITACIÓN (A juego con Comunidad) */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; display: none; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(10px); }
@@ -75,6 +117,16 @@
             .global-container { display: grid; grid-template-columns: 450px 1fr; align-items: start; }
             .panel-derecho { display: flex; flex-direction: column; gap: 30px; }
             .main-header-pro { padding: 0 50px; height: 100px; }
+        }
+
+        @media (max-width: 700px) {
+            .card-sim { padding: 20px; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .item-marcha { align-items: flex-start; flex-direction: column; }
+            .item-acciones { width: 100%; grid-template-columns: repeat(4, 1fr); }
+            .mini-player-sim { left: 10px; right: 10px; bottom: 10px; flex-wrap: wrap; }
+            .mini-player-datos { max-width: calc(100% - 50px); flex: 1; }
+            .mini-player-sim audio { order: 3; flex-basis: 100%; }
         }
     </style>
 </head>
@@ -106,17 +158,19 @@
             </div>
 
             <div class="card-sim" style="margin-top:30px;">
-                <h3>Añadir Marcha</h3>
+                <h3>Explorar y añadir marchas</h3>
                 <div class="input-group">
-                    <label>Seleccionar Obra</label>
-                    <input list="lista-marchas" id="sim-buscador-marcha" class="input-sim" placeholder="Busca título o autor...">
-                    <datalist id="lista-marchas"></datalist>
+                    <label>Buscar por título, autor o dedicatoria</label>
+                    <input type="search" id="sim-buscador-marcha" class="input-sim" placeholder="Ej. Amarguras, Font de Anta...">
                 </div>
                 <div class="input-group">
-                    <label>Ubicación / Calle</label>
+                    <label>Ubicación para la próxima marcha</label>
                     <input type="text" id="sim-calle" class="input-sim" placeholder="Ej. Calle Ancha">
                 </div>
-                <button id="btn-agregar-marcha" onclick="procesarMarcha()" class="btn-accion">Insertar en Cruceta</button>
+                <p class="buscador-ayuda">Escucha una obra antes de decidir y añádela directamente a la cruceta.</p>
+                <div id="resultados-marchas" class="resultados-marchas">
+                    <div class="estado-busqueda">Cargando catálogo musical...</div>
+                </div>
             </div>
         </div>
 
@@ -128,7 +182,11 @@
                     <div class="kpi-box"><span>Nº Marchas</span><strong id="aud-n">0</strong></div>
                     <div class="kpi-box"><span>Tiempo Musical</span><strong id="aud-tiempo">0:00</strong></div>
                     <div class="kpi-box"><span>Densidad (%)</span><strong id="aud-ratio">0%</strong></div>
+                    <div class="kpi-box"><span>Autores</span><strong id="aud-autores">0</strong></div>
+                    <div class="kpi-box"><span>Con cornetas</span><strong id="aud-cornetas">0%</strong></div>
+                    <div class="kpi-box"><span>Duración media</span><strong id="aud-media">0:00</strong></div>
                 </div>
+                <div id="aud-avisos" class="auditoria-avisos"></div>
             </div>
 
             <div class="card-sim">
@@ -156,8 +214,20 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../js/config.js"></script>
-    <script src="../js/simulacion.js"></script>
+    <div id="mini-player-sim" class="mini-player-sim">
+        <div class="mini-player-datos">
+            <strong id="mini-player-titulo">Marcha</strong>
+            <span id="mini-player-autor">Autor</span>
+        </div>
+        <audio id="mini-player-audio" controls preload="none"></audio>
+        <button type="button" class="mini-player-cerrar" onclick="cerrarReproductor()" aria-label="Cerrar reproductor">×</button>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/consent.js"></script>
+<script src="../js/analytics.js"></script>
+<script src="../js/pwa.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/simulacion.js"></script>
 </body>
 </html>

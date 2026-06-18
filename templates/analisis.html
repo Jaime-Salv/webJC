@@ -7,6 +7,9 @@
     
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../img/icon-192.png">
+    <meta name="theme-color" content="#050505">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -570,6 +573,46 @@
         }
 
     }  
+    @media (max-width: 720px) {
+        .charts-grid,
+        .dispersion-grid,
+        .kpi-actuacion {
+            grid-template-columns: 1fr !important;
+        }
+
+        .chart-card,
+        .panel-estadisticas,
+        .panel-timeline {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .chart-container,
+        .chart-wrapper {
+            width: 100% !important;
+            min-width: 0 !important;
+            overflow-x: auto;
+        }
+
+        .hero-content > div {
+            align-items: flex-start !important;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .hero-interact-box {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .btn-interact-pill {
+            justify-content: center;
+            min-width: 0;
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+    }
     </style>
 </head>
 <body>
@@ -598,6 +641,9 @@
                         <p id="subtitulo-localidad">Extrayendo matrices de datos</p>
                     </div>
                     <div class="hero-interact-box">
+                        <button type="button" class="btn-interact-pill" onclick="compartirActuacion()">
+                            Compartir
+                        </button>
                         <button id="btn-like-main" class="btn-interact-pill" onclick="gestionarLike()">
                             ♥ <span id="like-count-hero">0</span>
                         </button>
@@ -720,11 +766,15 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../js/config.js"></script>
-    <script src="../js/analisis.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/consent.js"></script>
+<script src="../js/analytics.js"></script>
+<script src="../js/share.js"></script>
+<script src="../js/pwa.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/analisis.js"></script>
 
     <script>
         function cerrarInvitacion() { document.getElementById('modal-auth-invitation').style.display = 'none'; }

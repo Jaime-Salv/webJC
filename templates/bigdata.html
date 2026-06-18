@@ -2,11 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laboratorio Big Data - Julián Cerdán</title>
     
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../img/escudo.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../img/icon-192.png">
+    <meta name="theme-color" content="#050505">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -92,6 +95,27 @@
             .global-container { max-width: 1400px; margin: 0 auto; padding: 0 50px 60px 50px; }
             .kpi-grid { grid-template-columns: repeat(4, 1fr); }
             .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        }
+
+        @media (max-width: 680px) {
+            body { padding-top: 78px; }
+            .main-header-pro { height: 70px; padding: 0 10px; }
+            .header-logo-side img { height: 42px; }
+            .header-title-side h2 { font-size: 0.68rem; }
+            .header-title-side h2 span { font-size: 0.48rem; }
+            .btn-volver-pro { padding: 8px 9px; font-size: 0.55rem; }
+            .global-container { padding: 12px 10px 70px; }
+            .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .kpi-card { min-width: 0; padding: 14px 9px; }
+            .kpi-value { font-size: 1.15rem; }
+            .ab-table-wrapper {
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+            }
+            .heatmap-table { min-width: 560px; }
+            .chart-container,
+            .chart-card { min-width: 0; overflow-x: auto; }
+            canvas { max-width: 100% !important; }
         }
     </style>
 </head>
@@ -218,6 +242,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/pwa.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/bigdata.js"></script>
 </body>
