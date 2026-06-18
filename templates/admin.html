@@ -801,6 +801,31 @@
             background: rgba(39,174,96,0.08);
         }
 
+        .header-admin-actions {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .btn-descartar-evento {
+            display: none;
+            width: auto;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 112, 112, 0.55);
+            border-radius: 4px;
+            background: transparent;
+            color: #ff8585;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.58rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .btn-descartar-evento:hover {
+            background: rgba(231, 76, 60, 0.13);
+        }
+
         @media (max-width: 1050px) {
             .admin-shell { grid-template-columns: 1fr; }
             .admin-sidebar {
@@ -851,6 +876,16 @@
             .admin-actions-row .btn-secundario {
                 width: 100%;
             }
+            .header-admin-actions {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 4px;
+            }
+            .header-admin-actions #btn-finalizar-evento,
+            .header-admin-actions .btn-descartar-evento {
+                padding: 6px 8px !important;
+                font-size: 0.5rem !important;
+            }
         }
     </style>
 </head>
@@ -869,7 +904,14 @@
             <span>Banda de Música Julián Cerdán</span>
         </div>
 
-        <div class="auth-side">
+        <div class="auth-side header-admin-actions">
+            <button
+                id="btn-descartar-evento"
+                type="button"
+                class="btn-descartar-evento"
+            >
+                Descartar
+            </button>
             <button
                 id="btn-finalizar-evento"
                 class="btn-send"

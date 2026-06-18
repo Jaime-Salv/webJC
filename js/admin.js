@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const inputIdMarcha = document.getElementById('inp-id-marcha');
     const btnFinalizarEvento = document.getElementById('btn-finalizar-evento');
+    const btnDescartarEvento = document.getElementById('btn-descartar-evento');
     const inputFichaIdMarcha = document.getElementById('ficha-id-marcha');
 
     if (inputIdMarcha) {
@@ -38,6 +39,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnFinalizarEvento) {
         btnFinalizarEvento.addEventListener('click', finalizarEvento);
+    }
+
+    if (btnDescartarEvento) {
+        btnDescartarEvento.addEventListener('click', descartarEvento);
     }
 
     if (inputFichaIdMarcha) {
@@ -300,6 +305,7 @@ function activarModoInyeccion() {
     const txtHermandad = document.getElementById('txt-hermandad-activa');
     const txtLugar = document.getElementById('txt-lugar-activa');
     const btnFinalizar = document.getElementById('btn-finalizar-evento');
+    const btnDescartar = document.getElementById('btn-descartar-evento');
     const panelInyeccion = document.getElementById('panel-inyeccion');
     const selectFase = document.getElementById('inp-fase-marcha');
 
@@ -316,6 +322,10 @@ function activarModoInyeccion() {
 
     if (btnFinalizar) {
         btnFinalizar.style.display = 'block';
+    }
+
+    if (btnDescartar) {
+        btnDescartar.style.display = 'block';
     }
 
     if (panelInyeccion) {
@@ -348,11 +358,13 @@ function desactivarModoInyeccion() {
     const formNuevaProcesion = document.getElementById('form-nueva-procesion');
     const info = document.getElementById('info-procesion-activa');
     const btnFinalizar = document.getElementById('btn-finalizar-evento');
+    const btnDescartar = document.getElementById('btn-descartar-evento');
     const panelInyeccion = document.getElementById('panel-inyeccion');
 
     if (formNuevaProcesion) formNuevaProcesion.style.display = 'block';
     if (info) info.style.display = 'none';
     if (btnFinalizar) btnFinalizar.style.display = 'none';
+    if (btnDescartar) btnDescartar.style.display = 'none';
 
     if (panelInyeccion) {
         panelInyeccion.style.opacity = '0.5';
@@ -1761,4 +1773,98 @@ function escaparHTML(valor) {
 
 function escaparAtributo(valor) {
     return escaparHTML(valor).replaceAll('`', '&#096;');
+}
+
+async function descartarEvento() {
+    if (!procesionActiva) return;
+
+    const confirmacion = prompt(
+        `Vas a eliminar definitivamente "${procesionActiva.hermandad}" y todo lo asociado.\n\nEscribe DESCARTAR para continuar.`
+    );
+
+    if (confirmacion !== 'DESCARTAR') {
+        return;
+    }
+
+    const idProcesion = procesionActiva.id_procesion;
+    const boton = document.getElementById('btn-descartar-evento');
+
+    try {
+        if (boton) {
+            boton.disabled = true;
+            boton.textContent = 'Eliminando...';
+        }
+
+        // Se eliminan primero los registros dependientes para evitar
+        // conservar repertorio, actividad social o datos huérfanos.
+        const tablasRelacionadas = [
+            'repertorio_transaccional',
+            'procesion_comentarios',
+            'valoraciones'
+        ];
+
+        for (const tabla of tablasRelacionadas) {
+            const { error } = await clienteSupabase
+                .from(tabla)
+                .delete()
+                .eq('id_procesion', idProcesion);
+
+            if (error) {
+                throw new Error(`No se ha podido limpiar ${tabla}: ${error.message}`);
+            }
+        }
+
+        const { error: errorProcesion } = await clienteSupabase
+            .from('maestro_procesiones')
+            .delete()
+            .eq('id_procesion', idProcesion);
+
+        if (errorProcesion) {
+            throw errorProcesion;
+        }
+
+        await eliminarPortadaActuacionDescartada(procesionActiva.url_foto);
+
+        procesionActiva = null;
+        contadorOrden = 1;
+        ordenEnEdicion = null;
+        desactivarModoInyeccion();
+
+        const tbody = document.getElementById('tabla-historial-body');
+        if (tbody) tbody.innerHTML = '';
+
+        alert('La actuación se ha descartado y no se guardará en el histórico.');
+        window.location.reload();
+
+    } catch (error) {
+        alert(`No se ha podido descartar completamente la actuación: ${error.message}`);
+
+        if (boton) {
+            boton.disabled = false;
+            boton.textContent = 'Descartar';
+        }
+    }
+}
+
+async function eliminarPortadaActuacionDescartada(urlFoto) {
+    if (!urlFoto || !urlFoto.includes('/storage/v1/object/public/portadas/')) {
+        return;
+    }
+
+    try {
+        const rutaCodificada = urlFoto.split('/storage/v1/object/public/portadas/')[1];
+        const rutaArchivo = decodeURIComponent(rutaCodificada.split('?')[0]);
+
+        if (rutaArchivo) {
+            const { error } = await clienteSupabase.storage
+                .from('portadas')
+                .remove([rutaArchivo]);
+
+            if (error) {
+                console.warn('La actuación se eliminó, pero no se pudo borrar su portada:', error);
+            }
+        }
+    } catch (error) {
+        console.warn('No se ha podido interpretar la ruta de la portada descartada:', error);
+    }
 }
