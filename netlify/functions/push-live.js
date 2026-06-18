@@ -1,4 +1,10 @@
-const { webpush, response, supabaseRequest, requireAdmin } = require('./lib/push-utils');
+const {
+    webpush,
+    configureWebPush,
+    response,
+    supabaseRequest,
+    requireAdmin
+} = require('./lib/push-utils');
 
 exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') return response(405, { error: 'Método no permitido' });
@@ -6,6 +12,7 @@ exports.handler = async (event) => {
     try {
         const admin = await requireAdmin(event);
         if (!admin) return response(403, { error: 'Acceso denegado' });
+        configureWebPush();
 
         const { idProcesion, hermandad, localidad } = JSON.parse(event.body || '{}');
         if (!idProcesion || !hermandad) return response(400, { error: 'Datos del directo incompletos' });

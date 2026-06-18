@@ -101,7 +101,20 @@
 
                 if (!respuesta.ok) {
                     await suscripcion.unsubscribe();
-                    throw new Error('No se ha podido guardar la suscripción.');
+                    let mensaje = 'No se ha podido guardar la suscripción.';
+
+                    try {
+                        const errorServidor = await respuesta.json();
+                        if (errorServidor.detail) {
+                            mensaje += ` ${errorServidor.detail}`;
+                        } else if (errorServidor.error) {
+                            mensaje += ` ${errorServidor.error}`;
+                        }
+                    } catch (error) {
+                        mensaje += ` Error ${respuesta.status}.`;
+                    }
+
+                    throw new Error(mensaje);
                 }
 
                 mostrarEstadoPWA('Te avisaremos cuando la banda entre en directo.');

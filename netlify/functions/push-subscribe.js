@@ -35,6 +35,13 @@ exports.handler = async (event) => {
         return response(200, { ok: true });
     } catch (error) {
         console.error(error);
-        return response(500, { error: 'No se ha podido guardar la suscripción' });
+        const detalleSeguro = error.message?.startsWith('Faltan variables:')
+            ? error.message
+            : 'Comprueba que la tabla push_subscriptions existe y que la clave privada de Supabase es correcta.';
+
+        return response(500, {
+            error: 'No se ha podido guardar la suscripción',
+            detail: detalleSeguro
+        });
     }
 };

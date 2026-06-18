@@ -1,29 +1,28 @@
 const webpush = require('web-push');
 
-function getConfig() {
-    const required = [
-        'SUPABASE_URL',
-        'SUPABASE_ANON_KEY',
-        'SUPABASE_SERVICE_ROLE_KEY',
-        'VAPID_PUBLIC_KEY',
-        'VAPID_PRIVATE_KEY',
-        'VAPID_SUBJECT'
-    ];
+function requireEnvironment(names) {
+    const missing = names.filter((name) => !process.env[name]);
 
-    const missing = required.filter((name) => !process.env[name]);
     if (missing.length) throw new Error(`Faltan variables: ${missing.join(', ')}`);
+}
+
+function getSupabaseConfig() {
+    requireEnvironment(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
+
+    return {
+        supabaseUrl: process.env.SUPABASE_URL,
+        serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY
+    };
+}
+
+function configureWebPush() {
+    requireEnvironment(['VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY', 'VAPID_SUBJECT']);
 
     webpush.setVapidDetails(
         process.env.VAPID_SUBJECT,
         process.env.VAPID_PUBLIC_KEY,
         process.env.VAPID_PRIVATE_KEY
     );
-
-    return {
-        supabaseUrl: process.env.SUPABASE_URL,
-        anonKey: process.env.SUPABASE_ANON_KEY,
-        serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY
-    };
 }
 
 function response(statusCode, body) {
@@ -38,7 +37,7 @@ function response(statusCode, body) {
 }
 
 async function supabaseRequest(path, options = {}) {
-    const config = getConfig();
+    const config = getSupabaseConfig();
     const headers = {
         apikey: config.serviceKey,
         'Content-Type': 'application/json',
@@ -55,7 +54,11 @@ async function supabaseRequest(path, options = {}) {
 }
 
 async function requireAdmin(event) {
-    const config = getConfig();
+    requireEnvironment(['SUPABASE_ANON_KEY']);
+    const config = {
+        ...getSupabaseConfig(),
+        anonKey: process.env.SUPABASE_ANON_KEY
+    };
     const authorization = event.headers.authorization || event.headers.Authorization;
     if (!authorization?.startsWith('Bearer ')) return null;
 
@@ -77,4 +80,10 @@ async function requireAdmin(event) {
     return profiles?.[0]?.rol === 'admin' ? user : null;
 }
 
-module.exports = { webpush, getConfig, response, supabaseRequest, requireAdmin };
+module.exports = {
+    webpush,
+    configureWebPush,
+    response,
+    supabaseRequest,
+    requireAdmin
+};
