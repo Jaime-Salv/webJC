@@ -134,11 +134,21 @@
         const suscripcion = await registroSW.pushManager.getSubscription();
         boton.classList.toggle('activo', Boolean(suscripcion));
         boton.textContent = suscripcion ? 'Avisos activados' : 'Avisarme del directo';
+        actualizarVisibilidadTarjetaPWA(Boolean(suscripcion));
     }
 
     function actualizarBotonInstalar(visible) {
         const boton = document.getElementById('btn-instalar-app');
         if (boton) boton.hidden = !visible;
+    }
+
+    function actualizarVisibilidadTarjetaPWA(notificacionesActivas) {
+        const bloque = document.getElementById('bloque-pwa-home');
+        if (!bloque) return;
+
+        // Si el usuario ya recibe avisos de directo, retiramos la tarjeta
+        // de la portada para mantener la interfaz limpia.
+        bloque.hidden = notificacionesActivas;
     }
 
     function mostrarEstadoPWA(mensaje) {
