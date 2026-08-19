@@ -846,19 +846,34 @@
         </div>
     </section>
 
-    <section id="bloque-pwa-home" class="page-shell">
-        <div class="pwa-home-card">
-            <div>
-                <span class="pwa-home-label">Llévanos contigo</span>
-                <h2>Instala la app y recibe avisos de directo</h2>
-                <p>Te avisaremos únicamente cuando la banda active una actuación en vivo.</p>
-                <div id="estado-pwa" class="pwa-home-status"></div>
-            </div>
-            <div class="pwa-home-actions">
-                <button type="button" id="btn-instalar-app" hidden>Instalar app</button>
-                <button type="button" id="btn-notificaciones-directo">Avisarme del directo</button>
+    <section class="page-shell hero-home">
+        <div>
+            <div class="eyebrow">Archivo vivo de la Banda de Música Julián Cerdán</div>
+
+            <h1 class="hero-title">
+                Descubre qué toca
+                <span>Julián Cerdán</span>
+            </h1>
+
+            <p class="hero-subtitle">
+                Consulta actuaciones y repertorios, escucha marchas y diseña tus propias
+                propuestas de cruceta en una comunidad dedicada a nuestra música.
+            </p>
+
+            <div class="hero-actions">
+                <a href="#ultima-actuacion" class="btn-primary">Ver última actuación</a>
+                <a href="templates/catalogo.html" class="btn-secondary">Explorar marchas</a>
             </div>
         </div>
+
+        <aside class="hero-card">
+            <img src="img/escudo.png" alt="Escudo de la Banda de Música Julián Cerdán">
+            <h3>Todo el repertorio, en un solo lugar</h3>
+            <p>
+                Explora el archivo musical, revive cada actuación y comparte propuestas
+                con otros amantes de la música procesional.
+            </p>
+        </aside>
     </section>
 
     <section id="ultima-actuacion" class="page-shell section-block">
@@ -871,6 +886,21 @@
 
         <div id="contenedor-ultima-actuacion">
             <div class="empty-state">Cargando última actuación...</div>
+        </div>
+    </section>
+
+    <section id="bloque-pwa-home" class="page-shell">
+        <div class="pwa-home-card">
+            <div>
+                <span class="pwa-home-label">Llévanos contigo</span>
+                <h2>Instala la app y recibe avisos de directo</h2>
+                <p>Te avisaremos únicamente cuando la banda active una actuación en vivo.</p>
+                <div id="estado-pwa" class="pwa-home-status"></div>
+            </div>
+            <div class="pwa-home-actions">
+                <button type="button" id="btn-instalar-app" hidden>Instalar app</button>
+                <button type="button" id="btn-notificaciones-directo">Avisarme del directo</button>
+            </div>
         </div>
     </section>
 
@@ -995,36 +1025,6 @@
         </div>
     </section>
 
-    <section class="page-shell hero-home">
-        <div>
-            <div class="eyebrow">Archivo musical · Repertorios · Análisis</div>
-
-            <h1 class="hero-title">
-                Banda de Música
-                <span>Julián Cerdán</span>
-            </h1>
-
-            <p class="hero-subtitle">
-                Plataforma musical para reunir actuaciones, repertorios, análisis de crucetas,
-                audios internos, enlaces externos y aportaciones de la comunidad.
-            </p>
-
-            <div class="hero-actions">
-                <a href="templates/catalogo.html" class="btn-primary">Explorar catálogo</a>
-                <a href="templates/comunidad.html" class="btn-secondary">Ir a comunidad</a>
-            </div>
-        </div>
-
-        <aside class="hero-card">
-            <img src="img/escudo.png" alt="Escudo Julián Cerdán">
-            <h3>Archivo vivo de la banda</h3>
-            <p>
-                Una plataforma para reunir repertorios, análisis de crucetas, enlaces externos,
-                audios internos y aportaciones de la comunidad musical.
-            </p>
-        </aside>
-    </section>
-
     <section class="page-shell admin-access">
         <a href="templates/admin.html" id="link-admin-footer">Acceso administración</a>
     </section>
@@ -1040,3 +1040,4 @@
 <script src="js/hub.js"></script>
 </body>
 </html>
+
