@@ -886,26 +886,114 @@
         }
 
         @media (max-width: 650px) {
-            .main-header { padding: 0 12px; }
+            body { padding-top: 64px; }
+            .main-header {
+                height: 64px;
+                padding: 0 10px;
+                gap: 8px;
+            }
+            .logo-side img { height: 38px; }
+            .header-center { min-width: 0; flex: 1; }
+            .header-center h2 {
+                overflow: hidden;
+                font-size: 0.68rem;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
             .header-center span { display: none; }
-            .admin-content { padding: 18px 12px 35px; }
+            .admin-shell { min-height: calc(100vh - 64px); }
+            .admin-sidebar {
+                top: 64px;
+                padding: 8px 10px 10px;
+                scrollbar-width: thin;
+                scroll-snap-type: x proximity;
+            }
+            .admin-nav { gap: 6px; }
+            .admin-nav-button {
+                min-height: 44px;
+                padding: 10px 14px;
+                border-color: #242424;
+                scroll-snap-align: start;
+                white-space: nowrap;
+            }
+            .admin-content { padding: 16px 10px 32px; }
             .admin-view-header { align-items: flex-start; flex-direction: column; }
             .admin-view-header p { text-align: left; }
             .dashboard-grid,
             .dashboard-actions { grid-template-columns: 1fr; }
             .dashboard-kpi { min-height: auto; }
-            .card-admin { padding: 18px; }
+            .card-admin { padding: 16px 13px; border-radius: 10px; }
             .admin-nav-button { font-size: 0.65rem; }
             .admin-nav-icon { display: none; }
-            .tabla-usuarios-wrapper,
-            .table-wrapper {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
+            .input-admin,
+            .btn-send,
+            .btn-secundario,
+            .btn-rol,
+            .btn-mini-danger {
+                min-height: 44px;
             }
+            .injection-row { padding: 12px; gap: 12px; }
+            .injection-row > div { min-width: 0; }
+            .table-wrapper { overflow: visible; border: 0; }
             .tabla-historial {
-                min-width: 520px;
-                table-layout: auto;
+                min-width: 0;
+                display: block;
             }
+            .tabla-historial thead { display: none; }
+            .tabla-historial tbody { display: grid; gap: 9px; }
+            .tabla-historial tr {
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                grid-template-areas: "num marcha accion" "fase fase fase";
+                align-items: center;
+                gap: 7px 10px;
+                padding: 12px;
+                border: 1px solid #292929;
+                border-radius: 9px;
+                background: #0b0b0b;
+            }
+            .tabla-historial td { padding: 0; border: 0; }
+            .tabla-historial .col-num { grid-area: num; width: auto; color: #777; }
+            .tabla-historial .col-marcha { grid-area: marcha; font-size: 0.86rem; color: white; }
+            .tabla-historial .col-fase {
+                grid-area: fase;
+                width: max-content;
+                padding: 5px 8px;
+                border-radius: 999px;
+                background: rgba(212,175,55,0.08);
+                color: var(--color-oro);
+                text-align: left !important;
+            }
+            .tabla-historial .col-acciones { grid-area: accion; width: auto; }
+            .btn-editar-fila { min-width: 44px; min-height: 44px; }
+            .tabla-usuarios-wrapper { overflow: visible; border: 0; }
+            .tabla-usuarios { min-width: 0; display: block; }
+            .tabla-usuarios thead { display: none; }
+            .tabla-usuarios tbody { display: grid; gap: 10px; }
+            .tabla-usuarios tr {
+                display: block;
+                padding: 13px;
+                border: 1px solid #292929;
+                border-radius: 9px;
+                background: #0b0b0b;
+            }
+            .tabla-usuarios td {
+                display: grid;
+                grid-template-columns: minmax(82px, 0.42fr) minmax(0, 1fr);
+                align-items: center;
+                gap: 10px;
+                padding: 7px 0 !important;
+                border: 0;
+                overflow-wrap: anywhere;
+            }
+            .tabla-usuarios td::before {
+                content: attr(data-label);
+                color: #777;
+                font-size: 0.58rem;
+                font-weight: 900;
+                text-transform: uppercase;
+            }
+            .tabla-usuarios .btn-rol { width: 100%; }
             .admin-actions-row {
                 display: grid;
                 grid-template-columns: 1fr;
@@ -915,15 +1003,61 @@
                 width: 100%;
             }
             .header-admin-actions {
-                align-items: stretch;
-                flex-direction: column;
-                gap: 4px;
+                flex: 0 0 auto;
+                align-items: center;
+                gap: 5px;
             }
             .header-admin-actions #btn-finalizar-evento,
             .header-admin-actions .btn-descartar-evento {
-                padding: 6px 8px !important;
-                font-size: 0.5rem !important;
+                width: 44px !important;
+                min-width: 44px;
+                min-height: 44px;
+                padding: 5px !important;
+                overflow: hidden;
+                font-size: 0 !important;
+                white-space: nowrap;
             }
+            .header-admin-actions #btn-finalizar-evento::before {
+                content: "✓";
+                font-size: 1rem;
+            }
+            .header-admin-actions .btn-descartar-evento::before {
+                content: "×";
+                font-size: 1.25rem;
+            }
+            .grid-ficha-musical { display: grid; grid-template-columns: minmax(0, 1fr); }
+            .obra-admin-item { grid-template-columns: 32px minmax(0, 1fr); }
+            .qr-admin-box canvas { width: min(100%, 280px) !important; height: auto !important; }
+            .resultado-ficha,
+            .concierto-box-actual,
+            .estado-url { overflow-wrap: anywhere; }
+        }
+
+        @media (max-width: 380px) {
+            .header-center h2 { display: none; }
+            .dashboard-kpi strong { font-size: 1.35rem; }
+            .admin-content { padding-inline: 7px; }
+            .card-admin { padding-inline: 11px; }
+            .tabla-usuarios td { grid-template-columns: 1fr; gap: 4px; }
+            .admin-view-header h1 { font-size: 1.4rem; }
+        }
+
+        @media (orientation: landscape) and (max-height: 520px) and (max-width: 950px) {
+            body { padding-top: 56px; }
+            .main-header { height: 56px; }
+            .admin-sidebar { top: 56px; }
+            .admin-nav-button { min-height: 40px; }
+            .admin-content { padding-top: 12px; }
+            .admin-view-header { margin-bottom: 14px; }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            button,
+            select,
+            input[type="file"] { touch-action: manipulation; }
+            .admin-nav-button:hover,
+            .dashboard-action:hover,
+            .btn-editar-fila:hover { transform: none; }
         }
     </style>
 </head>
