@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'jc-pwa-v2';
+const CACHE_VERSION = 'jc-pwa-v3';
 const APP_SHELL = [
     '/',
     '/index.html',
@@ -109,3 +109,4 @@ self.addEventListener('notificationclick', (event) => {
         })
     );
 });
+
