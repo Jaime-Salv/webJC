@@ -73,6 +73,9 @@
         .btn-mini.btn-anadir:hover { background: white; border-color: white; }
         .btn-mini:disabled { opacity: 0.3; cursor: not-allowed; }
         .estado-busqueda { color: #666; font-size: 0.76rem; text-align: center; padding: 24px 10px; border: 1px dashed #292929; border-radius: 10px; }
+        .aviso-simulador { display:none; position:fixed; top:92px; left:50%; transform:translateX(-50%); z-index:2200; width:min(92vw,620px); padding:14px 18px; border:1px solid rgba(212,175,55,.55); border-radius:10px; background:rgba(18,28,19,.97); color:#d8f1da; box-shadow:0 12px 35px rgba(0,0,0,.55); text-align:center; font-size:.78rem; font-weight:700; }
+        .aviso-simulador.visible { display:block; }
+        .aviso-simulador.error { background:rgba(45,18,18,.97); color:#ffcaca; border-color:#b84c4c; }
 
         /* LISTA DE MARCHAS */
         .itinerario-lista { display: flex; flex-direction: column; gap: 15px; }
@@ -131,6 +134,8 @@
     </style>
 </head>
 <body>
+
+    <div id="aviso-simulador" class="aviso-simulador" role="status" aria-live="polite"></div>
 
     <header class="main-header-pro">
         <div class="header-logo-side"><a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a></div>
