@@ -35,6 +35,12 @@ async function cargarDatosPerfil() {
         document.getElementById('perf-nombre').value = perfil.username || "";
         document.getElementById('perf-bio').value = perfil.descripcion || "";
         document.getElementById('perf-marcha').value = perfil.marcha_favorita || "";
+        const intereses = Array.isArray(perfil.intereses_musicales) ? perfil.intereses_musicales : [];
+        document.querySelectorAll('[name="intereses-musicales"]').forEach((campo) => {
+            campo.checked = intereses.includes(campo.value);
+        });
+        document.getElementById('perf-notif-comentarios').checked = perfil.notificar_comentarios !== false;
+        document.getElementById('perf-notif-valoraciones').checked = perfil.notificar_valoraciones !== false;
         if (perfil.avatar_url) {
             document.getElementById('avatar-preview').src = perfil.avatar_url;
         }
@@ -80,6 +86,9 @@ async function guardarPerfil() {
             username: document.getElementById('perf-nombre').value.trim(),
             descripcion: document.getElementById('perf-bio').value.trim(),
             marcha_favorita: document.getElementById('perf-marcha').value.trim(),
+            intereses_musicales: [...document.querySelectorAll('[name="intereses-musicales"]:checked')].map((campo) => campo.value),
+            notificar_comentarios: document.getElementById('perf-notif-comentarios').checked,
+            notificar_valoraciones: document.getElementById('perf-notif-valoraciones').checked,
             avatar_url: url_avatar,
             updated_at: new Date()
         };
@@ -100,3 +109,4 @@ async function guardarPerfil() {
         btn.disabled = false;
     }
 }
+
