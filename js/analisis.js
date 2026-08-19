@@ -78,6 +78,8 @@ async function cargarDatosActuacion() {
             };
         });
 
+        actualizarExportacionAnalisis();
+
         renderizarCabecera(datosProcesion);
         calcularMetricas(repertorioEnriquecido, datosProcesion.hermandad, datosProcesion.localidad);
         analizarRepeticiones(repertorioEnriquecido);
@@ -115,6 +117,38 @@ function renderizarCabecera(data) {
             hero.style.borderColor = 'transparent';
             hero.style.boxShadow = 'none';
         }
+    }
+}
+
+function actualizarExportacionAnalisis() {
+    document.querySelectorAll('[data-exportar-analisis]').forEach((boton) => {
+        boton.disabled = !datosProcesion || repertorioEnriquecido.length === 0;
+    });
+}
+
+function mostrarEstadoExportacion(mensaje) {
+    const estado = document.getElementById('estado-exportacion-repertorio');
+    if (estado) estado.textContent = mensaje;
+}
+
+async function copiarRepertorioAnalisis() {
+    if (!datosProcesion || repertorioEnriquecido.length === 0) return;
+    try {
+        await RepertorioExport.copiarTexto(datosProcesion, repertorioEnriquecido);
+        mostrarEstadoExportacion('Repertorio copiado. Ya puedes pegarlo en WhatsApp o en otro documento.');
+    } catch (error) {
+        mostrarEstadoExportacion('No se ha podido copiar: ' + error.message);
+    }
+}
+
+function descargarRepertorioAnalisis(formato) {
+    if (!datosProcesion || repertorioEnriquecido.length === 0) return;
+    try {
+        if (formato === 'pdf') RepertorioExport.descargarPDF(datosProcesion, repertorioEnriquecido);
+        else RepertorioExport.descargarTexto(datosProcesion, repertorioEnriquecido);
+        mostrarEstadoExportacion(`Repertorio ${formato.toUpperCase()} preparado.`);
+    } catch (error) {
+        mostrarEstadoExportacion('No se ha podido exportar: ' + error.message);
     }
 }
 

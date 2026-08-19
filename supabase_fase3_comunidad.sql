@@ -46,4 +46,3 @@ for insert to authenticated with check (
         where proyecto.id = repertorio_id
     )
 );
-

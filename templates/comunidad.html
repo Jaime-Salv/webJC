@@ -163,6 +163,9 @@
         .community-player-info strong { color: var(--color-oro); font-size: 0.75rem; }
         .community-player-info span { color: #777; font-size: 0.62rem; margin-top: 3px; }
         .community-player audio { flex: 1; min-width: 0; height: 38px; }
+        .visibilidad-propuesta { display:inline-flex; margin:0 0 10px; padding:5px 8px; border:1px solid rgba(52,152,219,.4); border-radius:999px; color:#7fc5ef; background:rgba(52,152,219,.08); font-size:.56rem; font-weight:800; text-transform:uppercase; }
+        .visibilidad-propuesta.privada { color:#d8b95c; border-color:rgba(212,175,55,.4); background:rgba(212,175,55,.08); }
+        .aviso-enlace-lectura { margin-bottom:14px; padding:12px; border:1px solid rgba(212,175,55,.4); border-radius:7px; background:rgba(212,175,55,.08); color:#dbc879; font-size:.7rem; line-height:1.5; }
 
         @media (min-width: 1024px) {
             .main-header-pro { padding: 0 50px; height: 100px; }
@@ -266,19 +269,21 @@
             
             <div class="modal-body">
                 <div id="modal-lista-marchas"></div>
-                
-                <button id="btn-mejorar" class="btn-ver-cruceta" style="background: var(--color-azul); color: white; margin: 30px 0; padding: 18px;">
-                    🛠️ PROPONER MEJORA TÉCNICA
-                </button>
 
-                <div id="contenedor-hilo-mejoras"></div>
+                <div id="modal-participacion">
+                    <button id="btn-mejorar" class="btn-ver-cruceta" style="background: var(--color-azul); color: white; margin: 30px 0; padding: 18px;">
+                        🛠️ PROPONER MEJORA TÉCNICA
+                    </button>
 
-                <h4 style="color:var(--color-oro); font-size:0.75rem; text-transform:uppercase; margin: 40px 0 15px 0; border-bottom: 1px solid #222; padding-bottom: 10px; letter-spacing: 1px;">Debate y Notas Técnicas</h4>
-                <div id="contenedor-comentarios" style="margin-bottom: 25px;"></div>
-                
-                <div style="display:flex; gap:12px; align-items: center;">
-                    <input type="text" id="input-comentario" class="input-comentario" placeholder="Escribe tu opinión experta...">
-                    <button onclick="enviarComentario()" style="background:var(--color-oro); border:none; padding:0; border-radius:8px; width:50px; height:50px; cursor:pointer; font-weight:bold; color: black; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; flex-shrink: 0;">></button>
+                    <div id="contenedor-hilo-mejoras"></div>
+
+                    <h4 style="color:var(--color-oro); font-size:0.75rem; text-transform:uppercase; margin: 40px 0 15px 0; border-bottom: 1px solid #222; padding-bottom: 10px; letter-spacing: 1px;">Debate y Notas Técnicas</h4>
+                    <div id="contenedor-comentarios" style="margin-bottom: 25px;"></div>
+
+                    <div style="display:flex; gap:12px; align-items: center;">
+                        <input type="text" id="input-comentario" class="input-comentario" placeholder="Escribe tu opinión experta...">
+                        <button onclick="enviarComentario()" style="background:var(--color-oro); border:none; padding:0; border-radius:8px; width:50px; height:50px; cursor:pointer; font-weight:bold; color: black; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; flex-shrink: 0;">></button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -309,8 +314,7 @@
 <script src="../js/share.js"></script>
 <script src="../js/pwa.js"></script>
 <script src="../js/config.js"></script>
-<script src="../js/comunidad.js"></script>
+<script src="../js/comunidad.js?v=4"></script>
 
 </body>
 </html>
-

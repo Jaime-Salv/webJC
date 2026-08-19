@@ -751,4 +751,3 @@ function gestionarHeaderSmart() {
         ultimoScroll = scrollActual;
     });
 }
-

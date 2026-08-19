@@ -20,4 +20,3 @@ alter table public.catalogo_marchas
 grant usage, select
   on sequence public.catalogo_marchas_id_marcha_seq
   to authenticated;
-

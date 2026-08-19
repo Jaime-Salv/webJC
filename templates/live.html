@@ -185,6 +185,51 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        .live-resumen {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) repeat(2, minmax(85px, 1fr));
+            gap: 9px;
+            margin-bottom: 10px;
+        }
+
+        .live-resumen-item {
+            min-width: 0;
+            padding: 11px 12px;
+            border: 1px solid rgba(212, 175, 55, 0.18);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .live-resumen-item span {
+            display: block;
+            margin-bottom: 4px;
+            color: #888;
+            font-size: 0.55rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .live-resumen-item strong {
+            display: block;
+            overflow: hidden;
+            color: white;
+            font-size: 0.75rem;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #live-conexion { color: #62d98c; }
+        #live-conexion.offline { color: #ffba59; }
+
+        #live-actualizado {
+            margin: 0 0 14px;
+            color: #777;
+            font-size: 0.62rem;
+        }
+
+        #live-actualizado.cache { color: #ffba59; }
+
         #timeline-contenedor {
             display: flex;
             flex-direction: column;
@@ -307,6 +352,14 @@
             .marcha-live-card {
                 align-items: flex-start;
             }
+
+            .live-resumen {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .live-resumen-item:first-child {
+                grid-column: 1 / -1;
+            }
         }
     </style>
 </head>
@@ -352,6 +405,22 @@
                 Secuencia Musical
             </h3>
 
+            <div class="live-resumen" aria-label="Resumen del directo">
+                <div class="live-resumen-item">
+                    <span>Ahora</span>
+                    <strong id="live-ahora">Esperando</strong>
+                </div>
+                <div class="live-resumen-item">
+                    <span>Interpretadas</span>
+                    <strong id="live-total">0</strong>
+                </div>
+                <div class="live-resumen-item">
+                    <span>Conexión</span>
+                    <strong id="live-conexion">Comprobando</strong>
+                </div>
+            </div>
+            <p id="live-actualizado">Conectando con el directo…</p>
+
             <div id="timeline-contenedor">
                 <p class="estado-vacio">Esperando a que la dirección musical inyecte la primera marcha...</p>
             </div>
@@ -367,4 +436,3 @@
 <script src="../js/live.js"></script>
 </body>
 </html>
-

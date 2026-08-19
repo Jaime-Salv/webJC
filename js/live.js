@@ -8,6 +8,7 @@ const idProcesion = parametrosURL.get('id');
 
 let catalogoMaestro = [];
 let canalDirecto = null;
+const CLAVE_CACHE_DIRECTO = `jc_directo_cache_${idProcesion || 'sin-id'}`;
 
 document.addEventListener('DOMContentLoaded', inicializarDirecto);
 
@@ -24,6 +25,9 @@ async function inicializarDirecto() {
 
     activarSuscripcionesRealtime();
     prepararEventosChat();
+    window.addEventListener('online', actualizarConexionDirecto);
+    window.addEventListener('offline', actualizarConexionDirecto);
+    actualizarConexionDirecto();
 }
 
 function textoSeguro(valor) {
@@ -128,19 +132,46 @@ async function cargarMarchas() {
         return;
     }
 
-    const { data, error } = await clienteSupabase
-        .from('repertorio_transaccional')
-        .select('*')
-        .eq('id_procesion', idProcesion)
-        .order('orden', { ascending: false });
+    let data = null;
+    let error = null;
+    let usandoCache = false;
+
+    try {
+        const respuesta = await clienteSupabase
+            .from('repertorio_transaccional')
+            .select('*')
+            .eq('id_procesion', idProcesion)
+            .order('orden', { ascending: false });
+        data = respuesta.data;
+        error = respuesta.error;
+    } catch (errorRed) {
+        error = errorRed;
+    }
+
+    if (error) {
+        try {
+            const cache = JSON.parse(localStorage.getItem(CLAVE_CACHE_DIRECTO) || 'null');
+            if (cache && Array.isArray(cache.data)) {
+                data = cache.data;
+                usandoCache = true;
+            }
+        } catch (_) {
+            data = null;
+        }
+    } else {
+        localStorage.setItem(CLAVE_CACHE_DIRECTO, JSON.stringify({ data: data || [], actualizadaEn: new Date().toISOString() }));
+    }
 
     limpiarElemento(contenedor);
 
-    if (error) {
+    if (error && !usandoCache) {
         console.error('Error cargando marchas:', error);
         contenedor.appendChild(crearMensajeEstado('No se ha podido cargar el repertorio.'));
+        actualizarResumenDirecto([], true);
         return;
     }
+
+    actualizarResumenDirecto(data || [], usandoCache);
 
     if (!data || data.length === 0) {
         contenedor.appendChild(crearMensajeEstado('Esperando marchas...'));
@@ -162,7 +193,7 @@ async function cargarMarchas() {
         if (esLaUltima) {
             fase.textContent = `🔴 SONANDO AHORA: ${textoSeguro(registro.fase)}`;
         } else {
-            fase.textContent = textoSeguro(registro.fase);
+            fase.textContent = `INTERPRETADA · ${textoSeguro(registro.fase)}`;
         }
 
         const titulo = document.createElement('h4');
@@ -181,6 +212,28 @@ async function cargarMarchas() {
 
         contenedor.appendChild(card);
     });
+}
+
+function actualizarConexionDirecto() {
+    const elemento = document.getElementById('live-conexion');
+    if (!elemento) return;
+    elemento.textContent = navigator.onLine ? 'En línea' : 'Sin cobertura';
+    elemento.classList.toggle('offline', !navigator.onLine);
+}
+
+function actualizarResumenDirecto(marchas, usandoCache = false) {
+    const ahora = document.getElementById('live-ahora');
+    const total = document.getElementById('live-total');
+    const actualizado = document.getElementById('live-actualizado');
+    if (ahora) ahora.textContent = marchas.length ? obtenerTituloMarcha(marchas[0].id_marcha) : 'Esperando';
+    if (total) total.textContent = textoSeguro(marchas.length);
+    if (actualizado) {
+        actualizado.textContent = usandoCache
+            ? 'Mostrando la última información guardada en este dispositivo.'
+            : `Actualizado a las ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+        actualizado.classList.toggle('cache', usandoCache);
+    }
+    actualizarConexionDirecto();
 }
 
 async function cargarChat() {

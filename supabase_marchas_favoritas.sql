@@ -19,4 +19,3 @@ create policy "usuarios_guardan_sus_favoritas" on public.marchas_favoritas
 for insert to authenticated with check ((select auth.uid()) = usuario_id);
 create policy "usuarios_borran_sus_favoritas" on public.marchas_favoritas
 for delete to authenticated using ((select auth.uid()) = usuario_id);
-

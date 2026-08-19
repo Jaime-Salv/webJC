@@ -55,6 +55,31 @@
         .btn-accion:hover { background: white; transform: translateY(-2px); }
         .btn-accion:active { transform: translateY(0); }
 
+        .herramientas-proyecto { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+        .herramientas-proyecto button { min-height: 40px; padding: 9px 12px; border: 1px solid rgba(212,175,55,.35); border-radius: 6px; background: rgba(212,175,55,.07); color: #e8d69b; font: 800 .61rem 'Montserrat',sans-serif; text-transform: uppercase; cursor: pointer; }
+        .herramientas-proyecto button.principal { background: var(--color-oro); color: #070707; }
+        .herramientas-proyecto button.secundario { border-color: #444; color: #aaa; background: #101010; }
+
+        .lista-borradores { display: flex; flex-direction: column; gap: 9px; }
+        .borrador-sim { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid #242424; border-radius: 9px; background: #0d0d0d; }
+        .borrador-sim.activo { border-color: rgba(212,175,55,.65); background: rgba(212,175,55,.06); }
+        .borrador-sim strong,.borrador-sim span { display: block; }
+        .borrador-sim strong { color: #eee; font-size: .75rem; }
+        .borrador-sim span { margin-top: 4px; color: #666; font-size: .61rem; }
+        .borrador-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+        .borrador-acciones button { min-height: 32px; padding: 6px 8px; border: 1px solid #333; border-radius: 5px; background: #151515; color: #bbb; font: 800 .55rem 'Montserrat',sans-serif; text-transform: uppercase; cursor: pointer; }
+        .borrador-acciones button.peligro { color: #ef8075; border-color: rgba(231,76,60,.4); }
+        .borradores-vacio { margin: 0; padding: 18px; border: 1px dashed #292929; border-radius: 8px; color: #666; font-size: .7rem; text-align: center; }
+        .visibilidad-ayuda { display:block; margin-top:7px; color:#777; font-size:.64rem; line-height:1.45; }
+        .resultado-enlace { display:none; margin:0 0 18px; padding:14px; border:1px solid rgba(52,152,219,.55); border-radius:9px; background:rgba(52,152,219,.08); }
+        .resultado-enlace.visible { display:block; }
+        .resultado-enlace strong,.resultado-enlace span { display:block; }
+        .resultado-enlace strong { color:#8dcaf0; font-size:.76rem; }
+        .resultado-enlace span { margin:5px 0 10px; color:#aaa; font-size:.66rem; line-height:1.45; }
+        .resultado-enlace-linea { display:flex; gap:7px; }
+        .resultado-enlace input { min-width:0; flex:1; padding:10px; border:1px solid #333; border-radius:5px; background:#080808; color:#ddd; }
+        .resultado-enlace button { padding:9px 12px; border:0; border-radius:5px; background:#3498db; color:white; font-weight:800; cursor:pointer; }
+
         /* BUSCADOR VISUAL */
         .buscador-ayuda { color: #777; font-size: 0.72rem; line-height: 1.5; margin: -8px 0 18px; }
         .resultados-marchas { display: flex; flex-direction: column; gap: 10px; max-height: 440px; overflow-y: auto; padding-right: 5px; }
@@ -130,6 +155,11 @@
             .mini-player-sim { left: 10px; right: 10px; bottom: 10px; flex-wrap: wrap; }
             .mini-player-datos { max-width: calc(100% - 50px); flex: 1; }
             .mini-player-sim audio { order: 3; flex-basis: 100%; }
+            .herramientas-proyecto { display: grid; grid-template-columns: 1fr 1fr; }
+            .herramientas-proyecto button { min-height: 46px; }
+            .herramientas-proyecto button.principal { grid-column: 1 / -1; }
+            .borrador-sim { align-items: stretch; flex-direction: column; }
+            .borrador-acciones { display: grid; grid-template-columns: repeat(4,1fr); }
         }
     </style>
 </head>
@@ -159,6 +189,15 @@
                 <div class="input-group">
                     <label>Argumentación Técnica</label>
                     <textarea id="sim-descripcion" class="input-sim" placeholder="Describe el estilo musical o motivos del diseño..."></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Visibilidad al publicar</label>
+                    <select id="sim-visibilidad" class="input-sim">
+                        <option value="publica">Pública - visible para todo el mundo</option>
+                        <option value="miembros">Solo miembros registrados</option>
+                        <option value="enlace">Privada mediante enlace</option>
+                    </select>
+                    <small id="sim-visibilidad-ayuda" class="visibilidad-ayuda">Aparecerá en la Comunidad y cualquiera podrá verla.</small>
                 </div>
             </div>
 
@@ -195,14 +234,37 @@
             </div>
 
             <div class="card-sim">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; border-bottom:1px solid #222; padding-bottom:15px;">
+                <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid #222; padding-bottom:15px;">
                     <h3 style="margin:0; border:0; padding:0;">Diseño de Cruceta</h3>
-                    <button class="btn-accion" style="width:auto; padding:12px 25px; margin:0;" onclick="prepararParaComunidad()">Publicar en Foro</button>
+                    <button id="btn-publicar-foro" class="btn-accion" style="width:auto; padding:12px 25px; margin:0;" onclick="prepararParaComunidad()">Publicar propuesta</button>
+                </div>
+
+                <div id="resultado-enlace-privado" class="resultado-enlace" role="status" aria-live="polite">
+                    <strong>Propuesta privada publicada</strong>
+                    <span>Solo podrá verla quien reciba este enlace. Guárdalo antes de salir.</span>
+                    <div class="resultado-enlace-linea">
+                        <input id="url-enlace-privado" type="text" readonly aria-label="Enlace privado de la propuesta">
+                        <button type="button" onclick="copiarEnlacePrivado()">Copiar</button>
+                    </div>
+                </div>
+
+                <div class="herramientas-proyecto" aria-label="Herramientas del repertorio">
+                    <button type="button" class="principal" onclick="guardarBorradorSimulacion()">Guardar borrador</button>
+                    <button type="button" class="secundario" onclick="nuevoBorradorSimulacion()">Nuevo</button>
+                    <button type="button" onclick="exportarSimulacionActual('copiar')">Copiar texto</button>
+                    <button type="button" onclick="exportarSimulacionActual('txt')">Descargar TXT</button>
+                    <button type="button" onclick="exportarSimulacionActual('pdf')">Exportar PDF</button>
                 </div>
                 
                 <div id="contenedor-itinerario" class="itinerario-lista">
                     <p style="color: #444; font-size: 0.9rem; text-align: center; padding: 40px; border: 2px dashed #1a1a1a; border-radius: 12px;">Comienza a añadir marchas para generar la simulación</p>
                 </div>
+            </div>
+
+            <div class="card-sim">
+                <h3>Mis borradores</h3>
+                <p class="buscador-ayuda">Se guardan únicamente en este dispositivo. Puedes abrirlos y exportarlos sin publicarlos.</p>
+                <div id="lista-borradores-simulacion" class="lista-borradores"></div>
             </div>
 
         </div>
@@ -228,12 +290,14 @@
         <button type="button" class="mini-player-cerrar" onclick="cerrarReproductor()" aria-label="Cerrar reproductor">×</button>
     </div>
 
+<script src="../js/vendor/jspdf.umd.min.js?v=4.2.1"></script>
+<script src="../js/vendor/jspdf.plugin.autotable.min.js?v=5.0.8"></script>
+<script src="../js/repertorio-export.js?v=2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/consent.js"></script>
 <script src="../js/analytics.js"></script>
 <script src="../js/pwa.js"></script>
 <script src="../js/config.js"></script>
-<script src="../js/simulacion.js"></script>
+<script src="../js/simulacion.js?v=4"></script>
 </body>
 </html>
-

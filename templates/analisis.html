@@ -351,6 +351,29 @@
         white-space: nowrap;
     }
 
+    .acciones-exportar-repertorio {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0 0 18px;
+    }
+
+    .acciones-exportar-repertorio button {
+        min-height: 42px;
+        padding: 9px 13px;
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        border-radius: 6px;
+        background: rgba(212, 175, 55, 0.07);
+        color: #ebd99e;
+        font: 800 0.65rem 'Montserrat', sans-serif;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+
+    .acciones-exportar-repertorio button.principal { background: var(--color-oro); color: #090909; }
+    .acciones-exportar-repertorio button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .estado-exportacion-repertorio { min-height: 1.2em; margin: -8px 0 14px; color: #8f8f8f; font-size: 0.72rem; }
+
     .timeline-paginacion {
         display: flex;
         justify-content: center;
@@ -737,6 +760,13 @@
                     <span class="badge-paginacion-repertorio">15 por página</span>
                 </div>
 
+                <div class="acciones-exportar-repertorio" aria-label="Exportar repertorio">
+                    <button type="button" data-exportar-analisis onclick="copiarRepertorioAnalisis()" disabled>Copiar texto</button>
+                    <button type="button" data-exportar-analisis onclick="descargarRepertorioAnalisis('txt')" disabled>Descargar TXT</button>
+                    <button type="button" data-exportar-analisis class="principal" onclick="descargarRepertorioAnalisis('pdf')" disabled>Exportar PDF</button>
+                </div>
+                <p id="estado-exportacion-repertorio" class="estado-exportacion-repertorio" role="status" aria-live="polite"></p>
+
                 <div id="timeline-contenedor" class="timeline"></div>
                 <div id="timeline-paginacion" class="timeline-paginacion"></div>
             </div>
@@ -766,6 +796,9 @@
         </div>
     </div>
 
+<script src="../js/vendor/jspdf.umd.min.js?v=4.2.1"></script>
+<script src="../js/vendor/jspdf.plugin.autotable.min.js?v=5.0.8"></script>
+<script src="../js/repertorio-export.js?v=2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

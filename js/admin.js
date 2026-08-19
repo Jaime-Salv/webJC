@@ -6,6 +6,10 @@ let procesionActiva = null;
 let catalogoCache = [];
 let contadorOrden = 1;
 let ordenEnEdicion = null;
+let historialDirectoCache = [];
+let guardandoMarchaDirecto = false;
+let sincronizandoMarchasPendientes = false;
+const CLAVE_MARCHAS_PENDIENTES = 'jc_marchas_directo_pendientes';
 
 let usuarioActual = null;
 let perfilActual = null;
@@ -71,6 +75,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
+
+    window.addEventListener('online', sincronizarMarchasPendientes);
+    window.addEventListener('offline', actualizarEstadoConexionDirecto);
+    actualizarEstadoConexionDirecto();
+    pintarMarchasPendientes();
+    if (navigator.onLine) sincronizarMarchasPendientes();
 });
 
 /* ------------------------------------------------------------
@@ -282,7 +292,7 @@ function mostrarAccesoDenegado(mensaje) {
 async function cargarCatalogoEnMemoria() {
     const { data, error } = await clienteSupabase
         .from('catalogo_marchas')
-        .select('id_marcha, titulo');
+        .select('id_marcha, titulo, autor, cornetas, duracion_seg');
 
     if (error) {
         console.error('Error cargando catálogo:', error);
@@ -708,7 +718,116 @@ window.prepararEdicion = function(orden, id_marcha, fase) {
     }
 };
 
+function leerMarchasPendientes() {
+    try {
+        const datos = JSON.parse(localStorage.getItem(CLAVE_MARCHAS_PENDIENTES) || '[]');
+        return Array.isArray(datos) ? datos : [];
+    } catch (_) {
+        return [];
+    }
+}
+
+function guardarMarchasPendientes(pendientes) {
+    localStorage.setItem(CLAVE_MARCHAS_PENDIENTES, JSON.stringify(pendientes));
+    pintarMarchasPendientes();
+}
+
+function actualizarEstadoInyeccion(mensaje, tipo = '') {
+    const estado = document.getElementById('estado-inyeccion');
+    if (!estado) return;
+    estado.textContent = mensaje;
+    estado.className = `estado-inyeccion ${tipo}`.trim();
+}
+
+function actualizarEstadoConexionDirecto() {
+    const conexion = document.getElementById('estado-conexion-directo');
+    if (!conexion) return;
+    conexion.textContent = navigator.onLine ? '● Con conexión' : '● Sin conexión';
+    conexion.classList.toggle('offline', !navigator.onLine);
+}
+
+function pintarMarchasPendientes() {
+    const contenedor = document.getElementById('marchas-pendientes');
+    if (!contenedor) return;
+    const pendientes = leerMarchasPendientes().filter((item) => {
+        return !procesionActiva || String(item.idProcesion) === String(procesionActiva.id_procesion);
+    });
+    contenedor.hidden = pendientes.length === 0;
+    contenedor.textContent = pendientes.length === 1
+        ? '1 marcha pendiente de sincronizar'
+        : `${pendientes.length} marchas pendientes de sincronizar`;
+}
+
+function establecerGuardadoDirecto(activo) {
+    guardandoMarchaDirecto = activo;
+    const boton = document.getElementById('btn-inyectar-marcha');
+    if (!boton) return;
+    boton.disabled = activo;
+    boton.textContent = activo ? 'Guardando…' : (ordenEnEdicion !== null ? 'ACTUALIZAR' : 'Añadir');
+}
+
+function limpiarFormularioMarcha() {
+    const inputId = document.getElementById('inp-id-marcha');
+    const inputTitulo = document.getElementById('inp-titulo-marcha');
+    if (inputId) inputId.value = '';
+    if (inputTitulo) {
+        inputTitulo.value = '';
+        inputTitulo.placeholder = 'Título de la marcha';
+        inputTitulo.style.color = 'var(--color-oro)';
+        inputTitulo.focus();
+    }
+}
+
+function encolarMarchaPendiente(datos) {
+    const pendientes = leerMarchasPendientes();
+    pendientes.push({
+        ...datos,
+        idLocal: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+        creadaEn: new Date().toISOString()
+    });
+    guardarMarchasPendientes(pendientes);
+}
+
+async function insertarMarchaPendiente(item) {
+    await cargarHistorialTransaccional();
+    const marcha = await obtenerOCrearMarcha(item.idIntroducido, item.titulo);
+    const { error } = await clienteSupabase.from('repertorio_transaccional').insert([{
+        id_procesion: item.idProcesion,
+        id_marcha: Number(marcha.id_marcha),
+        fase: item.fase,
+        orden: contadorOrden
+    }]);
+    if (error) throw error;
+}
+
+async function sincronizarMarchasPendientes() {
+    actualizarEstadoConexionDirecto();
+    if (!navigator.onLine || sincronizandoMarchasPendientes || guardandoMarchaDirecto || !procesionActiva) return;
+
+    const todas = leerMarchasPendientes();
+    const deEsteDirecto = todas.filter((item) => String(item.idProcesion) === String(procesionActiva.id_procesion));
+    if (deEsteDirecto.length === 0) return;
+
+    sincronizandoMarchasPendientes = true;
+    actualizarEstadoInyeccion('Recuperando marchas guardadas sin conexión…', 'pendiente');
+    try {
+        for (const item of deEsteDirecto) {
+            await insertarMarchaPendiente(item);
+            const restantes = leerMarchasPendientes().filter((pendiente) => pendiente.idLocal !== item.idLocal);
+            guardarMarchasPendientes(restantes);
+        }
+        await cargarHistorialTransaccional();
+        actualizarEstadoInyeccion('Marchas pendientes sincronizadas.', 'correcto');
+    } catch (error) {
+        console.error('No se ha podido sincronizar la cola del directo:', error);
+        actualizarEstadoInyeccion('La sincronización se reintentará cuando mejore la conexión.', 'pendiente');
+    } finally {
+        sincronizandoMarchasPendientes = false;
+    }
+}
+
 async function inyectarMarcha() {
+    if (guardandoMarchaDirecto) return;
     if (!procesionActiva) {
         alert('No hay proceso activo.');
         return;
@@ -727,6 +846,10 @@ async function inyectarMarcha() {
         alert('Escribe el título de la marcha. El ID es opcional.');
         return;
     }
+
+    const eraEdicion = ordenEnEdicion !== null;
+    establecerGuardadoDirecto(true);
+    actualizarEstadoInyeccion(eraEdicion ? 'Actualizando marcha…' : 'Guardando marcha…');
 
     try {
         const marcha = await obtenerOCrearMarcha(
@@ -780,24 +903,27 @@ async function inyectarMarcha() {
             }
         }
 
-        const inputIdMarcha = document.getElementById('inp-id-marcha');
-        const inputTituloMarcha = document.getElementById('inp-titulo-marcha');
-
-        if (inputIdMarcha) {
-            inputIdMarcha.value = '';
-            inputIdMarcha.focus();
-        }
-
-        if (inputTituloMarcha) {
-            inputTituloMarcha.value = '';
-            inputTituloMarcha.placeholder = 'Título de la marcha';
-            inputTituloMarcha.style.color = 'var(--color-oro)';
-        }
-
-        cargarHistorialTransaccional();
+        limpiarFormularioMarcha();
+        await cargarHistorialTransaccional();
+        actualizarEstadoInyeccion(eraEdicion ? 'Marcha actualizada.' : 'Marcha añadida al directo.', 'correcto');
 
     } catch (error) {
-        alert('Error al guardar marcha: ' + error.message);
+        const pareceErrorDeRed = !navigator.onLine || /fetch|network|conexi|Failed to fetch/i.test(error.message || '');
+        if (!eraEdicion && pareceErrorDeRed) {
+            encolarMarchaPendiente({
+                idProcesion: procesionActiva.id_procesion,
+                idIntroducido: Number.isInteger(inputId) ? inputId : null,
+                titulo: tituloInput,
+                fase
+            });
+            limpiarFormularioMarcha();
+            actualizarEstadoInyeccion('Sin cobertura: la marcha está guardada y se enviará automáticamente.', 'pendiente');
+        } else {
+            actualizarEstadoInyeccion('No se ha podido guardar: ' + error.message, 'error');
+        }
+    } finally {
+        establecerGuardadoDirecto(false);
+        if (navigator.onLine) setTimeout(sincronizarMarchasPendientes, 250);
     }
 }
 
@@ -826,6 +952,11 @@ async function cargarHistorialTransaccional() {
     tbody.innerHTML = '';
 
     contadorOrden = data.length > 0 ? data[data.length - 1].orden + 1 : 1;
+    historialDirectoCache = data.map((registro) => {
+        const marcha = catalogoCache.find((item) => Number(item.id_marcha) === Number(registro.id_marcha)) || {};
+        return { ...marcha, ...registro, titulo: marcha.titulo || `ID: ${registro.id_marcha}` };
+    });
+    actualizarBotonesExportacionDirecto();
 
     data.forEach((registro) => {
         const marcha = catalogoCache.find((item) => item.id_marcha === registro.id_marcha);
@@ -841,6 +972,69 @@ async function cargarHistorialTransaccional() {
                 </td>
             </tr>
         `;
+    });
+
+    pintarAccesosMarchasRecientes(data);
+    pintarMarchasPendientes();
+}
+
+function obtenerDatosExportacionDirecto() {
+    return {
+        meta: procesionActiva || {},
+        marchas: historialDirectoCache
+    };
+}
+
+function actualizarBotonesExportacionDirecto() {
+    document.querySelectorAll('[data-exportar-directo]').forEach((boton) => {
+        boton.disabled = !procesionActiva || historialDirectoCache.length === 0;
+    });
+}
+
+async function copiarRepertorioDirecto() {
+    const { meta, marchas } = obtenerDatosExportacionDirecto();
+    if (!marchas.length) return;
+    try {
+        await RepertorioExport.copiarTexto(meta, marchas);
+        actualizarEstadoInyeccion('Repertorio copiado. Ya puedes pegarlo en WhatsApp o donde quieras.', 'correcto');
+    } catch (error) {
+        actualizarEstadoInyeccion('No se ha podido copiar: ' + error.message, 'error');
+    }
+}
+
+function descargarRepertorioDirecto(formato) {
+    const { meta, marchas } = obtenerDatosExportacionDirecto();
+    if (!marchas.length) return;
+    try {
+        if (formato === 'pdf') RepertorioExport.descargarPDF(meta, marchas);
+        else RepertorioExport.descargarTexto(meta, marchas);
+        actualizarEstadoInyeccion(`Repertorio ${formato.toUpperCase()} preparado.`, 'correcto');
+    } catch (error) {
+        actualizarEstadoInyeccion('No se ha podido exportar: ' + error.message, 'error');
+    }
+}
+
+function pintarAccesosMarchasRecientes(registros) {
+    const contenedor = document.getElementById('accesos-marchas-recientes');
+    if (!contenedor) return;
+    contenedor.innerHTML = '';
+
+    const vistos = new Set();
+    registros.slice().reverse().forEach((registro) => {
+        if (vistos.size >= 4 || vistos.has(registro.id_marcha)) return;
+        vistos.add(registro.id_marcha);
+        const marcha = catalogoCache.find((item) => Number(item.id_marcha) === Number(registro.id_marcha));
+        if (!marcha) return;
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.className = 'marcha-reciente-btn';
+        boton.textContent = marcha.titulo;
+        boton.addEventListener('click', () => {
+            document.getElementById('inp-id-marcha').value = marcha.id_marcha;
+            autocompletarTitulo();
+            document.getElementById('inp-fase-marcha').focus();
+        });
+        contenedor.appendChild(boton);
     });
 }
 
@@ -2046,4 +2240,3 @@ async function eliminarPortadaActuacionDescartada(urlFoto) {
         console.warn('No se ha podido interpretar la ruta de la portada descartada:', error);
     }
 }
-

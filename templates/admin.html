@@ -191,6 +191,97 @@
             overflow-wrap: break-word;
         }
 
+        .directo-tools-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin: -4px 0 14px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .estado-conexion-directo { color: #4bd37b; }
+        .estado-conexion-directo.offline { color: #ffb84d; }
+        .marchas-pendientes { color: #ffb84d; }
+
+        .accesos-marchas-recientes {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 0 0 12px;
+            scrollbar-width: thin;
+        }
+
+        .marcha-reciente-btn {
+            flex: 0 0 auto;
+            max-width: 220px;
+            padding: 9px 12px;
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            border-radius: 999px;
+            background: rgba(212, 175, 55, 0.08);
+            color: #f4e7bd;
+            font: 700 0.68rem 'Montserrat', sans-serif;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+
+        .estado-inyeccion {
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            margin: 12px 0 15px;
+            padding: 9px 12px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #aaa;
+            font-size: 0.72rem;
+            line-height: 1.4;
+        }
+
+        .estado-inyeccion.correcto { color: #67db91; background: rgba(39, 174, 96, 0.1); }
+        .estado-inyeccion.pendiente { color: #ffc66d; background: rgba(255, 184, 77, 0.09); }
+        .estado-inyeccion.error { color: #ff8585; background: rgba(255, 59, 59, 0.09); }
+
+        #btn-inyectar-marcha:disabled { opacity: 0.65; cursor: wait; }
+
+        .exportacion-repertorio-admin {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin: 0 0 18px;
+            padding: 14px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            background: rgba(212, 175, 55, 0.045);
+        }
+
+        .exportacion-repertorio-admin strong,
+        .exportacion-repertorio-admin span { display: block; }
+        .exportacion-repertorio-admin strong { color: #fff; font-size: 0.82rem; }
+        .exportacion-repertorio-admin span { margin-top: 4px; color: #888; font-size: 0.67rem; line-height: 1.4; }
+
+        .exportacion-repertorio-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+        .exportacion-repertorio-acciones button {
+            min-height: 39px;
+            padding: 8px 11px;
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            border-radius: 5px;
+            background: transparent;
+            color: #e8d8a6;
+            font: 800 0.62rem 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+        .exportacion-repertorio-acciones button.principal { background: var(--color-oro); color: #080808; }
+        .exportacion-repertorio-acciones button:disabled { opacity: 0.35; cursor: not-allowed; }
+
         .tabla-historial th {
             background: #000;
             color: var(--color-oro);
@@ -492,6 +583,21 @@
                 border-radius: 8px;
                 border: 1px solid rgba(212, 175, 55, 0.2);
             }
+
+            #btn-inyectar-marcha {
+                min-height: 56px;
+                font-size: 0.82rem;
+            }
+
+            .marcha-reciente-btn {
+                min-height: 42px;
+                max-width: 78vw;
+            }
+
+            .exportacion-repertorio-admin { align-items: stretch; flex-direction: column; }
+            .exportacion-repertorio-acciones { display: grid; grid-template-columns: 1fr 1fr; }
+            .exportacion-repertorio-acciones button { min-height: 46px; }
+            .exportacion-repertorio-acciones button.principal { grid-column: 1 / -1; }
 
             .header-center h2 {
                 font-size: 1.2rem;
@@ -1226,6 +1332,13 @@
         <div class="card-admin" id="panel-inyeccion">
             <h3>Marchas del directo</h3>
 
+            <div class="directo-tools-row">
+                <span id="estado-conexion-directo" class="estado-conexion-directo">● Comprobando conexión</span>
+                <span id="marchas-pendientes" class="marchas-pendientes" hidden></span>
+            </div>
+
+            <div id="accesos-marchas-recientes" class="accesos-marchas-recientes" aria-label="Marchas recientes"></div>
+
             <div class="injection-row">
                 <div style="width: 100%;">
                     <label style="font-size:0.6rem; color:#888; display:block; margin-bottom:5px;">ID (OPCIONAL)</label>
@@ -1264,6 +1377,22 @@
                 >
                     Añadir
                 </button>
+            </div>
+
+            <div id="estado-inyeccion" class="estado-inyeccion" role="status" aria-live="polite">
+                Lista para añadir la siguiente marcha.
+            </div>
+
+            <div class="exportacion-repertorio-admin">
+                <div>
+                    <strong>Exportar repertorio</strong>
+                    <span>Copia el listado o guárdalo con un diseño listo para compartir.</span>
+                </div>
+                <div class="exportacion-repertorio-acciones">
+                    <button type="button" data-exportar-directo onclick="copiarRepertorioDirecto()" disabled>Copiar texto</button>
+                    <button type="button" data-exportar-directo onclick="descargarRepertorioDirecto('txt')" disabled>Descargar TXT</button>
+                    <button type="button" data-exportar-directo class="principal" onclick="descargarRepertorioDirecto('pdf')" disabled>Exportar PDF</button>
+                </div>
             </div>
 
             <div class="table-wrapper">
@@ -1620,7 +1749,10 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/vendor/jspdf.umd.min.js?v=4.2.1"></script>
+<script src="../js/vendor/jspdf.plugin.autotable.min.js?v=5.0.8"></script>
+<script src="../js/repertorio-export.js?v=2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/admin.js"></script>
@@ -1660,4 +1792,3 @@
     </script>
 </body>
 </html>
-

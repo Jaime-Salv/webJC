@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'jc-pwa-v5';
+const CACHE_VERSION = 'jc-pwa-v8';
 const APP_SHELL = [
     '/',
     '/index.html',
@@ -8,6 +8,9 @@ const APP_SHELL = [
     '/js/share.js',
     '/js/consent.js',
     '/js/analytics.js',
+    '/js/repertorio-export.js',
+    '/js/vendor/jspdf.umd.min.js',
+    '/js/vendor/jspdf.plugin.autotable.min.js',
     '/img/escudo.png',
     '/img/icon-192.png',
     '/img/icon-512.png',
@@ -109,4 +112,3 @@ self.addEventListener('notificationclick', (event) => {
         })
     );
 });
-

@@ -182,6 +182,7 @@ function aplicarFiltrosFeed() {
     const vista = document.getElementById('vista-comunidad')?.value || 'todo';
 
     proyectosVisibles = proyectosRaiz.filter((proyecto) => {
+        if (proyecto.visibilidad === 'enlace' && vista !== 'mios') return false;
         const coincideVista = vista === 'mios'
             ? sesionActual && String(proyecto.usuario_id) === String(sesionActual.user.id)
             : vista === 'para-ti'
@@ -266,6 +267,8 @@ function crearTarjetaProyecto(proyecto) {
             </div>
 
             <h3 style="margin:0 0 9px;">${escaparHTML(proyecto.proyecto_nombre || 'Proyecto sin título')}</h3>
+            ${proyecto.visibilidad === 'miembros' ? '<span class="visibilidad-propuesta">Solo miembros</span>' : ''}
+            ${proyecto.visibilidad === 'enlace' ? '<span class="visibilidad-propuesta privada">Privada por enlace</span>' : ''}
             <p class="post-description">${escaparHTML(proyecto.descripcion || 'Sin argumentación técnica publicada.')}</p>
 
             <div class="post-tags">
@@ -388,8 +391,12 @@ async function abrirModal(id, actualizarUrl = true) {
     const botonMejorar = document.getElementById('btn-mejorar');
     botonMejorar.onclick = () => prepararMejora(proyecto.id);
 
+    const accesoSoloEnlace = proyecto._accesoEnlace === true;
+    const participacion = document.getElementById('modal-participacion');
+    if (participacion) participacion.hidden = accesoSoloEnlace;
+
     document.getElementById('modal-cruceta').style.display = 'flex';
-    await Promise.all([cargarHiloMejoras(id), cargarComentarios(id)]);
+    if (!accesoSoloEnlace) await Promise.all([cargarHiloMejoras(id), cargarComentarios(id)]);
 
     if (actualizarUrl) {
         const url = obtenerUrlProyecto(id);
@@ -398,7 +405,28 @@ async function abrirModal(id, actualizarUrl = true) {
 }
 
 async function abrirProyectoCompartido() {
-    const id = new URLSearchParams(window.location.search).get('proyecto');
+    const parametros = new URLSearchParams(window.location.search);
+    const token = parametros.get('enlace');
+
+    if (token) {
+        const { data: proyectoPrivado, error } = await clienteSupabase
+            .rpc('obtener_repertorio_por_enlace', { p_token: token })
+            .maybeSingle();
+
+        if (error || !proyectoPrivado) {
+            mostrarEstadoFeed('El enlace privado no es válido o ya no está disponible.');
+            return;
+        }
+
+        proyectoPrivado._accesoEnlace = true;
+        if (!proyectosRaiz.some((proyecto) => String(proyecto.id) === String(proyectoPrivado.id))) {
+            proyectosRaiz.push(proyectoPrivado);
+        }
+        await abrirModal(proyectoPrivado.id, false);
+        return;
+    }
+
+    const id = parametros.get('proyecto');
     if (!id) return;
 
     const existe = proyectosRaiz.some((proyecto) => String(proyecto.id) === String(id));
@@ -414,9 +442,20 @@ function compartirProyecto(id) {
 
     abrirCompartir({
         titulo,
-        url: obtenerUrlProyecto(id),
+        url: obtenerUrlCompartirProyecto(proyecto),
         texto: `🎼 Mira este repertorio propuesto en la Comunidad de la Banda de Música Julián Cerdán:\n\n${titulo}\n${repertorio.length} obras · por ${proyecto.usuario_nombre || 'un miembro de la comunidad'}`
     });
+}
+
+function obtenerUrlCompartirProyecto(proyecto) {
+    if (proyecto?.visibilidad === 'enlace' && proyecto.enlace_token) {
+        const url = new URL(window.location.href);
+        url.search = '';
+        url.hash = '';
+        url.searchParams.set('enlace', proyecto.enlace_token);
+        return url.href;
+    }
+    return obtenerUrlProyecto(proyecto.id);
 }
 
 function obtenerUrlProyecto(id) {
@@ -434,6 +473,7 @@ function renderizarDetalleProyecto(proyecto, esMejora) {
     const color = esMejora ? '#3498db' : 'var(--color-oro)';
 
     lista.innerHTML = `
+        ${proyecto._accesoEnlace ? '<div class="aviso-enlace-lectura">Propuesta privada compartida contigo. Puedes consultarla, pero no aparece en el foro público.</div>' : ''}
         <div style="background:${esMejora ? 'rgba(52,152,219,0.1)' : 'rgba(212,175,55,0.1)'}; border:1px dashed ${color}; padding:15px; border-radius:6px; margin-bottom:16px; font-size:0.82rem; line-height:1.55; color:#ccc;">
             <strong style="color:${color}; display:block; margin-bottom:5px;">
                 ${esMejora ? 'ARGUMENTO DE LA MEJORA' : 'NOTAS DEL AUTOR'}
@@ -627,6 +667,7 @@ async function prepararMejora(id) {
     localStorage.setItem('jc_simulacion_descripcion', '');
     localStorage.setItem('jc_simulacion_horas', proyecto.horas_estimadas || 6);
     localStorage.setItem('jc_simulacion_parent_id', proyecto.id);
+    localStorage.setItem('jc_simulacion_visibilidad', proyecto.visibilidad === 'miembros' ? 'miembros' : 'publica');
     window.location.href = 'simulacion.html';
 }
 
@@ -946,4 +987,3 @@ function escaparHTML(valor) {
 function escaparAtributo(valor) {
     return escaparHTML(valor);
 }
-

@@ -6,6 +6,8 @@
 let catalogoGlobal = [];
 let itinerarioSimulado = [];
 let idEnEdicion = null;
+let borradorActualId = localStorage.getItem('jc_simulacion_borrador_actual_id');
+const CLAVE_BORRADORES_SIMULACION = 'jc_simulacion_borradores_v1';
 
 document.addEventListener('DOMContentLoaded', inicializarSimulador);
 
@@ -38,6 +40,7 @@ async function inicializarSimulador() {
 
     renderizarItinerario();
     ejecutarAuditoria();
+    renderizarBorradoresGuardados();
 }
 
 function incorporarMarchaPendiente() {
@@ -77,9 +80,11 @@ function prepararEventos() {
     });
     document.getElementById('sim-nombre')?.addEventListener('input', autoguardarSimulacion);
     document.getElementById('sim-descripcion')?.addEventListener('input', autoguardarSimulacion);
+    document.getElementById('sim-visibilidad')?.addEventListener('change', actualizarAyudaVisibilidad);
 
     document.getElementById('resultados-marchas')?.addEventListener('click', gestionarAccionResultado);
     document.getElementById('contenedor-itinerario')?.addEventListener('click', gestionarAccionItinerario);
+    document.getElementById('lista-borradores-simulacion')?.addEventListener('click', gestionarAccionBorrador);
 }
 
 function restaurarBorrador() {
@@ -96,10 +101,17 @@ function restaurarBorrador() {
     const horas = localStorage.getItem('jc_simulacion_horas');
     const nombre = localStorage.getItem('jc_simulacion_nombre');
     const descripcion = localStorage.getItem('jc_simulacion_descripcion');
+    const visibilidad = localStorage.getItem('jc_simulacion_visibilidad');
 
     if (horas !== null) document.getElementById('sim-horas').value = horas;
     if (nombre !== null) document.getElementById('sim-nombre').value = nombre;
     if (descripcion !== null) document.getElementById('sim-descripcion').value = descripcion;
+    if (visibilidad !== null && ['publica', 'miembros', 'enlace'].includes(visibilidad)) {
+        document.getElementById('sim-visibilidad').value = visibilidad;
+    }
+    const esMejora = Boolean(localStorage.getItem('jc_simulacion_parent_id'));
+    if (esMejora) document.getElementById('sim-visibilidad').disabled = true;
+    actualizarAyudaVisibilidad();
 }
 
 function renderizarResultados() {
@@ -430,6 +442,7 @@ async function prepararParaComunidad() {
     }, 0);
     const densidad = horas > 0 ? Math.round((totalSegundos / (horas * 3600)) * 100) : 0;
     const parentId = localStorage.getItem('jc_simulacion_parent_id');
+    const visibilidad = document.getElementById('sim-visibilidad')?.value || 'publica';
 
     try {
         const { data: perfil } = await clienteSupabase
@@ -439,7 +452,7 @@ async function prepararParaComunidad() {
             .maybeSingle();
         const nombrePublico = perfil?.username || usuario.email.split('@')[0];
 
-        const { error } = await clienteSupabase.from('comunidad_repertorios').insert([{
+        const { data: proyectoPublicado, error } = await clienteSupabase.from('comunidad_repertorios').insert([{
             proyecto_nombre: nombre,
             horas_estimadas: horas,
             densidad_musical: densidad,
@@ -447,16 +460,28 @@ async function prepararParaComunidad() {
             repertorio_json: itinerarioSimulado,
             usuario_id: usuario.id,
             usuario_nombre: nombrePublico,
-            respuesta_a_id: parentId
-        }]);
+            respuesta_a_id: parentId,
+            visibilidad
+        }]).select('id, visibilidad, enlace_token').single();
 
         if (error) throw error;
 
-        alert('¡Publicado con éxito!');
         itinerarioSimulado = [];
         localStorage.removeItem('jc_simulacion_borrador');
         localStorage.removeItem('jc_simulacion_parent_id');
-        window.location.href = 'comunidad.html';
+        actualizarSimulador();
+
+        if (visibilidad === 'enlace') {
+            const url = new URL('comunidad.html', window.location.href);
+            url.searchParams.set('enlace', proyectoPublicado.enlace_token);
+            const inputEnlace = document.getElementById('url-enlace-privado');
+            if (inputEnlace) inputEnlace.value = url.href;
+            document.getElementById('resultado-enlace-privado')?.classList.add('visible');
+            mostrarAvisoSimulador('Propuesta privada creada. Copia el enlace antes de salir.');
+        } else {
+            alert(visibilidad === 'miembros' ? 'Propuesta publicada para miembros.' : '¡Publicado con éxito!');
+            window.location.href = 'comunidad.html';
+        }
     } catch (error) {
         alert(error.message);
     }
@@ -467,6 +492,202 @@ function autoguardarSimulacion() {
     localStorage.setItem('jc_simulacion_horas', document.getElementById('sim-horas').value);
     localStorage.setItem('jc_simulacion_nombre', document.getElementById('sim-nombre').value);
     localStorage.setItem('jc_simulacion_descripcion', document.getElementById('sim-descripcion').value);
+    localStorage.setItem('jc_simulacion_visibilidad', document.getElementById('sim-visibilidad')?.value || 'publica');
+}
+
+function actualizarAyudaVisibilidad() {
+    const valor = document.getElementById('sim-visibilidad')?.value || 'publica';
+    const mensajes = {
+        publica: 'Aparecerá en la Comunidad y cualquiera podrá verla.',
+        miembros: 'Solo aparecerá para personas que hayan iniciado sesión.',
+        enlace: 'No aparecerá en la Comunidad. Será de solo lectura para quien tenga el enlace.'
+    };
+    const esMejora = Boolean(localStorage.getItem('jc_simulacion_parent_id'));
+    asignarTexto('sim-visibilidad-ayuda', esMejora ? 'La mejora conserva la visibilidad de la propuesta original.' : mensajes[valor]);
+    autoguardarSimulacion();
+}
+
+async function copiarEnlacePrivado() {
+    const input = document.getElementById('url-enlace-privado');
+    if (!input?.value) return;
+    try {
+        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(input.value);
+        else {
+            input.select();
+            document.execCommand('copy');
+        }
+        mostrarAvisoSimulador('Enlace privado copiado.');
+    } catch (error) {
+        mostrarAvisoSimulador('No se ha podido copiar. Mantén pulsado el enlace para copiarlo.', true);
+    }
+}
+
+function leerBorradoresSimulacion() {
+    try {
+        const datos = JSON.parse(localStorage.getItem(CLAVE_BORRADORES_SIMULACION) || '[]');
+        return Array.isArray(datos) ? datos : [];
+    } catch (_) {
+        return [];
+    }
+}
+
+function guardarColeccionBorradores(borradores) {
+    localStorage.setItem(CLAVE_BORRADORES_SIMULACION, JSON.stringify(borradores));
+    renderizarBorradoresGuardados();
+}
+
+function crearIdBorrador() {
+    return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function obtenerDatosProyectoActual() {
+    return {
+        id: borradorActualId,
+        nombre: document.getElementById('sim-nombre')?.value.trim() || 'Propuesta sin título',
+        descripcion: document.getElementById('sim-descripcion')?.value.trim() || '',
+        visibilidad: document.getElementById('sim-visibilidad')?.value || 'publica',
+        horas: Number(document.getElementById('sim-horas')?.value) || 0,
+        marchas: itinerarioSimulado.map((marcha) => ({ ...marcha })),
+        actualizadoEn: new Date().toISOString()
+    };
+}
+
+function prepararDatosExportacionSimulacion(proyecto = obtenerDatosProyectoActual()) {
+    return {
+        meta: {
+            tituloDocumento: 'Propuesta de repertorio',
+            hermandad: proyecto.nombre,
+            localidad: proyecto.horas ? `Borrador de trabajo · ${proyecto.horas} h de recorrido` : 'Borrador de trabajo',
+            fecha: String(proyecto.actualizadoEn || new Date().toISOString()).slice(0, 10),
+            tipo: 'Simulación',
+            etiquetaFase: 'Ubicación'
+        },
+        marchas: (proyecto.marchas || []).map((marcha, indice) => ({
+            ...marcha,
+            orden: indice + 1,
+            fase: marcha.calle || 'Sin ubicación'
+        }))
+    };
+}
+
+function guardarBorradorSimulacion() {
+    if (itinerarioSimulado.length === 0) {
+        mostrarAvisoSimulador('Añade al menos una marcha antes de guardar el borrador.', true);
+        return;
+    }
+
+    const borradores = leerBorradoresSimulacion();
+    if (!borradorActualId) borradorActualId = crearIdBorrador();
+    const proyecto = { ...obtenerDatosProyectoActual(), id: borradorActualId };
+    const indice = borradores.findIndex((item) => item.id === borradorActualId);
+    if (indice >= 0) borradores[indice] = proyecto;
+    else borradores.unshift(proyecto);
+
+    localStorage.setItem('jc_simulacion_borrador_actual_id', borradorActualId);
+    guardarColeccionBorradores(borradores);
+    mostrarAvisoSimulador(`Borrador “${proyecto.nombre}” guardado en este dispositivo.`);
+}
+
+function nuevoBorradorSimulacion() {
+    if (itinerarioSimulado.length > 0 && !confirm('¿Empezar un borrador nuevo? El actual seguirá disponible si lo has guardado.')) return;
+    borradorActualId = null;
+    itinerarioSimulado = [];
+    idEnEdicion = null;
+    localStorage.removeItem('jc_simulacion_borrador_actual_id');
+    localStorage.removeItem('jc_simulacion_parent_id');
+    document.getElementById('sim-nombre').value = '';
+    document.getElementById('sim-descripcion').value = '';
+    document.getElementById('sim-horas').value = '6';
+    document.getElementById('sim-visibilidad').value = 'publica';
+    document.getElementById('sim-visibilidad').disabled = false;
+    actualizarAyudaVisibilidad();
+    actualizarSimulador();
+    mostrarAvisoSimulador('Nuevo borrador preparado.');
+}
+
+function abrirBorradorSimulacion(id) {
+    const proyecto = leerBorradoresSimulacion().find((item) => item.id === id);
+    if (!proyecto) return;
+    borradorActualId = proyecto.id;
+    localStorage.setItem('jc_simulacion_borrador_actual_id', borradorActualId);
+    itinerarioSimulado = Array.isArray(proyecto.marchas) ? proyecto.marchas.map((marcha) => ({ ...marcha })) : [];
+    document.getElementById('sim-nombre').value = proyecto.nombre || '';
+    document.getElementById('sim-descripcion').value = proyecto.descripcion || '';
+    document.getElementById('sim-horas').value = proyecto.horas || 6;
+    document.getElementById('sim-visibilidad').value = proyecto.visibilidad || 'publica';
+    actualizarAyudaVisibilidad();
+    actualizarSimulador();
+    document.getElementById('contenedor-itinerario')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    mostrarAvisoSimulador(`Borrador “${proyecto.nombre}” abierto.`);
+}
+
+function eliminarBorradorSimulacion(id) {
+    const borradores = leerBorradoresSimulacion();
+    const proyecto = borradores.find((item) => item.id === id);
+    if (!proyecto || !confirm(`¿Eliminar el borrador “${proyecto.nombre}” de este dispositivo?`)) return;
+    guardarColeccionBorradores(borradores.filter((item) => item.id !== id));
+    if (borradorActualId === id) {
+        borradorActualId = null;
+        localStorage.removeItem('jc_simulacion_borrador_actual_id');
+    }
+    mostrarAvisoSimulador('Borrador eliminado.');
+}
+
+async function exportarProyectoSimulacion(proyecto, formato) {
+    const { meta, marchas } = prepararDatosExportacionSimulacion(proyecto);
+    if (marchas.length === 0) {
+        mostrarAvisoSimulador('El borrador no contiene marchas.', true);
+        return;
+    }
+    try {
+        if (formato === 'copiar') await RepertorioExport.copiarTexto(meta, marchas);
+        else if (formato === 'pdf') RepertorioExport.descargarPDF(meta, marchas);
+        else RepertorioExport.descargarTexto(meta, marchas);
+        mostrarAvisoSimulador(formato === 'copiar' ? 'Repertorio copiado.' : `Repertorio ${formato.toUpperCase()} preparado.`);
+    } catch (error) {
+        mostrarAvisoSimulador('No se ha podido exportar: ' + error.message, true);
+    }
+}
+
+function exportarSimulacionActual(formato) {
+    exportarProyectoSimulacion(obtenerDatosProyectoActual(), formato);
+}
+
+function gestionarAccionBorrador(evento) {
+    const boton = evento.target.closest('[data-borrador-accion][data-borrador-id]');
+    if (!boton) return;
+    const id = boton.dataset.borradorId;
+    const accion = boton.dataset.borradorAccion;
+    if (accion === 'abrir') abrirBorradorSimulacion(id);
+    if (accion === 'eliminar') eliminarBorradorSimulacion(id);
+    if (accion === 'txt' || accion === 'pdf') {
+        const proyecto = leerBorradoresSimulacion().find((item) => item.id === id);
+        if (proyecto) exportarProyectoSimulacion(proyecto, accion);
+    }
+}
+
+function renderizarBorradoresGuardados() {
+    const contenedor = document.getElementById('lista-borradores-simulacion');
+    if (!contenedor) return;
+    const borradores = leerBorradoresSimulacion();
+    if (borradores.length === 0) {
+        contenedor.innerHTML = '<p class="borradores-vacio">Todavía no hay borradores guardados en este dispositivo.</p>';
+        return;
+    }
+    contenedor.innerHTML = borradores.map((proyecto) => {
+        const fecha = new Date(proyecto.actualizadoEn);
+        const fechaTexto = Number.isNaN(fecha.getTime()) ? '' : fecha.toLocaleDateString('es-ES');
+        return `
+            <article class="borrador-sim ${proyecto.id === borradorActualId ? 'activo' : ''}">
+                <div><strong>${escaparHTML(proyecto.nombre || 'Propuesta sin título')}</strong><span>${(proyecto.marchas || []).length} marchas · ${escaparHTML(fechaTexto)}</span></div>
+                <div class="borrador-acciones">
+                    <button type="button" data-borrador-accion="abrir" data-borrador-id="${escaparAtributo(proyecto.id)}">Abrir</button>
+                    <button type="button" data-borrador-accion="txt" data-borrador-id="${escaparAtributo(proyecto.id)}">TXT</button>
+                    <button type="button" data-borrador-accion="pdf" data-borrador-id="${escaparAtributo(proyecto.id)}">PDF</button>
+                    <button type="button" class="peligro" data-borrador-accion="eliminar" data-borrador-id="${escaparAtributo(proyecto.id)}">Eliminar</button>
+                </div>
+            </article>`;
+    }).join('');
 }
 
 function tieneMultimedia(marcha) {
@@ -531,4 +752,3 @@ function escaparHTML(valor) {
 function escaparAtributo(valor) {
     return escaparHTML(valor);
 }
-
