@@ -143,6 +143,17 @@
         .cambio-ubicacion { background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.25); color: #dbc36f; }
         .comentario-meta { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 5px; }
         .comentario-meta time { color: #666; font-size: 0.62rem; }
+        .comunidad-personal { display:grid; grid-template-columns:1fr auto; gap:10px; margin-top:12px; }
+        .btn-notificaciones { border:1px solid rgba(212,175,55,.45); background:#111; color:#d4af37; border-radius:8px; padding:10px 12px; cursor:pointer; font-size:.66rem; font-weight:900; }
+        .btn-notificaciones span { display:inline-grid; place-items:center; min-width:20px; height:20px; margin-left:5px; border-radius:50%; background:#d4af37; color:#050505; }
+        .panel-notificaciones { display:none; margin-top:10px; padding:8px; background:#0a0a0a; border:1px solid #292929; border-radius:9px; max-height:340px; overflow:auto; }
+        .panel-notificaciones.abierto { display:block; }
+        .notificacion-item { display:block; width:100%; text-align:left; padding:11px; border:0; border-bottom:1px solid #222; background:transparent; color:#bbb; cursor:pointer; }
+        .notificacion-item.nueva { background:rgba(212,175,55,.08); border-left:3px solid #d4af37; }
+        .notificacion-item strong,.notificacion-item span,.notificacion-item small { display:block; }
+        .notificacion-item strong { color:#eee; font-size:.67rem; }
+        .notificacion-item span { margin:4px 0; color:#888; font-size:.62rem; }
+        .notificacion-item small,.notificacion-vacia { color:#555; font-size:.58rem; }
 
         /* REPRODUCTOR */
         .community-player { display: none; position: fixed; left: 18px; right: 18px; bottom: 16px; z-index: 3500; max-width: 850px; margin: auto; background: rgba(7,7,7,0.98); border: 1px solid rgba(212,175,55,0.5); border-radius: 11px; padding: 13px 15px; align-items: center; gap: 14px; box-shadow: 0 18px 45px rgba(0,0,0,0.75); }
@@ -161,6 +172,7 @@
 
         @media (max-width: 700px) {
             .feed-controles { grid-template-columns: 1fr; }
+            .comunidad-personal { grid-template-columns:1fr; }
             .post-card { padding: 19px; }
             .post-actions { grid-template-columns: 1fr; }
             .modal-content { padding: 22px; }
@@ -207,6 +219,10 @@
                 </div>
 
                 <a href="perfil.html" class="btn-ver-cruceta" style="padding: 10px; font-size: 0.6rem; background: #111; border: 1px solid #333; color: #888; text-decoration: none; display: block;">Editar Perfil</a>
+                <button id="btn-notificaciones-comunidad" class="btn-notificaciones" type="button" hidden style="width:100%; margin-top:10px;">🔔 Actividad</button>
+                <div id="panel-notificaciones-comunidad" class="panel-notificaciones">
+                    <div id="lista-notificaciones"><p class="notificacion-vacia">Cargando actividad...</p></div>
+                </div>
             </div>
         </aside>
 
@@ -222,6 +238,14 @@
                         <option value="comentados">Más comentados</option>
                         <option value="mejoras">Con más mejoras</option>
                     </select>
+                </div>
+                <div class="comunidad-personal">
+                    <select id="vista-comunidad" class="feed-input" aria-label="Personalizar propuestas">
+                        <option value="todo">Toda la comunidad</option>
+                        <option value="para-ti">Para ti</option>
+                        <option value="mios">Mis propuestas</option>
+                    </select>
+                    <a href="perfil.html" class="btn-post-secundario" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">Ajustar intereses</a>
                 </div>
                 <div id="feed-resumen" class="feed-resumen">Cargando propuestas...</div>
             </div>
@@ -289,3 +313,4 @@
 
 </body>
 </html>
+
