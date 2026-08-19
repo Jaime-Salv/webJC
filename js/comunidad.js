@@ -12,6 +12,8 @@ let votosUsuario = new Set();
 let sesionActual = null;
 let idAbierto = null;
 let modoVotosPersistentes = true;
+let interesesUsuario = [];
+let perfilComunidadActual = null;
 
 document.addEventListener('DOMContentLoaded', inicializarComunidad);
 
@@ -23,6 +25,9 @@ async function inicializarComunidad() {
 function prepararEventosComunidad() {
     document.getElementById('filtro-comunidad')?.addEventListener('input', aplicarFiltrosFeed);
     document.getElementById('orden-comunidad')?.addEventListener('change', aplicarFiltrosFeed);
+    document.getElementById('vista-comunidad')?.addEventListener('change', aplicarFiltrosFeed);
+    document.getElementById('btn-notificaciones-comunidad')?.addEventListener('click', alternarPanelNotificaciones);
+    document.getElementById('lista-notificaciones')?.addEventListener('click', gestionarNotificacion);
     document.getElementById('feed-contenedor')?.addEventListener('click', gestionarAccionFeed);
     document.getElementById('modal-cruceta')?.addEventListener('click', gestionarAccionModal);
     document.getElementById('input-comentario')?.addEventListener('keydown', (evento) => {
@@ -36,6 +41,12 @@ async function cargarComunidad() {
     try {
         const { data: { session } } = await clienteSupabase.auth.getSession();
         sesionActual = session;
+        if (!sesionActual) {
+            document.querySelectorAll('#vista-comunidad option:not([value="todo"])').forEach((opcion) => {
+                opcion.disabled = true;
+            });
+            document.getElementById('vista-comunidad')?.setAttribute('title', 'Inicia sesión para personalizar la Comunidad');
+        }
 
         const { data: proyectos, error } = await clienteSupabase
             .from('comunidad_repertorios')
@@ -51,7 +62,8 @@ async function cargarComunidad() {
         if (sesionActual) {
             await Promise.all([
                 cargarDatosSidebar(sesionActual.user),
-                cargarVotosUsuario(sesionActual.user.id)
+                cargarVotosUsuario(sesionActual.user.id),
+                cargarNotificacionesComunidad(sesionActual.user.id)
             ]);
         }
 
@@ -150,6 +162,8 @@ async function cargarDatosSidebar(user) {
     ]);
 
     const perfil = perfilRes.data;
+    perfilComunidadActual = perfil || null;
+    interesesUsuario = Array.isArray(perfil?.intereses_musicales) ? perfil.intereses_musicales : [];
     asignarTexto('user-name', perfil?.username || nombreEmail);
     asignarTexto('user-bio', perfil?.descripcion || 'Músico de la familia Julián Cerdán.');
     asignarTexto('user-fav', perfil?.marcha_favorita || 'No definida');
@@ -165,8 +179,15 @@ async function cargarDatosSidebar(user) {
 function aplicarFiltrosFeed() {
     const termino = normalizarTexto(document.getElementById('filtro-comunidad')?.value || '');
     const orden = document.getElementById('orden-comunidad')?.value || 'recientes';
+    const vista = document.getElementById('vista-comunidad')?.value || 'todo';
 
     proyectosVisibles = proyectosRaiz.filter((proyecto) => {
+        const coincideVista = vista === 'mios'
+            ? sesionActual && String(proyecto.usuario_id) === String(sesionActual.user.id)
+            : vista === 'para-ti'
+                ? coincideConIntereses(proyecto)
+                : true;
+        if (!coincideVista) return false;
         if (!termino) return true;
 
         const marchas = repertorioSeguro(proyecto)
@@ -190,6 +211,16 @@ function aplicarFiltrosFeed() {
     });
 
     renderizarFeed();
+}
+
+function coincideConIntereses(proyecto) {
+    if (!sesionActual || interesesUsuario.length === 0) return true;
+    const etiquetas = generarEtiquetas(calcularEstadisticas(repertorioSeguro(proyecto))).map(normalizarTexto);
+    const mapa = {
+        clasico: 'clasico', contemporaneo: 'contemporaneo', cornetas: 'con cornetas',
+        sin_cornetas: 'predominio sin cornetas', variedad: 'alta variedad autoral'
+    };
+    return interesesUsuario.some((interes) => etiquetas.includes(mapa[interes]));
 }
 
 function renderizarFeed() {
@@ -261,6 +292,72 @@ function crearTarjetaProyecto(proyecto) {
             </div>
         </article>
     `;
+}
+
+async function cargarNotificacionesComunidad(usuarioId) {
+    const boton = document.getElementById('btn-notificaciones-comunidad');
+    if (!boton) return;
+    try {
+        const { data, error } = await clienteSupabase.from('notificaciones_comunidad')
+            .select('*').eq('destinatario_id', usuarioId).order('created_at', { ascending: false }).limit(20);
+        if (error) throw error;
+        const notificaciones = data || [];
+        const pendientes = notificaciones.filter((item) => !item.leida).length;
+        boton.hidden = false;
+        boton.innerHTML = `🔔 Actividad${pendientes ? ` <span>${pendientes}</span>` : ''}`;
+        const lista = document.getElementById('lista-notificaciones');
+        if (lista) lista.innerHTML = notificaciones.length
+            ? notificaciones.map(crearItemNotificacion).join('')
+            : '<p class="notificacion-vacia">Todavía no tienes actividad nueva.</p>';
+    } catch (error) {
+        console.error('No se han podido cargar las notificaciones:', error);
+    }
+}
+
+function crearItemNotificacion(item) {
+    const accion = item.tipo === 'comentario' ? 'comentó tu propuesta' : 'apoyó tu propuesta';
+    return `<button type="button" class="notificacion-item ${item.leida ? '' : 'nueva'}" data-notificacion-id="${escaparAtributo(item.id)}" data-proyecto-id="${escaparAtributo(item.repertorio_id)}">
+        <strong>${escaparHTML(item.actor_nombre || 'Alguien')} ${accion}</strong>
+        ${item.resumen ? `<span>${escaparHTML(item.resumen)}</span>` : ''}
+        <small>${escaparHTML(formatearFechaRelativa(item.created_at))}</small>
+    </button>`;
+}
+
+function alternarPanelNotificaciones() {
+    document.getElementById('panel-notificaciones-comunidad')?.classList.toggle('abierto');
+}
+
+async function gestionarNotificacion(evento) {
+    const item = evento.target.closest('[data-notificacion-id]');
+    if (!item || !sesionActual) return;
+    await clienteSupabase.from('notificaciones_comunidad').update({ leida: true })
+        .eq('id', item.dataset.notificacionId).eq('destinatario_id', sesionActual.user.id);
+    document.getElementById('panel-notificaciones-comunidad')?.classList.remove('abierto');
+    await Promise.all([abrirModal(item.dataset.proyectoId), cargarNotificacionesComunidad(sesionActual.user.id)]);
+}
+
+async function crearNotificacionProyecto(idProyecto, tipo, resumen = '') {
+    if (!sesionActual) return;
+    const proyecto = proyectosRaiz.find((item) => String(item.id) === String(idProyecto));
+    if (!proyecto?.usuario_id || String(proyecto.usuario_id) === String(sesionActual.user.id)) return;
+    const campoPreferencia = tipo === 'comentario' ? 'notificar_comentarios' : 'notificar_valoraciones';
+    try {
+        const { data: preferencias } = await clienteSupabase.from('perfiles')
+            .select(`username, ${campoPreferencia}`).eq('id', proyecto.usuario_id).maybeSingle();
+        if (preferencias && preferencias[campoPreferencia] === false) return;
+        const nombreActor = perfilComunidadActual?.username || sesionActual.user.email?.split('@')[0] || 'Miembro';
+        const { error } = await clienteSupabase.from('notificaciones_comunidad').insert({
+            destinatario_id: proyecto.usuario_id,
+            actor_id: sesionActual.user.id,
+            actor_nombre: nombreActor,
+            repertorio_id: proyecto.id,
+            tipo,
+            resumen: String(resumen || proyecto.proyecto_nombre || '').slice(0, 180)
+        });
+        if (error) throw error;
+    } catch (error) {
+        console.error('No se ha podido registrar la notificación:', error);
+    }
 }
 
 async function gestionarAccionFeed(evento) {
@@ -563,6 +660,7 @@ async function darLike(id) {
         } else {
             votosUsuario.add(String(id));
             votosPorProyecto[id] = obtenerVotos(id) + 1;
+            await crearNotificacionProyecto(id, 'valoracion');
         }
 
         guardarVotosLocales();
@@ -620,6 +718,7 @@ async function enviarComentario() {
 
         input.value = '';
         comentariosPorProyecto[idAbierto] = obtenerComentarios(idAbierto) + 1;
+        await crearNotificacionProyecto(idAbierto, 'comentario', texto);
         await Promise.all([cargarComentarios(idAbierto), cargarDatosSidebar(usuario)]);
         renderizarFeed();
     } catch (error) {
@@ -847,3 +946,4 @@ function escaparHTML(valor) {
 function escaparAtributo(valor) {
     return escaparHTML(valor);
 }
+
