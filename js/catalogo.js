@@ -3,9 +3,13 @@
    ============================================================ */
 
 let catalogoGlobal = [];
+let usuarioCatalogo = null;
+let favoritasCatalogo = new Set();
+let mostrarSoloFavoritas = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarCatalogoMaestro();
+    cargarFavoritasUsuario();
     prepararEventosCatalogo();
     gestionarHeaderSmart();
 });
@@ -22,6 +26,9 @@ function prepararEventosCatalogo() {
     if (filtroEstilo) filtroEstilo.addEventListener('change', aplicarFiltros);
     if (filtroAnoMin) filtroAnoMin.addEventListener('input', aplicarFiltros);
     if (filtroAnoMax) filtroAnoMax.addEventListener('input', aplicarFiltros);
+    document.getElementById('btn-solo-favoritas')?.addEventListener('click', alternarFiltroFavoritas);
+    document.getElementById('btn-modal-favorita')?.addEventListener('click', gestionarFavoritaModal);
+    document.getElementById('btn-modal-simulador')?.addEventListener('click', gestionarSimuladorModal);
 
     const btnCerrar = document.getElementById('btn-cerrar-modal');
     const modal = document.getElementById('modal-marcha');
@@ -48,6 +55,27 @@ function prepararEventosCatalogo() {
             cerrarFichaMarcha();
         }
     });
+}
+
+async function cargarFavoritasUsuario() {
+    try {
+        const { data: { session } } = await clienteSupabase.auth.getSession();
+        usuarioCatalogo = session?.user || null;
+        if (!usuarioCatalogo) {
+            actualizarControlFavoritas();
+            return;
+        }
+
+        const { data, error } = await clienteSupabase.from('marchas_favoritas')
+            .select('id_marcha').eq('usuario_id', usuarioCatalogo.id);
+        if (error) throw error;
+        favoritasCatalogo = new Set((data || []).map((item) => Number(item.id_marcha)));
+        actualizarControlFavoritas();
+        aplicarFiltros();
+    } catch (error) {
+        console.error('No se han podido cargar las favoritas:', error);
+        mostrarAvisoCatalogo('No se han podido cargar tus favoritas. El catálogo sigue disponible.', 'error');
+    }
 }
 
 async function cargarCatalogoMaestro() {
@@ -143,7 +171,8 @@ function aplicarFiltros() {
         const year = parseInt(marcha.ano) || 0;
         const matchAno = year === 0 || (year >= minAno && year <= maxAno);
 
-        return matchTexto && matchAutor && matchEstilo && matchAno;
+        const matchFavorita = !mostrarSoloFavoritas || favoritasCatalogo.has(Number(marcha.id_marcha));
+        return matchTexto && matchAutor && matchEstilo && matchAno && matchFavorita;
     });
 
     renderizarTabla(resultados);
@@ -190,6 +219,10 @@ function renderizarTabla(datosFiltrados) {
             <td>${estiloCornetas}</td>
             <td style="color:#888;">${escaparHTML(tiempoEst)}</td>
             <td style="text-align:center;">
+                <div class="acciones-catalogo-fila">
+                <button type="button" class="btn-favorita-tabla ${favoritasCatalogo.has(Number(marcha.id_marcha)) ? 'activa' : ''}"
+                    title="${favoritasCatalogo.has(Number(marcha.id_marcha)) ? 'Quitar de favoritas' : 'Guardar en favoritas'}"
+                    aria-label="${favoritasCatalogo.has(Number(marcha.id_marcha)) ? 'Quitar de favoritas' : 'Guardar en favoritas'}">★</button>
                 <button
                     type="button"
                     class="btn-play-tabla"
@@ -199,6 +232,8 @@ function renderizarTabla(datosFiltrados) {
                 >
                     ▶
                 </button>
+                <button type="button" class="btn-simulador-tabla" title="Añadir al simulador" aria-label="Añadir al simulador">＋</button>
+                </div>
             </td>
         `;
 
@@ -219,6 +254,16 @@ function renderizarTabla(datosFiltrados) {
                 reproducirEnMiniPlayer(marcha);
             });
         }
+
+        tr.querySelector('.btn-favorita-tabla')?.addEventListener('click', (evento) => {
+            evento.stopPropagation();
+            alternarFavorita(marcha.id_marcha);
+        });
+
+        tr.querySelector('.btn-simulador-tabla')?.addEventListener('click', (evento) => {
+            evento.stopPropagation();
+            enviarAlSimulador(marcha);
+        });
 
         tbody.appendChild(tr);
     });
@@ -306,11 +351,99 @@ function rellenarFichaMarcha(marcha) {
     setText('modal-estilo', marcha.cornetas === 1 ? 'Con cornetas' : 'Sin cornetas');
     setText('modal-localidad', marcha.localidad || '--');
     setText('modal-dedicatoria', marcha.dedicatoria || '--');
+    const btnFavorita = document.getElementById('btn-modal-favorita');
+    const btnSimulador = document.getElementById('btn-modal-simulador');
+    if (btnFavorita) {
+        btnFavorita.dataset.idMarcha = marcha.id_marcha;
+        pintarBotonFavorita(btnFavorita, marcha.id_marcha);
+    }
+    if (btnSimulador) btnSimulador.dataset.idMarcha = marcha.id_marcha;
 
     pintarAudioWeb(marcha);
     pintarYoutube(marcha.url_youtube);
     pintarSpotify(marcha.spotify_uri);
     pintarPatrimonioMusical(marcha);
+}
+
+function alternarFiltroFavoritas() {
+    if (!usuarioCatalogo) {
+        mostrarAvisoCatalogo('Inicia sesión para guardar y consultar tus marchas favoritas.', 'info', true);
+        return;
+    }
+    mostrarSoloFavoritas = !mostrarSoloFavoritas;
+    actualizarControlFavoritas();
+    aplicarFiltros();
+}
+
+async function alternarFavorita(idMarcha) {
+    if (!usuarioCatalogo) {
+        mostrarAvisoCatalogo('Inicia sesión para guardar marchas favoritas.', 'info', true);
+        return;
+    }
+
+    const id = Number(idMarcha);
+    const eraFavorita = favoritasCatalogo.has(id);
+    try {
+        const respuesta = eraFavorita
+            ? await clienteSupabase.from('marchas_favoritas').delete().eq('usuario_id', usuarioCatalogo.id).eq('id_marcha', id)
+            : await clienteSupabase.from('marchas_favoritas').insert({ usuario_id: usuarioCatalogo.id, id_marcha: id });
+        if (respuesta.error) throw respuesta.error;
+        if (eraFavorita) favoritasCatalogo.delete(id); else favoritasCatalogo.add(id);
+        actualizarControlFavoritas();
+        aplicarFiltros();
+        const btnModal = document.getElementById('btn-modal-favorita');
+        if (btnModal?.dataset.idMarcha === String(id)) pintarBotonFavorita(btnModal, id);
+        mostrarAvisoCatalogo(eraFavorita ? 'Marcha eliminada de favoritas.' : 'Marcha guardada en favoritas.');
+    } catch (error) {
+        console.error('Error actualizando favorita:', error);
+        mostrarAvisoCatalogo('No se ha podido actualizar la favorita. Inténtalo de nuevo.', 'error');
+    }
+}
+
+function pintarBotonFavorita(boton, idMarcha) {
+    const activa = favoritasCatalogo.has(Number(idMarcha));
+    boton.classList.toggle('activa', activa);
+    boton.setAttribute('aria-pressed', String(activa));
+    if (boton.id === 'btn-modal-favorita') boton.textContent = activa ? '★ Guardada en favoritas' : '☆ Guardar en favoritas';
+    else boton.title = activa ? 'Quitar de favoritas' : 'Guardar en favoritas';
+}
+
+function actualizarControlFavoritas() {
+    const boton = document.getElementById('btn-solo-favoritas');
+    if (!boton) return;
+    boton.classList.toggle('activo', mostrarSoloFavoritas);
+    boton.setAttribute('aria-pressed', String(mostrarSoloFavoritas));
+    boton.innerHTML = `★ Mis favoritas <span>${favoritasCatalogo.size}</span>`;
+}
+
+function gestionarFavoritaModal() {
+    const id = document.getElementById('btn-modal-favorita')?.dataset.idMarcha;
+    if (id) alternarFavorita(id);
+}
+
+function gestionarSimuladorModal() {
+    const id = document.getElementById('btn-modal-simulador')?.dataset.idMarcha;
+    const marcha = catalogoGlobal.find((item) => String(item.id_marcha) === String(id));
+    if (marcha) enviarAlSimulador(marcha);
+}
+
+function enviarAlSimulador(marcha) {
+    try {
+        localStorage.setItem('jc_marcha_pendiente_simulador', JSON.stringify(marcha));
+        window.location.href = 'simulacion.html?desde=catalogo';
+    } catch (error) {
+        console.error('No se ha podido preparar la marcha:', error);
+        mostrarAvisoCatalogo('No se ha podido abrir el simulador.', 'error');
+    }
+}
+
+function mostrarAvisoCatalogo(mensaje, tipo = 'ok', incluirAcceso = false) {
+    const aviso = document.getElementById('aviso-catalogo');
+    if (!aviso) return;
+    aviso.className = `aviso-catalogo visible ${tipo}`;
+    aviso.innerHTML = `${escaparHTML(mensaje)}${incluirAcceso ? ' <a href="login.html">Iniciar sesión</a>' : ''}`;
+    clearTimeout(mostrarAvisoCatalogo.temporizador);
+    mostrarAvisoCatalogo.temporizador = setTimeout(() => aviso.classList.remove('visible'), 4500);
 }
 
 function pintarAudioWeb(marcha) {
@@ -618,3 +751,4 @@ function gestionarHeaderSmart() {
         ultimoScroll = scrollActual;
     });
 }
+
