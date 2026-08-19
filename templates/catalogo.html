@@ -973,6 +973,27 @@
             }
         }
     </style>
+    <style>
+        .favoritas-bar { display:flex; align-items:center; gap:12px; margin:0 0 18px; flex-wrap:wrap; }
+        .btn-favoritas { border:1px solid rgba(212,175,55,.5); background:#111; color:#d4af37; border-radius:999px; padding:11px 16px; font:800 .72rem 'Montserrat',sans-serif; cursor:pointer; }
+        .btn-favoritas span { display:inline-grid; place-items:center; min-width:22px; height:22px; margin-left:6px; border-radius:50%; background:#252525; }
+        .btn-favoritas.activo { background:#d4af37; color:#050505; }
+        .aviso-catalogo { display:none; flex:1; min-width:240px; padding:11px 14px; border-radius:8px; background:#142016; color:#bfe5c4; font-size:.75rem; }
+        .aviso-catalogo.visible { display:block; }
+        .aviso-catalogo.error { background:#291414; color:#ffc2c2; }
+        .aviso-catalogo.info { background:#201d12; color:#eadb9a; }
+        .aviso-catalogo a { color:inherit; font-weight:900; }
+        .acciones-catalogo-fila { display:flex; justify-content:center; gap:6px; }
+        .btn-favorita-tabla,.btn-simulador-tabla { width:34px; height:34px; border-radius:7px; border:1px solid #333; background:#111; color:#888; cursor:pointer; font-size:1rem; }
+        .btn-favorita-tabla.activa { color:#d4af37; border-color:#d4af37; }
+        .btn-simulador-tabla { color:#d4af37; }
+        .modal-acciones-marcha { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 0 18px; }
+        .modal-acciones-marcha button { min-height:46px; display:flex; align-items:center; justify-content:center; border-radius:8px; padding:10px 14px; font:800 .7rem 'Montserrat',sans-serif; cursor:pointer; }
+        #btn-modal-favorita { border:1px solid #d4af37; background:#111; color:#d4af37; }
+        #btn-modal-favorita.activa { background:#d4af37; color:#050505; }
+        #btn-modal-simulador { border:0; background:#d4af37; color:#050505; }
+        @media(max-width:650px){ .modal-acciones-marcha{grid-template-columns:1fr;} .acciones-catalogo-fila{min-width:112px;} }
+    </style>
 </head>
 
 <body>
@@ -1048,6 +1069,11 @@
             </div>
         </div>
 
+        <div class="favoritas-bar">
+            <button id="btn-solo-favoritas" class="btn-favoritas" type="button" aria-pressed="false">★ Mis favoritas <span>0</span></button>
+            <div id="aviso-catalogo" class="aviso-catalogo" role="status" aria-live="polite"></div>
+        </div>
+
         <div class="tabla-contenedor">
             <table class="tabla-catalogo">
                 <thead>
@@ -1098,6 +1124,11 @@
             <div class="modal-cabecera">
                 <h2 id="modal-titulo">Título de la marcha</h2>
                 <div id="modal-subtitulo" class="modal-subtitulo"></div>
+            </div>
+
+            <div class="modal-acciones-marcha">
+                <button id="btn-modal-favorita" type="button" aria-pressed="false">☆ Guardar en favoritas</button>
+                <button id="btn-modal-simulador" type="button">＋ Añadir al simulador</button>
             </div>
 
             <div class="modal-grid">
@@ -1166,3 +1197,4 @@
 <script src="../js/catalogo.js"></script>
 </body>
 </html>
+
