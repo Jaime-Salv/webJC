@@ -27,6 +27,7 @@ async function inicializarSimulador() {
         });
 
         renderizarResultados();
+        incorporarMarchaPendiente();
     } catch (error) {
         console.error('Error cargando el catálogo:', error);
         const resultados = document.getElementById('resultados-marchas');
@@ -37,6 +38,35 @@ async function inicializarSimulador() {
 
     renderizarItinerario();
     ejecutarAuditoria();
+}
+
+function incorporarMarchaPendiente() {
+    const pendiente = localStorage.getItem('jc_marcha_pendiente_simulador');
+    if (!pendiente) return;
+
+    try {
+        const datosPendientes = JSON.parse(pendiente);
+        const marcha = catalogoGlobal.find((item) => String(item.id_marcha) === String(datosPendientes.id_marcha)) || datosPendientes;
+        if (!marcha?.titulo || !(Number(marcha.duracion_seg) > 0)) throw new Error('Marcha incompleta');
+        localStorage.removeItem('jc_marcha_pendiente_simulador');
+        agregarMarcha(marcha);
+        mostrarAvisoSimulador(`“${marcha.titulo}” se ha añadido a tu cruceta.`);
+        document.getElementById('contenedor-itinerario')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (error) {
+        localStorage.removeItem('jc_marcha_pendiente_simulador');
+        console.error('No se ha podido incorporar la marcha del catálogo:', error);
+        mostrarAvisoSimulador('No se ha podido añadir la marcha enviada desde el catálogo.', true);
+    }
+}
+
+function mostrarAvisoSimulador(mensaje, esError = false) {
+    const aviso = document.getElementById('aviso-simulador');
+    if (!aviso) return;
+    aviso.textContent = mensaje;
+    aviso.classList.toggle('error', esError);
+    aviso.classList.add('visible');
+    clearTimeout(mostrarAvisoSimulador.temporizador);
+    mostrarAvisoSimulador.temporizador = setTimeout(() => aviso.classList.remove('visible'), 5000);
 }
 
 function prepararEventos() {
@@ -501,3 +531,4 @@ function escaparHTML(valor) {
 function escaparAtributo(valor) {
     return escaparHTML(valor);
 }
+
