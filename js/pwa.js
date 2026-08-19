@@ -163,3 +163,65 @@
         return Uint8Array.from([...raw].map((caracter) => caracter.charCodeAt(0)));
     }
 })();
+
+/* Navegación móvil pública. Es aditiva: no sustituye las cabeceras existentes. */
+(() => {
+    const ruta = window.location.pathname.toLowerCase();
+    const paginasConNavegacion = [
+        '/',
+        '/index.html',
+        '/templates/catalogo',
+        '/templates/catalogo.html',
+        '/templates/comunidad',
+        '/templates/comunidad.html',
+        '/templates/simulacion',
+        '/templates/simulacion.html',
+        '/templates/perfil',
+        '/templates/perfil.html'
+    ];
+
+    if (!paginasConNavegacion.includes(ruta)) return;
+
+    const destinos = [
+        { clave: 'inicio', icono: '⌂', texto: 'Inicio', href: '/' },
+        { clave: 'actuaciones', icono: '♪', texto: 'Actuaciones', href: '/#actuaciones' },
+        { clave: 'catalogo', icono: '▤', texto: 'Catálogo', href: '/templates/catalogo' },
+        { clave: 'crear', icono: '+', texto: 'Crear', href: '/templates/simulacion' },
+        { clave: 'comunidad', icono: '♙', texto: 'Comunidad', href: '/templates/comunidad' }
+    ];
+
+    function detectarSeccionActiva() {
+        if (ruta.includes('catalogo')) return 'catalogo';
+        if (ruta.includes('simulacion')) return 'crear';
+        if (ruta.includes('comunidad')) return 'comunidad';
+        if (window.location.hash === '#actuaciones') return 'actuaciones';
+        return 'inicio';
+    }
+
+    function montarNavegacion() {
+        if (document.querySelector('.mobile-app-nav')) return;
+
+        const activa = detectarSeccionActiva();
+        const nav = document.createElement('nav');
+        nav.className = 'mobile-app-nav';
+        nav.setAttribute('aria-label', 'Navegación principal móvil');
+        nav.innerHTML = destinos.map((destino) => `
+            <a class="mobile-app-nav-item${destino.clave === activa ? ' activo' : ''}"
+               href="${destino.href}"
+               ${destino.clave === activa ? 'aria-current="page"' : ''}>
+                <span class="mobile-app-nav-icon" aria-hidden="true">${destino.icono}</span>
+                <span>${destino.texto}</span>
+            </a>
+        `).join('');
+
+        document.body.appendChild(nav);
+        document.body.classList.add('con-mobile-app-nav');
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', montarNavegacion, { once: true });
+    } else {
+        montarNavegacion();
+    }
+})();
+
