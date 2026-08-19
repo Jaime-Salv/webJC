@@ -5,6 +5,9 @@ create table if not exists public.marchas_favoritas (
     primary key (usuario_id, id_marcha)
 );
 
+create index if not exists marchas_favoritas_id_marcha_idx
+on public.marchas_favoritas (id_marcha);
+
 alter table public.marchas_favoritas enable row level security;
 revoke all on table public.marchas_favoritas from anon;
 grant select, insert, delete on table public.marchas_favoritas to authenticated;
