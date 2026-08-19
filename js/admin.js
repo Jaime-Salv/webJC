@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await actualizarResumenAdmin();
 
     const inputIdMarcha = document.getElementById('inp-id-marcha');
+    const inputTituloMarcha = document.getElementById('inp-titulo-marcha');
     const btnFinalizarEvento = document.getElementById('btn-finalizar-evento');
     const btnDescartarEvento = document.getElementById('btn-descartar-evento');
     const btnProbarNotificacion = document.getElementById('btn-probar-notificacion');
@@ -36,6 +37,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (inputIdMarcha) {
         inputIdMarcha.addEventListener('input', autocompletarTitulo);
+    }
+
+    if (inputTituloMarcha) {
+        inputTituloMarcha.addEventListener('input', () => {
+            inputTituloMarcha.style.color = 'var(--color-oro)';
+        });
+
+        inputTituloMarcha.addEventListener('keydown', (evento) => {
+            if (evento.key === 'Enter') {
+                evento.preventDefault();
+                inyectarMarcha();
+            }
+        });
     }
 
     if (btnFinalizarEvento) {
@@ -601,7 +615,7 @@ function autocompletarTitulo() {
     }
 
     if (isNaN(inputId)) {
-        inputTitulo.value = '';
+        inputTitulo.style.color = 'var(--color-oro)';
         return;
     }
 
@@ -611,9 +625,58 @@ function autocompletarTitulo() {
         inputTitulo.value = marchaEncontrada.titulo;
         inputTitulo.style.color = '#27ae60';
     } else {
-        inputTitulo.value = '⚠️ ID no registrado';
+        inputTitulo.value = '';
+        inputTitulo.placeholder = 'ID no registrado: escribe el título para crearlo';
         inputTitulo.style.color = '#ff3b3b';
     }
+}
+
+function normalizarTituloCatalogo(titulo) {
+    return String(titulo || '')
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('es');
+}
+
+async function obtenerOCrearMarcha(idIntroducido, tituloIntroducido) {
+    if (Number.isInteger(idIntroducido)) {
+        const marchaPorId = catalogoCache.find((marcha) => Number(marcha.id_marcha) === idIntroducido);
+
+        if (marchaPorId) return marchaPorId;
+    }
+
+    const titulo = String(tituloIntroducido || '').trim();
+
+    if (!titulo) {
+        throw new Error('Escribe un título o introduce el ID de una marcha existente.');
+    }
+
+    const tituloNormalizado = normalizarTituloCatalogo(titulo);
+    const marchaExistente = catalogoCache.find((marcha) => {
+        return normalizarTituloCatalogo(marcha.titulo) === tituloNormalizado;
+    });
+
+    if (marchaExistente) return marchaExistente;
+
+    const nuevaMarcha = { titulo };
+
+    if (Number.isInteger(idIntroducido)) {
+        nuevaMarcha.id_marcha = idIntroducido;
+    }
+
+    const { data, error } = await clienteSupabase
+        .from('catalogo_marchas')
+        .insert([nuevaMarcha])
+        .select('id_marcha, titulo')
+        .single();
+
+    if (error) {
+        throw new Error(`No se ha podido crear la marcha: ${error.message}`);
+    }
+
+    catalogoCache.push(data);
+    return data;
 }
 
 window.prepararEdicion = function(orden, id_marcha, fase) {
@@ -651,21 +714,32 @@ async function inyectarMarcha() {
         return;
     }
 
-    const inputId = parseInt(document.getElementById('inp-id-marcha')?.value);
+    const inputId = parseInt(document.getElementById('inp-id-marcha')?.value, 10);
     const fase = document.getElementById('inp-fase-marcha')?.value;
-    const tituloInput = document.getElementById('inp-titulo-marcha')?.value || '';
+    const tituloInput = document.getElementById('inp-titulo-marcha')?.value?.trim() || '';
 
-    if (isNaN(inputId) || tituloInput.includes('⚠️') || tituloInput === '') {
-        alert('Introduce un ID de marcha válido.');
+    if (ordenEnEdicion !== null && isNaN(inputId)) {
+        alert('Para editar una marcha del directo, introduce un ID válido.');
+        return;
+    }
+
+    if (isNaN(inputId) && !tituloInput) {
+        alert('Escribe el título de la marcha. El ID es opcional.');
         return;
     }
 
     try {
+        const marcha = await obtenerOCrearMarcha(
+            Number.isInteger(inputId) ? inputId : null,
+            tituloInput
+        );
+        const idMarcha = Number(marcha.id_marcha);
+
         if (ordenEnEdicion !== null) {
             const { data, error } = await clienteSupabase
                 .from('repertorio_transaccional')
                 .update({
-                    id_marcha: inputId,
+                    id_marcha: idMarcha,
                     fase: fase
                 })
                 .eq('id_procesion', procesionActiva.id_procesion)
@@ -696,7 +770,7 @@ async function inyectarMarcha() {
                 .from('repertorio_transaccional')
                 .insert([{
                     id_procesion: procesionActiva.id_procesion,
-                    id_marcha: inputId,
+                    id_marcha: idMarcha,
                     fase: fase,
                     orden: contadorOrden
                 }]);
@@ -716,6 +790,8 @@ async function inyectarMarcha() {
 
         if (inputTituloMarcha) {
             inputTituloMarcha.value = '';
+            inputTituloMarcha.placeholder = 'Título de la marcha';
+            inputTituloMarcha.style.color = 'var(--color-oro)';
         }
 
         cargarHistorialTransaccional();
@@ -1970,3 +2046,4 @@ async function eliminarPortadaActuacionDescartada(urlFoto) {
         console.warn('No se ha podido interpretar la ruta de la portada descartada:', error);
     }
 }
+
