@@ -874,8 +874,8 @@ async function cargarUsuariosAdmin() {
     }
 
     let html = `
-        <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+        <div class="tabla-usuarios-wrapper">
+            <table class="tabla-usuarios">
                 <thead>
                     <tr style="border-bottom:1px solid rgba(212,175,55,0.35); color:#d4af37; text-align:left;">
                         <th style="padding:10px;">Usuario</th>
@@ -894,15 +894,15 @@ async function cargarUsuariosAdmin() {
         const esMiUsuario = usuarioActual && usuario.id === usuarioActual.id;
 
         html += `
-            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
-                <td style="padding:10px; color:white;">${escaparHTML(nombreVisible)}</td>
-                <td style="padding:10px; color:#aaa;">${escaparHTML(emailVisible)}</td>
-                <td style="padding:10px;">
+            <tr>
+                <td data-label="Usuario">${escaparHTML(nombreVisible)}</td>
+                <td data-label="Email">${escaparHTML(emailVisible)}</td>
+                <td data-label="Rol actual">
                     <span style="color:${rolActual === 'admin' ? '#d4af37' : '#ccc'}; font-weight:bold;">
                         ${escaparHTML(rolActual)}
                     </span>
                 </td>
-                <td style="padding:10px;">
+                <td data-label="Acción">
                     ${
                         esMiUsuario
                             ? `<span style="color:#777;">Tu usuario</span>`
