@@ -94,156 +94,38 @@
             : (opciones) => window.jspdfAutoTable?.autoTable(doc, opciones);
         if (!autoTable) throw new Error('No se ha podido preparar la tabla del PDF.');
 
-        const oro = [175, 137, 47];
-        const oroSuave = [232, 221, 188];
-        const negro = [24, 23, 21];
-        const marfil = [250, 248, 241];
-        const gris = [92, 89, 82];
-        const ancho = 297;
-        const alto = 210;
+        const oro = [182, 145, 38];
+        doc.setFillColor(15, 15, 15);
+        doc.rect(0, 0, 297, 36, 'F');
+        doc.setTextColor(...oro);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(17);
+        doc.text(texto(meta.tituloDocumento, 'REPERTORIO').toUpperCase(), 14, 15);
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.text(texto(meta.organizacion, 'Banda de Música Julián Cerdán'), 14, 23);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.text(`${texto(meta.hermandad)} · ${texto(meta.localidad)} · ${formatearFecha(meta.fecha)}`, 14, 31);
 
-        function dibujarRombo(x, y, radio = 1.6) {
-            doc.line(x, y - radio, x + radio, y);
-            doc.line(x + radio, y, x, y + radio);
-            doc.line(x, y + radio, x - radio, y);
-            doc.line(x - radio, y, x, y - radio);
-        }
-
-        function dibujarEsquina(x, y, sx, sy) {
-            doc.setDrawColor(...oro);
-            doc.setLineWidth(0.35);
-            doc.line(x, y, x + (8 * sx), y);
-            doc.line(x, y, x, y + (8 * sy));
-            doc.setLineWidth(0.15);
-            doc.line(x + (2 * sx), y + (2 * sy), x + (7 * sx), y + (2 * sy));
-            doc.line(x + (2 * sx), y + (2 * sy), x + (2 * sx), y + (7 * sy));
-            dibujarRombo(x + (3.7 * sx), y + (3.7 * sy), 0.9);
-        }
-
-        function dibujarMotivoMusical() {
-            const x1 = 235;
-            const x2 = 281;
-            const y = 13;
-            doc.setDrawColor(113, 89, 29);
-            doc.setLineWidth(0.18);
-            for (let i = 0; i < 5; i += 1) {
-                doc.line(x1, y + (i * 1.65), x2, y + (i * 1.65));
-            }
-            doc.setFillColor(...oro);
-            doc.ellipse(246, 19.2, 1.35, 0.95, 'F');
-            doc.line(247.25, 18.8, 247.25, 12.8);
-            doc.ellipse(259, 16.1, 1.35, 0.95, 'F');
-            doc.line(260.25, 15.7, 260.25, 10.1);
-            doc.ellipse(272, 21.8, 1.35, 0.95, 'F');
-            doc.line(273.25, 21.4, 273.25, 15.5);
-        }
-
-        function dibujarCabeceraPagina() {
-            doc.setFillColor(...marfil);
-            doc.rect(0, 0, ancho, alto, 'F');
-
-            doc.setDrawColor(...oroSuave);
-            doc.setLineWidth(0.25);
-            doc.rect(7, 7, ancho - 14, alto - 14);
-            doc.setLineWidth(0.12);
-            doc.rect(9.2, 9.2, ancho - 18.4, alto - 18.4);
-
-            dibujarEsquina(9.2, 9.2, 1, 1);
-            dibujarEsquina(ancho - 9.2, 9.2, -1, 1);
-            dibujarEsquina(9.2, alto - 9.2, 1, -1);
-            dibujarEsquina(ancho - 9.2, alto - 9.2, -1, -1);
-
-            doc.setFillColor(...negro);
-            doc.roundedRect(11, 10.5, ancho - 22, 28.5, 1.5, 1.5, 'F');
-            doc.setFillColor(...oro);
-            doc.rect(11, 37.2, ancho - 22, 1.8, 'F');
-
-            doc.setTextColor(...oro);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(17);
-            doc.text(texto(meta.tituloDocumento, 'REPERTORIO').toUpperCase(), 16, 20);
-
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(10);
-            doc.text(texto(meta.organizacion, 'Banda de Música Julián Cerdán'), 16, 27.5);
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8.8);
-            const detalle = `${texto(meta.hermandad)} · ${texto(meta.localidad)} · ${formatearFecha(meta.fecha)}`;
-            doc.text(detalle, 16, 34.2);
-
-            if (meta.tipo) {
-                doc.setTextColor(...oroSuave);
-                doc.setFontSize(7.5);
-                doc.text(texto(meta.tipo).toUpperCase(), 281, 34.2, { align: 'right' });
-            }
-
-            dibujarMotivoMusical();
-        }
-
-        function crearFilasConFases() {
-            const filas = [];
-            let faseAnterior = null;
-
-            marchas.forEach((marcha, indice) => {
-                const fase = texto(marcha.fase);
-                if (fase !== faseAnterior) {
-                    filas.push([{
-                        content: fase.toUpperCase(),
-                        colSpan: 6,
-                        styles: {
-                            fillColor: oroSuave,
-                            textColor: [73, 56, 20],
-                            fontStyle: 'bold',
-                            halign: 'center',
-                            fontSize: 8.3,
-                            cellPadding: 2.2,
-                            lineColor: oro,
-                            lineWidth: 0.2
-                        }
-                    }]);
-                    faseAnterior = fase;
-                }
-
-                filas.push([
-                    texto(marcha.orden ?? indice + 1, String(indice + 1)),
-                    texto(marcha.titulo),
-                    texto(marcha.autor),
-                    fase,
-                    formatearCornetas(marcha.cornetas),
-                    formatearDuracion(marcha.duracion_seg)
-                ]);
-            });
-
-            return filas;
-        }
+        const filas = marchas.map((marcha, indice) => [
+            texto(marcha.orden ?? indice + 1, String(indice + 1)),
+            texto(marcha.titulo),
+            texto(marcha.autor),
+            texto(marcha.fase),
+            formatearCornetas(marcha.cornetas),
+            formatearDuracion(marcha.duracion_seg)
+        ]);
 
         autoTable({
-            startY: 46,
+            startY: 43,
             head: [['Nº', 'Marcha', 'Autor', texto(meta.etiquetaFase, 'Fase'), 'Cornetas', 'Duración']],
-            body: crearFilasConFases(),
+            body: filas,
             theme: 'grid',
-            margin: { top: 46, left: 14, right: 14, bottom: 18 },
-            styles: {
-                font: 'helvetica',
-                fontSize: 8.3,
-                cellPadding: 2.7,
-                lineColor: [218, 213, 201],
-                lineWidth: 0.13,
-                textColor: [38, 37, 34],
-                fillColor: [255, 254, 250],
-                overflow: 'linebreak',
-                valign: 'middle'
-            },
-            headStyles: {
-                fillColor: oro,
-                textColor: [18, 17, 15],
-                fontStyle: 'bold',
-                halign: 'left',
-                lineColor: oro,
-                lineWidth: 0.2
-            },
-            alternateRowStyles: { fillColor: [247, 243, 232] },
+            margin: { left: 14, right: 14, bottom: 16 },
+            styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 3, lineColor: [218, 218, 218], lineWidth: 0.15, textColor: [35, 35, 35], overflow: 'linebreak', valign: 'middle' },
+            headStyles: { fillColor: oro, textColor: [10, 10, 10], fontStyle: 'bold', halign: 'left' },
+            alternateRowStyles: { fillColor: [247, 244, 235] },
             columnStyles: {
                 0: { cellWidth: 13, halign: 'center' },
                 1: { cellWidth: 91, fontStyle: 'bold' },
@@ -252,31 +134,18 @@
                 4: { cellWidth: 28, halign: 'center' },
                 5: { cellWidth: 28, halign: 'center' }
             },
-            rowPageBreak: 'avoid',
-            showHead: 'everyPage',
-            willDrawPage: dibujarCabeceraPagina
+            rowPageBreak: 'avoid'
         });
 
         const paginas = doc.getNumberOfPages();
         for (let pagina = 1; pagina <= paginas; pagina += 1) {
             doc.setPage(pagina);
-
             doc.setDrawColor(...oro);
-            doc.setLineWidth(0.25);
-            doc.line(14, 194.5, 121, 194.5);
-            doc.line(176, 194.5, 283, 194.5);
-            dibujarRombo(148.5, 194.5, 1.3);
-            doc.setDrawColor(...oroSuave);
-            doc.setLineWidth(0.12);
-            doc.line(121, 194.5, 144, 194.5);
-            doc.line(153, 194.5, 176, 194.5);
-
-            doc.setTextColor(...gris);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7.3);
-            doc.text(`Total: ${marchas.length} marchas`, 14, 201.5);
-            doc.text(texto(meta.organizacion, 'Banda de Música Julián Cerdán'), 148.5, 201.5, { align: 'center' });
-            doc.text(`Página ${pagina} de ${paginas}`, 283, 201.5, { align: 'right' });
+            doc.line(14, 198, 283, 198);
+            doc.setTextColor(95, 95, 95);
+            doc.setFontSize(7.5);
+            doc.text(`Total: ${marchas.length} marchas`, 14, 203);
+            doc.text(`Página ${pagina} de ${paginas}`, 283, 203, { align: 'right' });
         }
 
         return doc;
