@@ -81,6 +81,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     actualizarEstadoConexionDirecto();
     pintarMarchasPendientes();
     if (navigator.onLine) sincronizarMarchasPendientes();
+
+    // Los módulos complementarios esperan a que la sesión y la consola
+    // estén preparadas antes de consultar datos o sustituir acciones del directo.
+    document.dispatchEvent(new CustomEvent('admin:ready'));
 });
 
 /* ------------------------------------------------------------

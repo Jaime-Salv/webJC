@@ -20,9 +20,7 @@
 
     const numeroVisible = (numero) => String(Number(numero) || 0).padStart(3, '0');
 
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(inicializarCompatibilidad, 100);
-    });
+    document.addEventListener('admin:ready', inicializarCompatibilidad, { once: true });
 
     async function inicializarCompatibilidad() {
         if (typeof clienteSupabase === 'undefined') return;

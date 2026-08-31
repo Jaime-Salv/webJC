@@ -27,9 +27,7 @@
 
     const numeroVisible = (numero) => String(Number(numero) || 0).padStart(3, '0');
 
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(inicializarModuloRepertorios, 0);
-    });
+    document.addEventListener('admin:ready', inicializarModuloRepertorios, { once: true });
 
     async function inicializarModuloRepertorios() {
         if (!document.querySelector('.admin-shell') || typeof clienteSupabase === 'undefined') return;
