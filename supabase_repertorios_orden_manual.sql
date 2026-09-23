@@ -24,7 +24,9 @@ begin
 
     with orden as (
         select m.id_marcha, row_number() over (
-            order by regexp_replace(lower(trim(c.titulo)), '^[^[:alnum:]]+', '') collate "es-ES-x-icu",
+            -- Descarta signos iniciales y neutraliza tildes antes de comparar.
+            order by translate(regexp_replace(lower(trim(c.titulo)), '^[^[:alnum:]]+', ''),
+                               'áéíóúü', 'aeiouu') collate "es-ES-x-icu",
                      lower(c.titulo) collate "es-ES-x-icu", c.id_marcha
         )::integer as nuevo_numero
         from public.repertorio_temporada_marchas m
