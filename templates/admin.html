@@ -767,6 +767,32 @@
 
         .card-admin, .admin-module-grid > *, .injection-row > * { min-width: 0; }
 
+        .rep-ayuda { color: #aaa; font-size: .76rem; line-height: 1.5; margin: 0 0 12px; }
+        #rep-resumen, #rep-estado { overflow-wrap: anywhere; }
+        .rep-lista-marchas { display: grid; gap: 9px; padding: 0; margin: 0; list-style: none; }
+        .rep-marcha-item {
+            display: grid;
+            grid-template-columns: 48px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid #303030;
+            border-radius: 9px;
+            background: #0c0c0c;
+        }
+        .rep-marcha-numero { color: var(--color-oro); font-weight: 900; font-variant-numeric: tabular-nums; }
+        .rep-marcha-detalle { min-width: 0; text-transform: none; overflow-wrap: anywhere; }
+        .rep-marcha-detalle strong { display: block; color: #fff; font-size: .82rem; line-height: 1.45; }
+        .rep-marcha-detalle span { display: block; color: #aaa; font-size: .66rem; line-height: 1.5; margin-top: 3px; }
+        .rep-marcha-acciones { display: flex; align-items: center; gap: 5px; text-transform: none; }
+        .rep-mover, .rep-retirar { min-width: 44px; min-height: 44px; border-radius: 7px; cursor: pointer; }
+        .rep-mover { border: 1px solid #60512c; background: #1b1a15; color: var(--color-oro); font-size: 1rem; font-weight: 800; }
+        .rep-mover:disabled { opacity: .38; cursor: default; }
+        .rep-ir-label { display: flex; align-items: center; gap: 5px; color: #aaa; font-size: .68rem; margin-left: 4px; }
+        .rep-ir-label input { width: 58px; min-height: 44px; padding: 6px; border: 1px solid #555; border-radius: 6px; background: #111; color: #fff; font: inherit; font-size: 1rem; text-align: center; }
+        .rep-marcha-acciones .rep-retirar { padding: 0 9px; margin-left: 4px; }
+
         .admin-view-header {
             display: flex;
             justify-content: space-between;
@@ -996,6 +1022,12 @@
         }
 
         @media (max-width: 650px) {
+            .rep-marcha-item { grid-template-columns: 38px minmax(0, 1fr); align-items: start; }
+            .rep-marcha-acciones { grid-column: 1 / -1; flex-wrap: wrap; margin-top: 2px; }
+            .rep-marcha-acciones .rep-retirar { margin-left: auto; }
+            .rep-ir-label { margin-left: auto; }
+            .rep-marcha-detalle strong { font-size: .84rem; }
+            .rep-mover, .rep-ir-label input, .rep-retirar { touch-action: manipulation; }
             body { padding-top: 64px; }
             .main-header {
                 height: 64px;
@@ -1146,6 +1178,7 @@
         }
 
         @media (max-width: 380px) {
+            .rep-marcha-acciones .rep-retirar { width: 100%; margin-left: 0; }
             .header-center h2 { display: none; }
             .dashboard-kpi strong { font-size: 1.35rem; }
             .admin-content { padding-inline: 7px; }
@@ -1761,7 +1794,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <script src="../js/config.js"></script>
-    <script src="../js/admin-repertorios.js?v=5"></script>
+    <script src="../js/admin-repertorios.js?v=6"></script>
     <script src="../js/admin-repertorios-compat.js?v=4"></script>
     <script src="../js/admin.js?v=3"></script>
 

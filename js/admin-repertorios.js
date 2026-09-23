@@ -11,6 +11,7 @@
     let marchasTemporada = [];
     let catalogoRepertorio = [];
     let ordenEdicionDirecto = null;
+    let guardandoOrden = false;
 
     const normalizar = (texto) => String(texto || '')
         .trim()
@@ -125,20 +126,8 @@
                         </details>
                     </div>
 
-                    <div style="overflow-x:auto;">
-                        <table class="tabla-historial" style="min-width:620px;">
-                            <thead>
-                                <tr>
-                                    <th style="width:75px;">Nº anual</th>
-                                    <th>Marcha</th>
-                                    <th>Autor</th>
-                                    <th style="width:90px;">ID maestro</th>
-                                    <th style="width:95px;">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="rep-tabla-marchas"></tbody>
-                        </table>
-                    </div>
+                    <p id="rep-ayuda" class="rep-ayuda">Usa las flechas para mover una posición o escribe el número de destino para ir directamente.</p>
+                    <ol id="rep-lista-marchas" class="rep-lista-marchas" aria-label="Marchas de la temporada"></ol>
                 </div>
             </div>
         `;
@@ -155,6 +144,25 @@
         document.getElementById('rep-activar')?.addEventListener('click', activarTemporada);
         document.getElementById('rep-anadir-existente')?.addEventListener('click', anadirMarchaExistente);
         document.getElementById('rep-crear-marcha')?.addEventListener('click', crearMarchaYAnadir);
+        document.getElementById('rep-lista-marchas')?.addEventListener('click', (evento) => {
+            const boton = evento.target.closest('button');
+            if (!boton || guardandoOrden) return;
+            const fila = boton.closest('[data-rep-id]');
+            if (!fila) return;
+            const idMarcha = Number(fila.dataset.repId);
+            if (boton.matches('[data-rep-retirar]')) retirarMarcha(idMarcha);
+            if (boton.matches('[data-rep-subir]')) moverMarcha(idMarcha, -1);
+            if (boton.matches('[data-rep-bajar]')) moverMarcha(idMarcha, 1);
+            if (boton.matches('[data-rep-ir]')) {
+                const destino = Number(fila.querySelector('[data-rep-destino]')?.value);
+                moverMarcha(idMarcha, destino - 1, true);
+            }
+        });
+        document.getElementById('rep-lista-marchas')?.addEventListener('keydown', (evento) => {
+            if (evento.key !== 'Enter' || !evento.target.matches('[data-rep-destino]')) return;
+            evento.preventDefault();
+            evento.target.closest('[data-rep-id]')?.querySelector('[data-rep-ir]')?.click();
+        });
     }
 
     async function cargarCatalogoRepertorio() {
@@ -227,7 +235,7 @@
     function renderizarGestion() {
         const resumen = document.getElementById('rep-resumen');
         const aviso = document.getElementById('rep-solo-borrador');
-        const tabla = document.getElementById('rep-tabla-marchas');
+        const lista = document.getElementById('rep-lista-marchas');
         const form = document.getElementById('rep-form-anadir');
         const ordenar = document.getElementById('rep-ordenar');
         const activar = document.getElementById('rep-activar');
@@ -241,28 +249,67 @@
             ${repertorioSeleccionado.estado === 'Activo' ? 'Este es el repertorio utilizado para buscar por número durante los directos.' : 'Los cambios aquí no afectan al catálogo maestro ni a actuaciones anteriores.'}
         `;
         if (aviso) aviso.textContent = editable
-            ? 'Puedes añadir o retirar marchas. Al ordenar A-Z se recalcularán los números anuales de esta temporada.'
+            ? 'Puedes añadir, retirar y mover marchas. La numeración se guarda al moverlas. “Ordenar A-Z” sustituye el orden manual.'
             : 'Esta temporada está protegida. Para hacer cambios crea una nueva temporada en borrador.';
         if (form) form.style.display = editable ? 'block' : 'none';
+        const ayuda = document.getElementById('rep-ayuda');
+        if (ayuda) ayuda.hidden = !editable;
         if (ordenar) ordenar.disabled = !editable || marchasTemporada.length === 0;
         if (activar) activar.disabled = repertorioSeleccionado.estado === 'Activo' || marchasTemporada.length === 0;
 
-        if (tabla) {
-            tabla.innerHTML = marchasTemporada.map((item) => {
+        if (lista) {
+            lista.innerHTML = marchasTemporada.map((item, indice) => {
                 const marcha = item.catalogo_marchas || {};
                 return `
-                    <tr>
-                        <td style="color:#d4af37;font-weight:900;">${numeroVisible(item.numero_repertorio)}</td>
-                        <td style="color:white;font-weight:800;">${escapar(marcha.titulo || 'Marcha sin título')}</td>
-                        <td>${escapar(marcha.autor || '--')}</td>
-                        <td>#${item.id_marcha}</td>
-                        <td>${editable ? `<button type="button" class="btn-mini-danger" data-rep-retirar="${item.id_marcha}">Retirar</button>` : '—'}</td>
-                    </tr>
+                    <li class="rep-marcha-item" data-rep-id="${item.id_marcha}">
+                        <span class="rep-marcha-numero" aria-label="Número anual ${item.numero_repertorio}">${numeroVisible(item.numero_repertorio)}</span>
+                        <div class="rep-marcha-detalle">
+                            <strong>${escapar(marcha.titulo || 'Marcha sin título')}</strong>
+                            <span>${escapar(marcha.autor || 'Autor desconocido')} · ID #${item.id_marcha}</span>
+                        </div>
+                        ${editable ? `<div class="rep-marcha-acciones" aria-label="Cambiar orden de ${escapar(marcha.titulo || 'Marcha')}">
+                            <button type="button" class="rep-mover" data-rep-subir aria-label="Subir ${escapar(marcha.titulo || 'Marcha')}" title="Subir" ${indice === 0 ? 'disabled' : ''}>↑</button>
+                            <button type="button" class="rep-mover" data-rep-bajar aria-label="Bajar ${escapar(marcha.titulo || 'Marcha')}" title="Bajar" ${indice === marchasTemporada.length - 1 ? 'disabled' : ''}>↓</button>
+                            <label class="rep-ir-label">Nº <input data-rep-destino type="number" inputmode="numeric" min="1" max="${marchasTemporada.length}" aria-label="Nuevo número para ${escapar(marcha.titulo || 'Marcha')}" placeholder="${indice + 1}"></label>
+                            <button type="button" class="rep-mover rep-ir" data-rep-ir aria-label="Mover ${escapar(marcha.titulo || 'Marcha')} al número indicado">Ir</button>
+                            <button type="button" class="btn-mini-danger rep-retirar" data-rep-retirar aria-label="Retirar ${escapar(marcha.titulo || 'Marcha')}">Retirar</button>
+                        </div>` : ''}
+                    </li>
                 `;
             }).join('');
-            tabla.querySelectorAll('[data-rep-retirar]').forEach((boton) => {
-                boton.addEventListener('click', () => retirarMarcha(Number(boton.dataset.repRetirar)));
+        }
+    }
+
+    async function moverMarcha(idMarcha, posicion, posicionAbsoluta = false) {
+        if (!asegurarBorrador() || guardandoOrden) return;
+        const origen = marchasTemporada.findIndex((m) => Number(m.id_marcha) === idMarcha);
+        const destino = posicionAbsoluta ? posicion : origen + posicion;
+        if (origen < 0 || !Number.isInteger(destino) || destino < 0 || destino >= marchasTemporada.length) {
+            estadoRepertorio(`Introduce un número entre 1 y ${marchasTemporada.length}.`, true);
+            return;
+        }
+        if (origen === destino) return;
+        const orden = [...marchasTemporada];
+        orden.splice(destino, 0, ...orden.splice(origen, 1));
+        guardandoOrden = true;
+        document.querySelectorAll('#rep-lista-marchas button, #rep-lista-marchas input').forEach((control) => { control.disabled = true; });
+        document.querySelectorAll('#rep-select-temporada, #rep-ordenar, #rep-activar, #rep-anadir-existente, #rep-crear-marcha').forEach((control) => { control.disabled = true; });
+        estadoRepertorio('Guardando el nuevo orden...');
+        try {
+            const { error } = await clienteSupabase.rpc('reordenar_repertorio_personalizado', {
+                p_id_repertorio: repertorioSeleccionado.id_repertorio,
+                p_ids_marchas: orden.map((m) => Number(m.id_marcha))
             });
+            if (error) throw error;
+            await cargarMarchasTemporada();
+            estadoRepertorio(`Marcha movida al número ${destino + 1}. Orden guardado.`);
+        } catch (error) {
+            estadoRepertorio('No se pudo guardar el orden: ' + error.message, true);
+            try { await cargarMarchasTemporada(); } catch (recargaError) { console.error(recargaError); }
+        } finally {
+            guardandoOrden = false;
+            renderizarGestion();
+            document.querySelectorAll('#rep-select-temporada, #rep-anadir-existente, #rep-crear-marcha').forEach((control) => { control.disabled = false; });
         }
     }
 
@@ -360,7 +407,7 @@
         }
         await cargarMarchasTemporada();
         renderizarGestion();
-        estadoRepertorio('Marcha añadida. Pulsa “Ordenar A-Z y renumerar” cuando termines los cambios.');
+        estadoRepertorio('Marcha añadida al final. Puedes moverla al número deseado o pulsar “Ordenar A-Z”.');
     }
 
     async function retirarMarcha(idMarcha) {

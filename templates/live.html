@@ -66,7 +66,7 @@
             width: auto;
         }
 
-        .header-center h2 {
+        .header-center h1, .header-center h2 {
             font-size: 1rem;
             text-transform: uppercase;
             margin: 0;
@@ -186,6 +186,10 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        .header-center { min-width: 0; flex: 1; }
+        .header-center h1 { justify-content: center; flex-wrap: wrap; min-width: 0; overflow-wrap: anywhere; }
+        #txt-hermandad-header { min-width: 0; overflow-wrap: anywhere; }
+
         .live-resumen {
             display: grid;
             grid-template-columns: minmax(0, 2fr) repeat(2, minmax(85px, 1fr));
@@ -213,11 +217,10 @@
 
         .live-resumen-item strong {
             display: block;
-            overflow: hidden;
             color: white;
             font-size: 0.75rem;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
         }
 
         #live-conexion { color: #62d98c; }
@@ -279,6 +282,7 @@
             font-size: 0.95rem;
             color: white;
             font-weight: 700;
+            overflow-wrap: anywhere;
         }
 
         .ml-orden {
@@ -319,7 +323,7 @@
                 height: 300px;
             }
 
-            .header-center h2 {
+            .header-center h1, .header-center h2 {
                 font-size: 0.8rem;
             }
         }
@@ -333,7 +337,7 @@
                 height: 38px;
             }
 
-            .header-center h2 {
+            .header-center h1, .header-center h2 {
                 flex-direction: column;
                 gap: 4px;
             }
@@ -352,6 +356,7 @@
 
             .marcha-live-card {
                 align-items: flex-start;
+                min-width: 0;
             }
 
             .live-resumen {
