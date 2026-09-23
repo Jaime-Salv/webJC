@@ -798,6 +798,7 @@ async function insertarMarchaPendiente(item) {
     const { error } = await clienteSupabase.from('repertorio_transaccional').insert([{
         id_procesion: item.idProcesion,
         id_marcha: Number(marcha.id_marcha),
+        numero_repertorio: item.numeroRepertorio || null,
         fase: item.fase,
         orden: contadorOrden
     }]);
@@ -1034,8 +1035,12 @@ function pintarAccesosMarchasRecientes(registros) {
         boton.className = 'marcha-reciente-btn';
         boton.textContent = marcha.titulo;
         boton.addEventListener('click', () => {
-            document.getElementById('inp-id-marcha').value = marcha.id_marcha;
-            autocompletarTitulo();
+            if (typeof window.seleccionarMarchaRecienteDirecto === 'function') {
+                window.seleccionarMarchaRecienteDirecto(marcha);
+            } else {
+                document.getElementById('inp-id-marcha').value = marcha.id_marcha;
+                autocompletarTitulo();
+            }
             document.getElementById('inp-fase-marcha').focus();
         });
         contenedor.appendChild(boton);

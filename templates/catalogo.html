@@ -409,6 +409,7 @@
             max-width: 980px;
             max-height: 88vh;
             overflow-y: auto;
+            overflow-x: hidden;
             background:
                 linear-gradient(145deg, rgba(20,20,20,0.98), rgba(5,5,5,0.98));
             border: 1px solid rgba(212, 175, 55, 0.45);
@@ -446,6 +447,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             font-size: 1.45rem;
+            overflow-wrap: anywhere;
         }
 
         .modal-subtitulo {
@@ -458,7 +460,10 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 18px;
+            align-items: start;
         }
+
+        .modal-grid > * { min-width: 0; }
 
         .bloque-ficha {
             background: rgba(255, 255, 255, 0.035);
@@ -480,8 +485,15 @@
             line-height: 1.7;
             font-size: 0.92rem;
             margin: 0;
-            white-space: pre-wrap;
+            white-space: normal;
+            overflow-wrap: anywhere;
         }
+
+        .bloque-textos { background: linear-gradient(125deg, rgba(212,175,55,.09), rgba(255,255,255,.025)); }
+        .bloque-textos .texto-fuente { margin: 0 0 12px; color: #bbb; }
+        .bloque-ficha .enlace-ficha { margin-top: 0; }
+        #modal-youtube:empty { display: none; }
+        #modal-youtube:not(:empty) { margin-top: 12px; }
 
         .ficha-datos {
             display: grid;
@@ -508,6 +520,7 @@
         .dato-ficha strong {
             color: #fff;
             font-size: 0.9rem;
+            overflow-wrap: anywhere;
         }
 
         .btn-youtube {
@@ -549,6 +562,8 @@
             border-radius: 6px;
             font-size: 0.8rem;
             margin-top: 8px;
+            max-width: 100%;
+            overflow-wrap: anywhere;
         }
 
         .nota-fuente-externa {
@@ -562,6 +577,8 @@
             color: #777 !important;
             font-style: italic;
         }
+
+        #modal-sin-escucha[hidden] { display: none; }
 
         .fuentes-lista {
             margin: 0;
@@ -1173,16 +1190,13 @@
 
                     <div id="modal-audio-web"></div>
 
-                    <div id="modal-youtube" style="margin-top: 16px;"></div>
+                    <div id="modal-youtube"></div>
+                    <p id="modal-sin-escucha" class="sin-dato" hidden>No hay grabaciones enlazadas todavía.</p>
                 </section>
 
                 <section class="bloque-ficha bloque-textos">
                     <h3>Información externa</h3>
-
-                    <p style="color:#ccc; margin-bottom:14px;">
-                        Para ampliar información histórica y documental sobre esta marcha, puedes consultar fuentes externas especializadas.
-                    </p>
-
+                    <p class="texto-fuente">Consulta la ficha documental de esta marcha en Patrimonio Musical.</p>
                     <div id="modal-patrimonio"></div>
                 </section>
             </div>
@@ -1194,6 +1208,6 @@
 <script src="../js/analytics.js"></script>
 <script src="../js/pwa.js"></script>
 <script src="../js/config.js"></script>
-<script src="../js/catalogo.js"></script>
+<script src="../js/catalogo.js?v=2"></script>
 </body>
 </html>

@@ -362,6 +362,8 @@ function rellenarFichaMarcha(marcha) {
     pintarAudioWeb(marcha);
     pintarYoutube(marcha.url_youtube);
     pintarSpotify(marcha.spotify_uri);
+    const sinEscucha = document.getElementById('modal-sin-escucha');
+    if (sinEscucha) sinEscucha.hidden = Boolean(marcha.url_audio || marcha.url_youtube || marcha.spotify_uri);
     pintarPatrimonioMusical(marcha);
 }
 
@@ -456,10 +458,6 @@ function pintarAudioWeb(marcha) {
     contenedor.innerHTML = '';
 
     if (!marcha.url_audio || String(marcha.url_audio).trim() === '') {
-        const p = document.createElement('p');
-        p.className = 'sin-dato';
-        p.textContent = 'Audio interno no disponible.';
-        contenedor.appendChild(p);
         return;
     }
 
@@ -493,10 +491,6 @@ function pintarYoutube(urlYoutube) {
     contenedor.innerHTML = '';
 
     if (!urlYoutube || String(urlYoutube).trim() === '') {
-        const p = document.createElement('p');
-        p.className = 'sin-dato';
-        p.textContent = 'Vídeo de YouTube no disponible.';
-        contenedor.appendChild(p);
         return;
     }
 
@@ -568,18 +562,8 @@ function pintarPatrimonioMusical(marcha) {
 
     const urlBusqueda = crearUrlBusquedaPatrimonio(marcha);
 
-    const texto = document.createElement('p');
-    texto.style.marginBottom = '10px';
-    texto.style.color = '#ccc';
-
-    if (urlGuardada) {
-        texto.textContent = 'Ficha externa recomendada:';
-    } else {
-        texto.textContent = 'No hay ficha enlazada todavía. Puedes buscar esta marcha en Patrimonio Musical:';
-    }
-
     const enlace = document.createElement('a');
-    enlace.className = 'btn-patrimonio';
+    enlace.className = 'btn-patrimonio enlace-ficha';
     enlace.href = urlGuardada || urlBusqueda;
     enlace.target = '_blank';
     enlace.rel = 'noopener noreferrer';
@@ -589,7 +573,6 @@ function pintarPatrimonioMusical(marcha) {
     aviso.className = 'nota-fuente-externa';
     aviso.textContent = 'Enlace externo. La información pertenece a su fuente original.';
 
-    contenedor.appendChild(texto);
     contenedor.appendChild(enlace);
     contenedor.appendChild(aviso);
 }

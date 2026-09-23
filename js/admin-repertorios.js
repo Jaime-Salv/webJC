@@ -458,7 +458,7 @@
         const indicador = document.getElementById('directo-repertorio-activo');
         if (!indicador) return;
         indicador.innerHTML = repertorioActivo
-            ? `Numeración activa: <strong style="color:#d4af37;">Repertorio ${repertorioActivo.temporada}</strong>. El número introducido se traduce internamente al ID maestro.`
+            ? `Numeración activa: <strong style="color:#d4af37;">Repertorio ${repertorioActivo.temporada}</strong>. Introduce un número anual o deja el campo vacío y escribe el título de una marcha fuera del repertorio.`
             : '<strong style="color:#ff8585;">No hay repertorio activo.</strong> Activa una temporada antes de utilizar el directo.';
 
         const label = document.querySelector('label[for="inp-id-marcha"]');
@@ -466,11 +466,12 @@
         if (input) input.placeholder = 'Nº anual (ej. 027)';
         const contenedor = input?.parentElement;
         const etiqueta = contenedor?.querySelector('label');
-        if (etiqueta) etiqueta.textContent = 'Nº REPERTORIO';
+        if (etiqueta) etiqueta.textContent = 'Nº REPERTORIO (OPCIONAL)';
     }
 
     function capturarComportamientoDirecto() {
         const originalIniciar = window.iniciarNuevaProcesion;
+        const originalInyectar = window.inyectarMarcha;
         const originalPreparar = window.prepararEdicion;
         const input = document.getElementById('inp-id-marcha');
 
@@ -497,6 +498,7 @@
                 const catalogo = catalogoRepertorio.find((m) => Number(m.id_marcha) === Number(idMarcha));
                 inputTitulo.value = relacion?.catalogo_marchas?.titulo || catalogo?.titulo || `ID maestro ${idMarcha}`;
                 inputTitulo.style.color = relacion ? '#27ae60' : '#ffb84d';
+                inputTitulo.readOnly = Boolean(relacion);
             }
             if (selectFase) selectFase.value = fase;
             if (btn) {
@@ -505,6 +507,19 @@
                 btn.style.color = 'white';
             }
             document.getElementById('panel-inyeccion')?.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.seleccionarMarchaRecienteDirecto = async function(marcha) {
+            const inputNumero = document.getElementById('inp-id-marcha');
+            const inputTitulo = document.getElementById('inp-titulo-marcha');
+            const mapa = await obtenerMapaActivo();
+            const relacion = mapa.find((m) => Number(m.id_marcha) === Number(marcha.id_marcha));
+            if (inputNumero) inputNumero.value = relacion ? relacion.numero_repertorio : '';
+            if (inputTitulo) {
+                inputTitulo.value = marcha.titulo;
+                inputTitulo.readOnly = Boolean(relacion);
+                inputTitulo.style.color = relacion ? '#27ae60' : 'var(--color-oro)';
+            }
         };
 
         window.iniciarNuevaProcesion = async function() {
@@ -526,7 +541,12 @@
             }
         };
 
-        window.inyectarMarcha = inyectarMarchaPorNumeroAnual;
+        window.inyectarMarcha = function() {
+            const numero = document.getElementById('inp-id-marcha')?.value.trim();
+            // El alta sin número conserva también la cola local del directo sin cobertura.
+            if (!numero && ordenEdicionDirecto === null) return originalInyectar();
+            return inyectarMarchaPorNumeroAnual();
+        };
 
         if (originalPreparar && typeof originalPreparar !== 'function') {
             console.warn('No se ha podido capturar el editor anterior del directo.');
@@ -537,15 +557,18 @@
         const input = document.getElementById('inp-id-marcha');
         const titulo = document.getElementById('inp-titulo-marcha');
         if (!input || !titulo) return;
-        const numero = Number(input.value);
+        const valor = input.value.trim();
+        const numero = Number(valor);
         if (!Number.isInteger(numero) || numero <= 0) {
-            if (!input.value) {
-                titulo.value = '';
+            titulo.readOnly = false;
+            if (!valor) {
+                titulo.placeholder = 'Título de la marcha';
                 titulo.style.color = 'var(--color-oro)';
             }
             return;
         }
         const mapa = await obtenerMapaActivo();
+        if (input.value.trim() !== valor) return;
         const relacion = mapa.find((m) => Number(m.numero_repertorio) === numero);
         if (relacion) {
             titulo.value = relacion.catalogo_marchas?.titulo || `ID maestro ${relacion.id_marcha}`;
@@ -553,17 +576,23 @@
             titulo.readOnly = true;
         } else {
             titulo.value = '';
-            titulo.placeholder = `El nº ${numeroVisible(numero)} no existe en el repertorio activo`;
+            titulo.placeholder = `Nº ${numeroVisible(numero)} no encontrado: borra el número y escribe el título`;
             titulo.style.color = '#ff3b3b';
-            titulo.readOnly = true;
+            titulo.readOnly = false;
         }
     }
 
     async function inyectarMarchaPorNumeroAnual() {
-        const numero = Number(document.getElementById('inp-id-marcha')?.value);
+        const valorNumero = document.getElementById('inp-id-marcha')?.value.trim() || '';
+        const numero = valorNumero ? Number(valorNumero) : null;
+        const tituloManual = document.getElementById('inp-titulo-marcha')?.value.trim() || '';
         const fase = document.getElementById('inp-fase-marcha')?.value;
-        if (!Number.isInteger(numero) || numero <= 0) {
-            alert('Introduce el número de la marcha en el repertorio activo.');
+        if (valorNumero && (!Number.isInteger(numero) || numero <= 0)) {
+            alert('Introduce un número anual válido o déjalo vacío para escribir el título.');
+            return;
+        }
+        if (!valorNumero && !tituloManual) {
+            alert('Escribe el título de la marcha. El número anual es opcional.');
             return;
         }
         if (!repertorioActivo) await cargarRepertorioActivo();
@@ -572,17 +601,21 @@
             return;
         }
 
-        const { data: relacion, error: errorRelacion } = await clienteSupabase
-            .from('repertorio_temporada_marchas')
-            .select('id_marcha,numero_repertorio,catalogo_marchas(titulo)')
-            .eq('id_repertorio', repertorioActivo.id_repertorio)
-            .eq('numero_repertorio', numero)
-            .maybeSingle();
-        if (errorRelacion) {
-            alert('No se ha podido consultar el repertorio: ' + errorRelacion.message);
-            return;
+        let relacion = null;
+        if (valorNumero) {
+            const { data, error } = await clienteSupabase
+                .from('repertorio_temporada_marchas')
+                .select('id_marcha,numero_repertorio,catalogo_marchas(titulo)')
+                .eq('id_repertorio', repertorioActivo.id_repertorio)
+                .eq('numero_repertorio', numero)
+                .maybeSingle();
+            if (error) {
+                alert('No se ha podido consultar el repertorio: ' + error.message);
+                return;
+            }
+            relacion = data;
         }
-        if (!relacion) {
+        if (valorNumero && !relacion) {
             alert(`El número ${numeroVisible(numero)} no existe en el repertorio ${repertorioActivo.temporada}.`);
             return;
         }
@@ -611,11 +644,12 @@
         }
 
         try {
+            const marcha = relacion || await obtenerOCrearMarcha(null, tituloManual);
             if (ordenEdicionDirecto !== null) {
                 const { error } = await clienteSupabase
                     .from('repertorio_transaccional')
                     .update({
-                        id_marcha: Number(relacion.id_marcha),
+                        id_marcha: Number(marcha.id_marcha),
                         numero_repertorio: numero,
                         fase
                     })
@@ -636,7 +670,7 @@
                     .from('repertorio_transaccional')
                     .insert([{
                         id_procesion: procesion.id_procesion,
-                        id_marcha: Number(relacion.id_marcha),
+                        id_marcha: Number(marcha.id_marcha),
                         numero_repertorio: numero,
                         fase,
                         orden
@@ -657,7 +691,9 @@
                 boton.style.background = 'var(--color-oro)';
                 boton.style.color = 'black';
             }
-            document.getElementById('estado-inyeccion').textContent = `Marcha ${numeroVisible(numero)} · ${relacion.catalogo_marchas?.titulo || ''} guardada.`;
+            document.getElementById('estado-inyeccion').textContent = valorNumero
+                ? `Marcha ${numeroVisible(numero)} · ${relacion.catalogo_marchas?.titulo || ''} guardada.`
+                : `Marcha «${marcha.titulo}» guardada sin número anual.`;
             if (typeof window.cargarHistorialTransaccional === 'function') await window.cargarHistorialTransaccional();
         } catch (error) {
             alert('No se ha podido guardar la marcha: ' + error.message);

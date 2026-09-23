@@ -108,21 +108,21 @@
 
         inputNumero.addEventListener('input', () => {
             if (navigator.onLine) return;
-            const numero = Number(inputNumero.value);
+            const valor = inputNumero.value.trim();
+            const numero = Number(valor);
             const cache = leerMapa();
             const relacion = cache?.marchas?.find((item) => Number(item.numero_repertorio) === numero);
 
-            inputTitulo.readOnly = true;
+            inputTitulo.readOnly = Boolean(valor && relacion);
             if (relacion) {
                 inputTitulo.value = relacion.catalogo_marchas?.titulo || `ID maestro ${relacion.id_marcha}`;
                 inputTitulo.style.color = '#27ae60';
                 inputTitulo.placeholder = 'Título de la marcha';
-            } else if (inputNumero.value) {
+            } else if (valor) {
                 inputTitulo.value = '';
                 inputTitulo.style.color = '#ff3b3b';
                 inputTitulo.placeholder = `El nº ${numeroVisible(numero)} no está en la caché del repertorio`;
             } else {
-                inputTitulo.value = '';
                 inputTitulo.style.color = 'var(--color-oro)';
                 inputTitulo.placeholder = 'Título de la marcha';
             }
@@ -183,18 +183,25 @@
                 return inyectarOnline.apply(this, args);
             }
 
-            const numero = Number(document.getElementById('inp-id-marcha')?.value);
+            const valorNumero = document.getElementById('inp-id-marcha')?.value.trim() || '';
+            const numero = valorNumero ? Number(valorNumero) : null;
+            const tituloManual = document.getElementById('inp-titulo-marcha')?.value.trim() || '';
             const fase = document.getElementById('inp-fase-marcha')?.value;
             const cache = leerMapa();
             const directo = leerDirecto();
 
-            if (!Number.isInteger(numero) || numero <= 0) {
-                alert('Introduce el número de la marcha en el repertorio activo.');
+            if (valorNumero && (!Number.isInteger(numero) || numero <= 0)) {
+                alert('Introduce un número anual válido o déjalo vacío para escribir el título.');
                 return;
             }
 
-            const relacion = cache?.marchas?.find((item) => Number(item.numero_repertorio) === numero);
-            if (!relacion) {
+            if (!valorNumero && !tituloManual) {
+                alert('Escribe el título de la marcha. El número anual es opcional.');
+                return;
+            }
+
+            const relacion = valorNumero ? cache?.marchas?.find((item) => Number(item.numero_repertorio) === numero) : null;
+            if (valorNumero && !relacion) {
                 alert(`El número ${numeroVisible(numero)} no está disponible en la copia offline del repertorio.`);
                 return;
             }
@@ -207,8 +214,8 @@
             const pendientes = leerPendientes();
             pendientes.push({
                 idProcesion: directo.id_procesion,
-                idIntroducido: Number(relacion.id_marcha),
-                titulo: relacion.catalogo_marchas?.titulo || '',
+                idIntroducido: relacion ? Number(relacion.id_marcha) : null,
+                titulo: relacion?.catalogo_marchas?.titulo || tituloManual,
                 fase,
                 numeroRepertorio: numero,
                 idLocal: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
@@ -221,13 +228,16 @@
             if (inputNumero) inputNumero.value = '';
             if (inputTitulo) {
                 inputTitulo.value = '';
+                inputTitulo.readOnly = false;
                 inputTitulo.placeholder = 'Título de la marcha';
                 inputTitulo.style.color = 'var(--color-oro)';
             }
 
             const estado = document.getElementById('estado-inyeccion');
             if (estado) {
-                estado.textContent = `Sin conexión: ${numeroVisible(numero)} · ${relacion.catalogo_marchas?.titulo || ''} queda pendiente de sincronizar.`;
+                estado.textContent = relacion
+                    ? `Sin conexión: ${numeroVisible(numero)} · ${relacion.catalogo_marchas?.titulo || ''} queda pendiente de sincronizar.`
+                    : `Sin conexión: «${tituloManual}» queda pendiente de sincronizar.`;
                 estado.className = 'estado-inyeccion pendiente';
             }
 
