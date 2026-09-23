@@ -465,6 +465,13 @@
 
         .modal-grid > * { min-width: 0; }
 
+        .modal-columna-secundaria {
+            display: grid;
+            gap: 18px;
+            align-content: start;
+            min-width: 0;
+        }
+
         .bloque-ficha {
             background: rgba(255, 255, 255, 0.035);
             border: 1px solid rgba(255,255,255,0.07);
@@ -603,10 +610,6 @@
             }
 
             .bloque-reproductores {
-                grid-column: 1 / -1;
-            }
-
-            .bloque-textos {
                 grid-column: 1 / -1;
             }
 
@@ -1185,20 +1188,20 @@
                     </div>
                 </section>
 
-                <section class="bloque-ficha">
-                    <h3>Escucha</h3>
+                <div class="modal-columna-secundaria">
+                    <section class="bloque-ficha">
+                        <h3>Escucha</h3>
+                        <div id="modal-audio-web"></div>
+                        <div id="modal-youtube"></div>
+                        <p id="modal-sin-escucha" class="sin-dato" hidden>No hay grabaciones enlazadas todavía.</p>
+                    </section>
 
-                    <div id="modal-audio-web"></div>
-
-                    <div id="modal-youtube"></div>
-                    <p id="modal-sin-escucha" class="sin-dato" hidden>No hay grabaciones enlazadas todavía.</p>
-                </section>
-
-                <section class="bloque-ficha bloque-textos">
-                    <h3>Información externa</h3>
-                    <p class="texto-fuente">Consulta la ficha documental de esta marcha en Patrimonio Musical.</p>
-                    <div id="modal-patrimonio"></div>
-                </section>
+                    <section class="bloque-ficha bloque-textos">
+                        <h3>Información externa</h3>
+                        <p class="texto-fuente">Consulta la ficha documental de esta marcha en Patrimonio Musical.</p>
+                        <div id="modal-patrimonio"></div>
+                    </section>
+                </div>
             </div>
         </div>
     </div>
