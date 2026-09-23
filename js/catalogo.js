@@ -351,6 +351,10 @@ function rellenarFichaMarcha(marcha) {
     setText('modal-estilo', marcha.cornetas === 1 ? 'Con cornetas' : 'Sin cornetas');
     setText('modal-localidad', marcha.localidad || '--');
     setText('modal-dedicatoria', marcha.dedicatoria || '--');
+    ['modal-ano', 'modal-duracion', 'modal-localidad', 'modal-dedicatoria'].forEach((id) => {
+        const dato = document.getElementById(id);
+        if (dato?.parentElement) dato.parentElement.hidden = !dato.textContent || dato.textContent === '--';
+    });
     const btnFavorita = document.getElementById('btn-modal-favorita');
     const btnSimulador = document.getElementById('btn-modal-simulador');
     if (btnFavorita) {
@@ -461,11 +465,6 @@ function pintarAudioWeb(marcha) {
         return;
     }
 
-    const texto = document.createElement('p');
-    texto.style.marginBottom = '8px';
-    texto.style.color = '#ccc';
-    texto.textContent = 'Escuchar desde la web:';
-
     const boton = document.createElement('button');
     boton.type = 'button';
     boton.className = 'btn-send';
@@ -477,7 +476,6 @@ function pintarAudioWeb(marcha) {
         reproducirEnMiniPlayer(marcha);
     });
 
-    contenedor.appendChild(texto);
     contenedor.appendChild(boton);
 }
 
@@ -494,11 +492,6 @@ function pintarYoutube(urlYoutube) {
         return;
     }
 
-    const texto = document.createElement('p');
-    texto.style.marginBottom = '8px';
-    texto.style.color = '#ccc';
-    texto.textContent = 'También puedes abrir una interpretación en YouTube:';
-
     const enlace = document.createElement('a');
     enlace.className = 'btn-youtube';
     enlace.href = urlYoutube;
@@ -506,7 +499,6 @@ function pintarYoutube(urlYoutube) {
     enlace.rel = 'noopener noreferrer';
     enlace.textContent = 'Ver en YouTube';
 
-    contenedor.appendChild(texto);
     contenedor.appendChild(enlace);
 }
 
@@ -528,12 +520,7 @@ function pintarSpotify(spotifyUri) {
     }
 
     const bloque = document.createElement('div');
-    bloque.style.marginTop = '14px';
-
-    const texto = document.createElement('p');
-    texto.style.marginBottom = '8px';
-    texto.style.color = '#ccc';
-    texto.textContent = 'También puedes abrir esta marcha en Spotify:';
+    bloque.style.marginTop = '0';
 
     const enlace = document.createElement('a');
     enlace.className = 'btn-spotify';
@@ -542,7 +529,6 @@ function pintarSpotify(spotifyUri) {
     enlace.rel = 'noopener noreferrer';
     enlace.textContent = 'Abrir en Spotify';
 
-    bloque.appendChild(texto);
     bloque.appendChild(enlace);
     contenedor.appendChild(bloque);
 }
@@ -571,7 +557,7 @@ function pintarPatrimonioMusical(marcha) {
 
     const aviso = document.createElement('p');
     aviso.className = 'nota-fuente-externa';
-    aviso.textContent = 'Enlace externo. La información pertenece a su fuente original.';
+    aviso.textContent = urlGuardada ? 'Se abrirá la ficha en un sitio externo.' : 'Se abrirá una búsqueda externa; comprueba que el resultado corresponde a esta marcha.';
 
     contenedor.appendChild(enlace);
     contenedor.appendChild(aviso);

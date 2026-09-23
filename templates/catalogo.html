@@ -6,7 +6,7 @@
 
     <title>Catálogo Histórico - Julián Cerdán</title>
 
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/style.css?v=10">
     <link rel="icon" type="image/png" href="../img/escudo.png">
     <link rel="manifest" href="../manifest.webmanifest">
     <link rel="apple-touch-icon" href="../img/icon-192.png">
@@ -514,6 +514,7 @@
             padding: 12px;
             border-radius: 6px;
         }
+        .dato-ficha[hidden] { display: none; }
 
         .dato-ficha span {
             display: block;
@@ -586,6 +587,11 @@
         }
 
         #modal-sin-escucha[hidden] { display: none; }
+        #modal-audio-web, #modal-youtube { display: flex; flex-wrap: wrap; align-items: start; gap: 8px; }
+        #modal-audio-web:not(:empty) { margin-bottom: 8px; }
+        #modal-youtube:not(:empty) { margin-top: 0; }
+        #modal-youtube .btn-spotify { margin-top: 0; }
+        #modal-youtube .btn-youtube, #modal-youtube .btn-spotify, #modal-audio-web button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 0; text-align: center; }
 
         .fuentes-lista {
             margin: 0;
@@ -1198,7 +1204,7 @@
 
                     <section class="bloque-ficha bloque-textos">
                         <h3>Información externa</h3>
-                        <p class="texto-fuente">Consulta la ficha documental de esta marcha en Patrimonio Musical.</p>
+                        <p class="texto-fuente">Amplía los datos históricos de esta marcha.</p>
                         <div id="modal-patrimonio"></div>
                     </section>
                 </div>
@@ -1207,10 +1213,10 @@
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/consent.js"></script>
+<script src="../js/consent.js?v=2"></script>
 <script src="../js/analytics.js"></script>
-<script src="../js/pwa.js"></script>
+<script src="../js/pwa.js?v=2"></script>
 <script src="../js/config.js"></script>
-<script src="../js/catalogo.js?v=2"></script>
+<script src="../js/catalogo.js?v=3"></script>
 </body>
 </html>

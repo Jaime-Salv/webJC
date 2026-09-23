@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'jc-pwa-v9';
+const CACHE_VERSION = 'jc-pwa-v10';
 const APP_SHELL = [
     '/',
     '/index.html',
@@ -23,8 +23,12 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_VERSION)
             .then((cache) => cache.addAll(APP_SHELL))
-            .then(() => self.skipWaiting())
+            // La nueva versión espera a que el usuario elija actualizar.
     );
+});
+
+self.addEventListener('message', (event) => {
+    if (event.data?.type === 'ACTIVAR_ACTUALIZACION') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {

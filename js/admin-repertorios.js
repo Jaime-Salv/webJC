@@ -12,6 +12,8 @@
     let catalogoRepertorio = [];
     let ordenEdicionDirecto = null;
     let guardandoOrden = false;
+    let mapaActivoCache = null;
+    let mapaActivoId = null;
 
     const normalizar = (texto) => String(texto || '')
         .trim()
@@ -127,6 +129,16 @@
                     </div>
 
                     <p id="rep-ayuda" class="rep-ayuda">Usa las flechas para mover una posición o escribe el número de destino para ir directamente.</p>
+                    <div class="rep-busqueda">
+                        <label for="rep-filtrar">Buscar en esta temporada
+                            <input id="rep-filtrar" class="input-admin" type="search" placeholder="Título, autor o número" autocomplete="off">
+                        </label>
+                        <label for="rep-ir-numero">Ir al nº
+                            <input id="rep-ir-numero" class="input-admin" type="number" min="1" inputmode="numeric" placeholder="Nº">
+                        </label>
+                        <button id="rep-ir-boton" type="button" class="btn-secundario">Ir</button>
+                    </div>
+                    <p id="rep-coincidencias" class="rep-ayuda" role="status"></p>
                     <ol id="rep-lista-marchas" class="rep-lista-marchas" aria-label="Marchas de la temporada"></ol>
                 </div>
             </div>
@@ -144,6 +156,11 @@
         document.getElementById('rep-activar')?.addEventListener('click', activarTemporada);
         document.getElementById('rep-anadir-existente')?.addEventListener('click', anadirMarchaExistente);
         document.getElementById('rep-crear-marcha')?.addEventListener('click', crearMarchaYAnadir);
+        document.getElementById('rep-filtrar')?.addEventListener('input', filtrarListaMarchas);
+        document.getElementById('rep-ir-boton')?.addEventListener('click', irANumero);
+        document.getElementById('rep-ir-numero')?.addEventListener('keydown', (evento) => {
+            if (evento.key === 'Enter') { evento.preventDefault(); irANumero(); }
+        });
         document.getElementById('rep-lista-marchas')?.addEventListener('click', (evento) => {
             const boton = evento.target.closest('button');
             if (!boton || guardandoOrden) return;
@@ -261,7 +278,7 @@
             lista.innerHTML = marchasTemporada.map((item, indice) => {
                 const marcha = item.catalogo_marchas || {};
                 return `
-                    <li class="rep-marcha-item" data-rep-id="${item.id_marcha}">
+                    <li class="rep-marcha-item" data-rep-id="${item.id_marcha}" data-rep-numero="${item.numero_repertorio}" tabindex="-1">
                         <span class="rep-marcha-numero" aria-label="Número anual ${item.numero_repertorio}">${numeroVisible(item.numero_repertorio)}</span>
                         <div class="rep-marcha-detalle">
                             <strong>${escapar(marcha.titulo || 'Marcha sin título')}</strong>
@@ -277,7 +294,33 @@
                     </li>
                 `;
             }).join('');
+            filtrarListaMarchas();
         }
+    }
+
+    function filtrarListaMarchas() {
+        const lista = document.getElementById('rep-lista-marchas');
+        const texto = normalizar(document.getElementById('rep-filtrar')?.value);
+        if (!lista) return;
+        let visibles = 0;
+        lista.querySelectorAll('.rep-marcha-item').forEach((fila) => {
+            fila.hidden = Boolean(texto && !normalizar(fila.textContent).includes(texto));
+            if (!fila.hidden) visibles += 1;
+        });
+        const resultado = document.getElementById('rep-coincidencias');
+        if (resultado) resultado.textContent = texto ? `${visibles} de ${marchasTemporada.length} marchas` : `${marchasTemporada.length} marchas`;
+    }
+
+    function irANumero() {
+        const numero = Number(document.getElementById('rep-ir-numero')?.value);
+        const fila = Number.isInteger(numero) && numero > 0
+            ? document.querySelector(`#rep-lista-marchas [data-rep-numero="${numero}"]`) : null;
+        if (!fila) { estadoRepertorio('No existe ese número en esta temporada.', true); return; }
+        const filtro = document.getElementById('rep-filtrar');
+        if (filtro) filtro.value = '';
+        filtrarListaMarchas();
+        fila.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        fila.focus({ preventScroll: true });
     }
 
     async function moverMarcha(idMarcha, posicion, posicionAbsoluta = false) {
@@ -457,6 +500,7 @@
         }
         await cargarRepertorios();
         await cargarRepertorioActivo();
+        mapaActivoCache = null;
         repertorioSeleccionado = repertorioActivo;
         await cargarMarchasTemporada();
         renderizarGestion();
@@ -482,13 +526,26 @@
     async function obtenerMapaActivo() {
         if (!repertorioActivo) await cargarRepertorioActivo();
         if (!repertorioActivo) return [];
+        if (mapaActivoCache && mapaActivoId === repertorioActivo.id_repertorio) return mapaActivoCache;
+        if (!navigator.onLine) {
+            try {
+                const cache = JSON.parse(localStorage.getItem('jc_repertorio_activo_cache_v1') || 'null');
+                if (cache?.idRepertorio === repertorioActivo.id_repertorio && Array.isArray(cache.marchas)) {
+                    mapaActivoId = repertorioActivo.id_repertorio;
+                    mapaActivoCache = cache.marchas;
+                    return mapaActivoCache;
+                }
+            } catch (_) { /* La entrada puede estar incompleta. */ }
+        }
         const { data, error } = await clienteSupabase
             .from('repertorio_temporada_marchas')
             .select('id_marcha,numero_repertorio,catalogo_marchas(titulo,autor)')
             .eq('id_repertorio', repertorioActivo.id_repertorio)
             .order('numero_repertorio', { ascending: true });
         if (error) throw error;
-        return data || [];
+        mapaActivoId = repertorioActivo.id_repertorio;
+        mapaActivoCache = data || [];
+        return mapaActivoCache;
     }
 
     function actualizarIndicadorDirecto() {
@@ -505,7 +562,7 @@
         const indicador = document.getElementById('directo-repertorio-activo');
         if (!indicador) return;
         indicador.innerHTML = repertorioActivo
-            ? `Numeración activa: <strong style="color:#d4af37;">Repertorio ${repertorioActivo.temporada}</strong>. Introduce un número anual o deja el campo vacío y escribe el título de una marcha fuera del repertorio.`
+            ? `Numeración activa: <strong style="color:#d4af37;">Repertorio ${repertorioActivo.temporada}</strong>. Busca por número o título. Si no aparece, escribe el nombre de la nueva marcha.`
             : '<strong style="color:#ff8585;">No hay repertorio activo.</strong> Activa una temporada antes de utilizar el directo.';
 
         const label = document.querySelector('label[for="inp-id-marcha"]');
@@ -547,6 +604,7 @@
                 inputTitulo.style.color = relacion ? '#27ae60' : '#ffb84d';
                 inputTitulo.readOnly = Boolean(relacion);
             }
+            window.reflejarMarchaDirecto?.(inputTitulo?.value, relacion?.numero_repertorio);
             if (selectFase) selectFase.value = fase;
             if (btn) {
                 btn.textContent = 'ACTUALIZAR';
@@ -567,6 +625,7 @@
                 inputTitulo.readOnly = Boolean(relacion);
                 inputTitulo.style.color = relacion ? '#27ae60' : 'var(--color-oro)';
             }
+            window.reflejarMarchaDirecto?.(marcha.titulo, relacion?.numero_repertorio);
         };
 
         window.iniciarNuevaProcesion = async function() {
@@ -589,6 +648,7 @@
         };
 
         window.inyectarMarcha = function() {
+            window.sincronizarEntradaDirecto?.();
             const numero = document.getElementById('inp-id-marcha')?.value.trim();
             // El alta sin número conserva también la cola local del directo sin cobertura.
             if (!numero && ordenEdicionDirecto === null) return originalInyectar();
@@ -630,6 +690,7 @@
     }
 
     async function inyectarMarchaPorNumeroAnual() {
+        window.sincronizarEntradaDirecto?.();
         const valorNumero = document.getElementById('inp-id-marcha')?.value.trim() || '';
         const numero = valorNumero ? Number(valorNumero) : null;
         const tituloManual = document.getElementById('inp-titulo-marcha')?.value.trim() || '';
@@ -685,6 +746,7 @@
         }
 
         const boton = document.getElementById('btn-inyectar-marcha');
+        const idOperacion = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
         if (boton) {
             boton.disabled = true;
             boton.textContent = ordenEdicionDirecto !== null ? 'Actualizando…' : 'Guardando…';
@@ -720,7 +782,8 @@
                         id_marcha: Number(marcha.id_marcha),
                         numero_repertorio: numero,
                         fase,
-                        orden
+                        orden,
+                        id_operacion_cliente: idOperacion
                     }]);
                 if (error) throw error;
             }
@@ -734,6 +797,7 @@
                 titulo.placeholder = 'Título de la marcha';
                 titulo.style.color = 'var(--color-oro)';
             }
+            window.limpiarEntradaDirecto?.();
             if (boton) {
                 boton.style.background = 'var(--color-oro)';
                 boton.style.color = 'black';
@@ -743,7 +807,23 @@
                 : `Marcha «${marcha.titulo}» guardada sin número anual.`;
             if (typeof window.cargarHistorialTransaccional === 'function') await window.cargarHistorialTransaccional();
         } catch (error) {
-            alert('No se ha podido guardar la marcha: ' + error.message);
+            const problemaRed = !navigator.onLine || /fetch|network|conexi|Failed to fetch/i.test(error.message || '');
+            if (ordenEdicionDirecto === null && problemaRed && relacion && typeof window.encolarMarchaPendiente === 'function') {
+                window.encolarMarchaPendiente({
+                    idProcesion: procesion.id_procesion,
+                    idIntroducido: Number(relacion.id_marcha),
+                    numeroRepertorio: numero,
+                    titulo: relacion.catalogo_marchas?.titulo || tituloManual,
+                    fase,
+                    idLocal: idOperacion
+                });
+                document.getElementById('inp-id-marcha').value = '';
+                document.getElementById('inp-titulo-marcha').value = '';
+                window.limpiarEntradaDirecto?.();
+                document.getElementById('estado-inyeccion').textContent = 'Guardada en este dispositivo. Se reintentará cuando haya conexión.';
+            } else {
+                alert('No se ha podido guardar la marcha: ' + error.message);
+            }
         } finally {
             if (boton) {
                 boton.disabled = false;

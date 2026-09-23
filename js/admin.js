@@ -67,6 +67,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnProbarNotificacion) {
         btnProbarNotificacion.addEventListener('click', probarNotificacionDirecto);
     }
+    document.getElementById('btn-corregir-ultima')?.addEventListener('click', () => {
+        const ultima = historialDirectoCache.at(-1);
+        if (!ultima) return;
+        window.prepararEdicion(ultima.orden, ultima.id_marcha, ultima.fase);
+        document.getElementById('inp-buscar-marcha')?.focus();
+    });
+    document.getElementById('btn-guardar-flotante')?.addEventListener('click', async (evento) => {
+        const principal = document.getElementById('btn-inyectar-marcha');
+        if (principal?.disabled) return;
+        evento.currentTarget.disabled = true;
+        try { await window.inyectarMarcha(); }
+        finally { evento.currentTarget.disabled = false; }
+    });
 
     if (inputFichaIdMarcha) {
         inputFichaIdMarcha.addEventListener('keydown', (evento) => {
@@ -78,6 +91,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.addEventListener('online', sincronizarMarchasPendientes);
     window.addEventListener('offline', actualizarEstadoConexionDirecto);
+    document.getElementById('btn-reintentar-pendientes')?.addEventListener('click', sincronizarMarchasPendientes);
+    document.getElementById('lista-marchas-pendientes')?.addEventListener('click', (evento) => {
+        const boton = evento.target.closest('[data-pendiente-quitar]');
+        if (!boton || sincronizandoMarchasPendientes) return;
+        const id = boton.dataset.pendienteQuitar;
+        const item = leerMarchasPendientes().find((pendiente) => pendiente.idLocal === id);
+        if (!item || !confirm(`¿Quitar «${item.titulo}» de las pendientes de este dispositivo? Comprueba antes si ya aparece en el directo.`)) return;
+        guardarMarchasPendientes(leerMarchasPendientes().filter((pendiente) => pendiente.idLocal !== id));
+    });
     actualizarEstadoConexionDirecto();
     pintarMarchasPendientes();
     if (navigator.onLine) sincronizarMarchasPendientes();
@@ -383,6 +405,9 @@ function activarModoInyeccion() {
         }
     }
 
+    const flotante = document.getElementById('btn-guardar-flotante');
+    if (flotante) flotante.hidden = false;
+    pintarMarchasPendientes();
     cargarHistorialTransaccional();
     actualizarEstadoDirectoAdmin();
 }
@@ -404,6 +429,9 @@ function desactivarModoInyeccion() {
         panelInyeccion.style.pointerEvents = 'none';
     }
 
+    const flotante = document.getElementById('btn-guardar-flotante');
+    if (flotante) flotante.hidden = true;
+    pintarMarchasPendientes();
     actualizarEstadoDirectoAdmin();
 }
 
@@ -673,6 +701,12 @@ async function obtenerOCrearMarcha(idIntroducido, tituloIntroducido) {
 
     if (marchaExistente) return marchaExistente;
 
+    // Tras un corte de red, la creación pudo completarse sin que llegase la respuesta.
+    const { data: yaCreada, error: errorConsulta } = await clienteSupabase
+        .from('catalogo_marchas').select('id_marcha,titulo').eq('titulo', titulo).limit(1).maybeSingle();
+    if (errorConsulta) throw errorConsulta;
+    if (yaCreada) { catalogoCache.push(yaCreada); return yaCreada; }
+
     const nuevaMarcha = { titulo };
 
     if (Number.isInteger(idIntroducido)) {
@@ -752,14 +786,32 @@ function actualizarEstadoConexionDirecto() {
 
 function pintarMarchasPendientes() {
     const contenedor = document.getElementById('marchas-pendientes');
-    if (!contenedor) return;
-    const pendientes = leerMarchasPendientes().filter((item) => {
-        return !procesionActiva || String(item.idProcesion) === String(procesionActiva.id_procesion);
+    const panel = document.getElementById('panel-marchas-pendientes');
+    const lista = document.getElementById('lista-marchas-pendientes');
+    const botonReintento = document.getElementById('btn-reintentar-pendientes');
+    const pendientes = leerMarchasPendientes();
+    if (contenedor) {
+        contenedor.hidden = pendientes.length === 0;
+        contenedor.textContent = `${pendientes.length} pendiente${pendientes.length === 1 ? '' : 's'} de sincronizar`;
+    }
+    if (panel) panel.hidden = pendientes.length === 0;
+    if (botonReintento) botonReintento.disabled = !navigator.onLine || !procesionActiva || sincronizandoMarchasPendientes;
+    if (!lista) return;
+    lista.replaceChildren();
+    pendientes.forEach((item) => {
+        const fila = document.createElement('li');
+        const descripcion = document.createElement('span');
+        const mismaActuacion = procesionActiva && String(item.idProcesion) === String(procesionActiva.id_procesion);
+        descripcion.textContent = `${item.numeroRepertorio ? '#' + item.numeroRepertorio + ' · ' : ''}${item.titulo || 'Marcha sin título'} · ${item.fase || 'Sin fase'}${mismaActuacion ? '' : ' · Otra actuación'}${item.ultimoError ? ' · Error: ' + item.ultimoError : ''}`;
+        const quitar = document.createElement('button');
+        quitar.type = 'button';
+        quitar.dataset.pendienteQuitar = item.idLocal;
+        quitar.textContent = 'Quitar';
+        quitar.disabled = sincronizandoMarchasPendientes;
+        quitar.setAttribute('aria-label', `Quitar ${item.titulo || 'marcha'} de las pendientes`);
+        fila.append(descripcion, quitar);
+        lista.appendChild(fila);
     });
-    contenedor.hidden = pendientes.length === 0;
-    contenedor.textContent = pendientes.length === 1
-        ? '1 marcha pendiente de sincronizar'
-        : `${pendientes.length} marchas pendientes de sincronizar`;
 }
 
 function establecerGuardadoDirecto(activo) {
@@ -768,6 +820,8 @@ function establecerGuardadoDirecto(activo) {
     if (!boton) return;
     boton.disabled = activo;
     boton.textContent = activo ? 'Guardando…' : (ordenEnEdicion !== null ? 'ACTUALIZAR' : 'Añadir');
+    const flotante = document.getElementById('btn-guardar-flotante');
+    if (flotante) flotante.disabled = activo;
 }
 
 function limpiarFormularioMarcha() {
@@ -780,19 +834,28 @@ function limpiarFormularioMarcha() {
         inputTitulo.style.color = 'var(--color-oro)';
         inputTitulo.focus();
     }
+    window.limpiarEntradaDirecto?.();
 }
 
 function encolarMarchaPendiente(datos) {
     const pendientes = leerMarchasPendientes();
     pendientes.push({
         ...datos,
-        idLocal: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+        idLocal: datos.idLocal || (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
         creadaEn: new Date().toISOString()
     });
     guardarMarchasPendientes(pendientes);
 }
 
 async function insertarMarchaPendiente(item) {
+    const { data: existente, error: errorBusqueda } = await clienteSupabase
+        .from('repertorio_transaccional')
+        .select('id_registro')
+        .eq('id_procesion', item.idProcesion)
+        .eq('id_operacion_cliente', item.idLocal)
+        .maybeSingle();
+    if (errorBusqueda) throw errorBusqueda;
+    if (existente) return;
     await cargarHistorialTransaccional();
     const marcha = await obtenerOCrearMarcha(item.idIntroducido, item.titulo);
     const { error } = await clienteSupabase.from('repertorio_transaccional').insert([{
@@ -800,9 +863,18 @@ async function insertarMarchaPendiente(item) {
         id_marcha: Number(marcha.id_marcha),
         numero_repertorio: item.numeroRepertorio || null,
         fase: item.fase,
-        orden: contadorOrden
+        orden: contadorOrden,
+        id_operacion_cliente: item.idLocal
     }]);
-    if (error) throw error;
+    if (error) {
+        if (error.code === '23505') {
+            const { data: confirmado } = await clienteSupabase.from('repertorio_transaccional')
+                .select('id_registro').eq('id_procesion', item.idProcesion)
+                .eq('id_operacion_cliente', item.idLocal).maybeSingle();
+            if (confirmado) return;
+        }
+        throw error;
+    }
 }
 
 async function sincronizarMarchasPendientes() {
@@ -814,24 +886,33 @@ async function sincronizarMarchasPendientes() {
     if (deEsteDirecto.length === 0) return;
 
     sincronizandoMarchasPendientes = true;
+    pintarMarchasPendientes();
     actualizarEstadoInyeccion('Recuperando marchas guardadas sin conexión…', 'pendiente');
     try {
+        let fallidas = 0;
         for (const item of deEsteDirecto) {
-            await insertarMarchaPendiente(item);
-            const restantes = leerMarchasPendientes().filter((pendiente) => pendiente.idLocal !== item.idLocal);
-            guardarMarchasPendientes(restantes);
+            try {
+                await insertarMarchaPendiente(item);
+                guardarMarchasPendientes(leerMarchasPendientes().filter((pendiente) => pendiente.idLocal !== item.idLocal));
+            } catch (error) {
+                fallidas += 1;
+                guardarMarchasPendientes(leerMarchasPendientes().map((pendiente) =>
+                    pendiente.idLocal === item.idLocal ? { ...pendiente, ultimoError: error.message } : pendiente));
+            }
         }
         await cargarHistorialTransaccional();
-        actualizarEstadoInyeccion('Marchas pendientes sincronizadas.', 'correcto');
+        actualizarEstadoInyeccion(fallidas ? `${fallidas} marchas siguen pendientes. Revisa la lista y reintenta.` : 'Marchas pendientes sincronizadas.', fallidas ? 'pendiente' : 'correcto');
     } catch (error) {
         console.error('No se ha podido sincronizar la cola del directo:', error);
         actualizarEstadoInyeccion('La sincronización se reintentará cuando mejore la conexión.', 'pendiente');
     } finally {
         sincronizandoMarchasPendientes = false;
+        pintarMarchasPendientes();
     }
 }
 
 async function inyectarMarcha() {
+    window.sincronizarEntradaDirecto?.();
     if (guardandoMarchaDirecto) return;
     if (!procesionActiva) {
         alert('No hay proceso activo.');
@@ -853,6 +934,7 @@ async function inyectarMarcha() {
     }
 
     const eraEdicion = ordenEnEdicion !== null;
+    const idOperacion = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
     establecerGuardadoDirecto(true);
     actualizarEstadoInyeccion(eraEdicion ? 'Actualizando marcha…' : 'Guardando marcha…');
 
@@ -900,7 +982,8 @@ async function inyectarMarcha() {
                     id_procesion: procesionActiva.id_procesion,
                     id_marcha: idMarcha,
                     fase: fase,
-                    orden: contadorOrden
+                    orden: contadorOrden,
+                    id_operacion_cliente: idOperacion
                 }]);
 
             if (error) {
@@ -919,7 +1002,8 @@ async function inyectarMarcha() {
                 idProcesion: procesionActiva.id_procesion,
                 idIntroducido: Number.isInteger(inputId) ? inputId : null,
                 titulo: tituloInput,
-                fase
+                fase,
+                idLocal: idOperacion
             });
             limpiarFormularioMarcha();
             actualizarEstadoInyeccion('Sin cobertura: la marcha está guardada y se enviará automáticamente.', 'pendiente');
@@ -962,6 +1046,8 @@ async function cargarHistorialTransaccional() {
         return { ...marcha, ...registro, titulo: marcha.titulo || `ID: ${registro.id_marcha}` };
     });
     actualizarBotonesExportacionDirecto();
+    const corregir = document.getElementById('btn-corregir-ultima');
+    if (corregir) corregir.disabled = !historialDirectoCache.length;
 
     data.forEach((registro) => {
         const marcha = catalogoCache.find((item) => item.id_marcha === registro.id_marcha);
@@ -1508,12 +1594,20 @@ async function finalizarEvento() {
         return;
     }
 
-    const confirmar = confirm('¿Finalizar el evento? Se guardará en el histórico.');
+    const pendientes = leerMarchasPendientes().filter((item) => String(item.idProcesion) === String(procesionActiva.id_procesion));
+    if (pendientes.length) {
+        actualizarEstadoInyeccion(`Hay ${pendientes.length} marcha(s) pendientes. Sincronízalas antes de finalizar.`, 'pendiente');
+        document.getElementById('panel-marchas-pendientes')?.scrollIntoView({ behavior: 'smooth' });
+        return;
+    }
+    const confirmar = confirm(`¿Finalizar «${procesionActiva.hermandad}»? Se guardarán ${historialDirectoCache.length} marchas en el histórico y ya no podrás añadir más.`);
 
     if (!confirmar) {
         return;
     }
 
+    const boton = document.getElementById('btn-finalizar-evento');
+    if (boton) boton.disabled = true;
     try {
         const { error } = await clienteSupabase
             .from('maestro_procesiones')
@@ -1528,6 +1622,7 @@ async function finalizarEvento() {
 
     } catch (error) {
         alert('Error al finalizar: ' + error.message);
+        if (boton) boton.disabled = false;
     }
 }
 

@@ -9,6 +9,7 @@
     const STORAGE_KEY = 'jc_consentimiento_analytics';
     const VERSION = '1';
     const VIGENCIA_MS = 24 * 30 * 24 * 60 * 60 * 1000;
+    let focoAnterior = null;
 
     // analytics.js comprobará esta marca antes de activar GA4.
     window.JC_ANALYTICS_REQUIERE_CONSENTIMIENTO = true;
@@ -135,13 +136,17 @@
     }
 
     function mostrarPanelConsentimiento() {
+        focoAnterior = document.activeElement;
         document.getElementById('jc-cookie-panel')?.classList.add('activo');
         document.body.classList.add('cookie-panel-abierto');
+        document.querySelector('#jc-cookie-panel [data-cookie-decision="rechazado"]')?.focus();
     }
 
     function ocultarPanelConsentimiento() {
         document.getElementById('jc-cookie-panel')?.classList.remove('activo');
         document.body.classList.remove('cookie-panel-abierto');
+        if (focoAnterior && focoAnterior !== document.body && typeof focoAnterior.focus === 'function') focoAnterior.focus();
+        focoAnterior = null;
     }
 
     function obtenerRutaPoliticaCookies() {

@@ -179,6 +179,7 @@
         if (typeof inyectarOnline !== 'function') return;
 
         window.inyectarMarcha = async function(...args) {
+            window.sincronizarEntradaDirecto?.();
             if (navigator.onLine) {
                 return inyectarOnline.apply(this, args);
             }
@@ -232,6 +233,7 @@
                 inputTitulo.placeholder = 'Título de la marcha';
                 inputTitulo.style.color = 'var(--color-oro)';
             }
+            window.limpiarEntradaDirecto?.();
 
             const estado = document.getElementById('estado-inyeccion');
             if (estado) {

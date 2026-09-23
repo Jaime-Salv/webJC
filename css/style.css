@@ -289,6 +289,8 @@ body.cookie-panel-abierto { overflow: hidden; }
 
 .cookie-consent-content {
     width: min(100%, 920px);
+    max-height: calc(100dvh - 36px);
+    overflow-y: auto;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 24px;
@@ -319,7 +321,7 @@ body.cookie-panel-abierto { overflow: hidden; }
 .cookie-consent-content p {
     margin: 0;
     color: #aaa;
-    font-size: 0.72rem;
+    font-size: 0.86rem;
     line-height: 1.55;
 }
 
@@ -332,7 +334,7 @@ body.cookie-panel-abierto { overflow: hidden; }
 .cookie-consent-content summary {
     color: #d4af37;
     cursor: pointer;
-    font-size: 0.65rem;
+    font-size: 0.82rem;
 }
 .cookie-consent-content details p { margin-top: 8px; }
 
@@ -351,7 +353,7 @@ body.cookie-panel-abierto { overflow: hidden; }
     color: #d4af37;
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.68rem;
+    font-size: 0.8rem;
     font-weight: 900;
     text-transform: uppercase;
 }
@@ -365,7 +367,7 @@ body.cookie-panel-abierto { overflow: hidden; }
     left: 10px;
     bottom: 10px;
     z-index: 2300;
-    min-height: 34px;
+    min-height: 44px;
     padding: 0 12px;
     border: 1px solid #444;
     border-radius: 999px;
@@ -377,12 +379,23 @@ body.cookie-panel-abierto { overflow: hidden; }
     font-weight: 800;
 }
 
+body.cookie-panel-abierto .cookie-settings-button { display: none; }
+
+.aviso-version-web { position: fixed; top: calc(12px + env(safe-area-inset-top)); right: 12px; z-index: 4000; width: min(330px, calc(100vw - 24px)); padding: 14px; border: 1px solid #d4af37; border-radius: 10px; background: #171717; color: #fff; box-shadow: 0 14px 38px #000c; font: 400 .8rem 'Montserrat', sans-serif; }
+.aviso-version-web strong, .aviso-version-web span { display: block; line-height: 1.45; }
+.aviso-version-web span { margin: 5px 0 12px; color: #ddd; }
+.aviso-version-web div { display: flex; gap: 8px; }
+.aviso-version-web button { min-height: 44px; flex: 1; padding: 8px; border: 1px solid #b5963c; border-radius: 7px; background: #d4af37; color: #111; font: 800 .76rem 'Montserrat', sans-serif; }
+.aviso-version-web button:last-child { background: transparent; color: #f0d888; }
+.aviso-version-web button:disabled { opacity: .5; }
+
 @media (max-width: 680px) {
     .cookie-consent-panel {
-        padding: 10px;
+        padding: 10px 10px max(10px, env(safe-area-inset-bottom));
     }
 
     .cookie-consent-content {
+        max-height: calc(100dvh - 20px - env(safe-area-inset-bottom));
         grid-template-columns: 1fr;
         gap: 16px;
         padding: 18px;

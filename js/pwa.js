@@ -8,6 +8,7 @@
     const VAPID_PUBLIC_KEY = 'BD6xm9ZnsMUywalMZNWC-jMmKElpqucvIJZ9TfCzODu9TIR-d11QcpBO_nafnvdSdTIvyGqTH5COyrXzhCT-aWs';
     let eventoInstalacion = null;
     let registroSW = null;
+    let recargarTrasActualizar = false;
 
     if (!('serviceWorker' in navigator)) return;
 
@@ -28,11 +29,46 @@
     navigator.serviceWorker.register('/sw.js', { scope: '/' })
         .then(async (registro) => {
             registroSW = registro;
+            observarActualizaciones(registro);
             await actualizarEstadoNotificaciones();
         })
         .catch((error) => {
             console.error('No se ha podido registrar la aplicación:', error);
         });
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (recargarTrasActualizar) window.location.reload();
+    });
+
+    function observarActualizaciones(registro) {
+        if (registro.waiting && navigator.serviceWorker.controller) mostrarActualizacion(registro);
+        registro.addEventListener('updatefound', () => {
+            const instalando = registro.installing;
+            instalando?.addEventListener('statechange', () => {
+                if (instalando.state === 'installed' && navigator.serviceWorker.controller) mostrarActualizacion(registro);
+            });
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && navigator.onLine) registro.update().catch(() => {});
+        });
+    }
+
+    function mostrarActualizacion(registro) {
+        if (document.getElementById('aviso-version-web')) return;
+        const aviso = document.createElement('aside');
+        aviso.id = 'aviso-version-web';
+        aviso.className = 'aviso-version-web';
+        aviso.setAttribute('role', 'status');
+        aviso.innerHTML = '<strong>Nueva versión disponible</strong><span>Actualiza cuando hayas terminado de añadir marchas.</span><div><button type="button" data-pwa-actualizar>Actualizar</button><button type="button" data-pwa-despues>Después</button></div>';
+        aviso.querySelector('[data-pwa-despues]').addEventListener('click', () => aviso.remove());
+        aviso.querySelector('[data-pwa-actualizar]').addEventListener('click', () => {
+            if (!registro.waiting) return;
+            recargarTrasActualizar = true;
+            aviso.querySelector('[data-pwa-actualizar]').disabled = true;
+            registro.waiting.postMessage({ type: 'ACTIVAR_ACTUALIZACION' });
+        });
+        document.body.appendChild(aviso);
+    }
 
     function prepararControlesPWA() {
         document.getElementById('btn-instalar-app')?.addEventListener('click', instalarAplicacion);

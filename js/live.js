@@ -4,18 +4,33 @@
    ============================================================ */
 
 const parametrosURL = new URLSearchParams(window.location.search);
-const idProcesion = parametrosURL.get('id');
+let idProcesion = parametrosURL.get('id');
 
 let catalogoMaestro = [];
 let canalDirecto = null;
-const CLAVE_CACHE_DIRECTO = `jc_directo_cache_${idProcesion || 'sin-id'}`;
+let CLAVE_CACHE_DIRECTO = `jc_directo_cache_${idProcesion || 'sin-id'}`;
 
 document.addEventListener('DOMContentLoaded', inicializarDirecto);
 
 async function inicializarDirecto() {
     if (!idProcesion) {
-        mostrarErrorDirecto('No se ha indicado ninguna procesión.');
-        return;
+        try {
+            const { data, error } = await clienteSupabase.from('maestro_procesiones')
+                .select('id_procesion').eq('estado', 'Activa').maybeSingle();
+            if (error) throw error;
+            if (!data) {
+                mostrarErrorDirecto('No hay ningún directo activo en este momento.', true);
+                return;
+            }
+            idProcesion = String(data.id_procesion);
+            CLAVE_CACHE_DIRECTO = `jc_directo_cache_${idProcesion}`;
+            parametrosURL.set('id', idProcesion);
+            history.replaceState({}, '', `${location.pathname}?${parametrosURL}`);
+        } catch (error) {
+            console.error('No se pudo consultar el directo activo:', error);
+            mostrarErrorDirecto('No se ha podido consultar el directo. Vuelve a intentarlo.', true);
+            return;
+        }
     }
 
     await cargarCabeceraEvento();
@@ -51,17 +66,28 @@ function crearMensajeEstado(texto) {
     return p;
 }
 
-function mostrarErrorDirecto(texto) {
+function mostrarErrorDirecto(texto, sinDirecto = false) {
     const header = document.getElementById('txt-hermandad-header');
     const timeline = document.getElementById('timeline-contenedor');
+    const resumen = document.querySelector('.live-resumen');
+    const chat = document.querySelector('.columna-chat');
+    if (resumen) resumen.hidden = true;
+    if (chat) chat.hidden = true;
 
     if (header) {
-        header.textContent = 'Error';
+        header.textContent = sinDirecto ? 'Sin directo' : 'Directo no disponible';
     }
 
     if (timeline) {
         limpiarElemento(timeline);
         timeline.appendChild(crearMensajeEstado(texto));
+        if (sinDirecto) {
+            const enlace = document.createElement('a');
+            enlace.href = '../index.html';
+            enlace.className = 'live-enlace-inicio';
+            enlace.textContent = 'Ver próximas actuaciones';
+            timeline.appendChild(enlace);
+        }
     }
 }
 
