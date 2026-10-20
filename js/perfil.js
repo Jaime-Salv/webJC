@@ -34,7 +34,7 @@ async function cargarDatosPerfil() {
         .maybeSingle();
 
     if (error) { alert('No se ha podido cargar el perfil: ' + error.message); return; }
-    perfilTieneBanda = ['musico','admin'].includes(perfil?.rol);
+    perfilTieneBanda = perfil?.es_musico === true || perfil?.rol === 'musico';
     document.getElementById('perfil-banda').hidden = !perfilTieneBanda;
     if (perfilTieneBanda) {
         try {

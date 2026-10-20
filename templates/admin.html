@@ -1512,7 +1512,7 @@
 <h3>Zona de fichaje</h3><p class="muted">Configura el punto donde estarán los músicos al fichar. Puedes guardar el evento sin coordenadas y completarlas antes de abrir el QR.</p>
 <div class="grid"><label>Latitud<input type="number" name="latitud" min="-90" max="90" step="any"></label><label>Longitud<input type="number" name="longitud" min="-180" max="180" step="any"></label></div>
 <div class="grid"><label>Radio permitido (metros)<input type="number" name="radio_m" min="30" max="1000" value="150" required></label><div><button id="ba-use-location" type="button">Usar mi ubicación actual</button><p class="muted">Úsalo cuando estés en el lugar del evento.</p></div></div>
-<p class="muted">Se convocan los músicos y administradores actuales. Si das de alta músicos después, usa «Añadir nuevos músicos» en el evento.</p>
+<p class="muted">Se convocan las cuentas con permiso Músico, incluidas las que también son administradoras. Si das de alta músicos después, usa «Añadir nuevos músicos» en el evento.</p>
 <div class="row"><button class="primary" type="submit">Guardar convocatoria</button><button id="ba-editor-close" type="button">Cerrar edición</button></div>
 </form></section>
 <div class="grid"><section class="panel"><h2>Convocatorias</h2><label>Ver<select id="ba-filter"><option value="upcoming">Próximas</option><option value="all">Todas e histórico</option></select></label><div id="ba-events"></div></section><section class="panel" id="ba-detail"><h2>Respuestas y asistencias</h2><p class="muted">Selecciona una convocatoria para ver los músicos, el estado de sus respuestas y los fichajes.</p></section></div>
@@ -1534,8 +1534,8 @@
             <h3>Gestión de usuarios</h3>
 
             <p style="color:#aaa; font-size:0.9rem; margin-top:0;">
-                Asigna los roles de público general, músico y administrador. Completa nombre, instrumento y año desde «Ficha musical».
-                No puedes quitarte el rol a ti mismo desde esta pantalla.
+                Marca Administrador y Músico de forma independiente. Una cuenta puede tener ambos permisos. Completa nombre, instrumento y año desde «Ficha musical».
+                Puedes activar tu permiso de músico; no puedes quitarte el de administrador.
             </p>
 
             <div id="tabla-usuarios-admin">
@@ -1868,10 +1868,10 @@
     <script src="../js/admin-repertorios.js?v=7"></script>
     <script src="../js/admin-repertorios-compat.js?v=5"></script>
     <script src="../js/admin-buscador-directo.js?v=1"></script>
-    <script src="../js/banda-common.js?v=1"></script>
+    <script src="../js/banda-common.js?v=2"></script>
 <script src="../js/vendor/qrcode-generator.js"></script>
-<script src="../js/admin-banda.js?v=1"></script>
-<script src="../js/admin.js?v=5"></script>
+<script src="../js/admin-banda.js?v=2"></script>
+<script src="../js/admin.js?v=6"></script>
     <script src="../js/pwa.js?v=2"></script>
 
     <script>

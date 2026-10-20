@@ -36,10 +36,10 @@ window.JCBanda = (() => {
    if(location.pathname.endsWith('/musicos.html') && !sessionStorage.getItem('jc_banda_return')) sessionStorage.setItem('jc_banda_return',location.pathname+location.hash);
    location.replace('/templates/login.html'); return null;
   }
-  const {data:profile,error:pe}=await clienteSupabase.from('perfiles').select('id,rol,username').eq('id',session.user.id).maybeSingle();
+  const {data:profile,error:pe}=await clienteSupabase.from('perfiles').select('id,rol,es_musico,username').eq('id',session.user.id).maybeSingle();
   if(pe) throw pe;
   if(!profile || !['admin','musico'].includes(profile.rol)) throw Error('Tu cuenta no tiene acceso al área de músicos. El rol lo asigna administración.');
-  return {user:session.user,profile,admin:profile.rol==='admin'};
+  return {user:session.user,profile,admin:profile.rol==='admin',musico:profile.es_musico===true||profile.rol==='musico'};
  }
  function geo() {
   return new Promise((resolve,reject)=> {

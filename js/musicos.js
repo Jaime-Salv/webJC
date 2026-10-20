@@ -7,7 +7,7 @@
  if(checkin.token) history.replaceState(null,'',location.pathname);
  function card(ev) {
   const r=responses.find(x=>x.evento_id===ev.id), a=attendance.find(x=>x.evento_id===ev.id);
-  const closed=ev.estado==='cancelado'||Date.now()>Date.parse(ev.limite_respuesta)||Date.now()>=Date.parse(ev.fin);
+  const closed=!auth.musico||ev.estado==='cancelado'||Date.now()>Date.parse(ev.limite_respuesta)||Date.now()>=Date.parse(ev.fin);
   return `<article class="event" id="ev-${ev.id}"><span class="badge">${ev.tipo==='ensayo'?'Ensayo':'Actuación'}</span> ${ev.estado==='cancelado'?'<span class="badge warn">Cancelado</span>':''}<h3>${E(ev.titulo)}</h3><time>${B.fecha(ev.inicio)}</time><p>${E(ev.lugar)}</p>${ev.notas?`<p class="notes">${E(ev.notas)}</p>`:''}<p class="muted">Responde hasta ${B.fecha(ev.limite_respuesta)}</p><div class="row"><button data-response="voy" data-event="${ev.id}" aria-pressed="${r?.respuesta==='voy'}" ${closed?'disabled':''}>Voy</button><button data-response="no_voy" data-event="${ev.id}" aria-pressed="${r?.respuesta==='no_voy'}" ${closed?'disabled':''}>No voy</button><span class="badge ${r?'':'warn'}">${r?(r.respuesta==='voy'?'Confirmado: voy':'Confirmado: no voy'):'Sin responder'}</span></div><p class="muted">${closed?'Plazo cerrado · ':''}Asistencia: ${E(B.asistencia(a))}</p></article>`;
  }
  function paint() {
@@ -36,7 +36,7 @@
    if(!ev) {B.notice('Este QR no corresponde a una convocatoria accesible para tu cuenta.',true);return;}
    document.getElementById('banda-checkin').hidden=false;
    document.getElementById('banda-checkin-event').textContent=`${ev.titulo} · ${B.fecha(ev.inicio)}`;
-   const a=attendance.find(x=>x.evento_id===ev.id);document.getElementById('banda-fichar').disabled=!!a;
+   const a=attendance.find(x=>x.evento_id===ev.id);document.getElementById('banda-fichar').disabled=!!a||!auth.musico;
    if(a) B.notice(`Tu registro: ${B.asistencia(a)}.`);
   }
  }
@@ -54,7 +54,7 @@
   auth=await B.access();if(!auth)return;
   sessionStorage.removeItem('jc_banda_return');
   document.getElementById('banda-admin-link').hidden=!auth.admin;
-  document.getElementById('banda-identidad').textContent=`Hola, ${auth.profile.username||'músico'}. Consulta tus convocatorias y confirma tu disponibilidad.`;
+  document.getElementById('banda-identidad').textContent=!auth.musico?'Acceso de administración. Para confirmar y fichar personalmente, activa también el permiso Músico en Usuarios.':`Hola, ${auth.profile.username||'músico'}. Consulta tus convocatorias y confirma tu disponibilidad.`;
   await load();document.getElementById('banda-content').hidden=false;
  }));
  document.getElementById('banda-calendar').addEventListener('click',e=>{const b=e.target.closest('[data-day]');if(b){selectedDay=b.dataset.day;paint();document.getElementById('banda-events').scrollIntoView({behavior:'smooth',block:'start'});}});

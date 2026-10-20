@@ -16,14 +16,24 @@ declare
 begin
  perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'role','authenticated')::text,true);
  assert jc_private.rol_actual()='admin','Rol admin';
+ perform public.banda_accion('rol',jsonb_build_object('usuario_id',a,'rol','admin','es_musico',true));
+ assert jc_private.rol_actual()='admin' and (select es_musico from public.perfiles where id=a),'Administrador y músico simultáneos';
  payload:=jsonb_build_object('titulo','Prueba transaccional JC','tipo','ensayo','inicio',now()-interval '15 minutes','fin',now()+interval '1 hour','limite_respuesta',now()+interval '30 minutes','lugar','Local de prueba','latitud',36.778,'longitud',-6.35,'radio_m',150);
  result:=public.banda_accion('evento',payload);ev:=(result->>'id')::uuid;
  assert exists(select 1 from public.banda_convocados where evento_id=ev and usuario_id=m),'Convocatoria músico';
  assert not exists(select 1 from public.banda_convocados where evento_id=ev and usuario_id=u),'Público no convocado';
  perform public.banda_accion('abrir',jsonb_build_object('evento_id',ev));
  result:=public.banda_accion('qr',jsonb_build_object('evento_id',ev));token:=result->>'token';
+ assert exists(select 1 from public.banda_convocados where evento_id=ev and usuario_id=a),'Administrador músico convocado';
+ perform public.banda_accion('respuesta',jsonb_build_object('evento_id',ev,'respuesta','voy'));
+ perform public.banda_accion('rol',jsonb_build_object('usuario_id',a,'rol','admin','es_musico',false));
+ assert jc_private.rol_actual()='admin' and not (select es_musico from public.perfiles where id=a),'Retirar músico conserva administrador';
+ denied:=false;begin perform public.banda_accion('respuesta',jsonb_build_object('evento_id',ev,'respuesta','no_voy'));exception when others then denied:=true;end;assert denied,'Administrador sin músico no confirma';
+ denied:=false;begin perform public.banda_accion('rol',jsonb_build_object('usuario_id',a,'rol','usuario','es_musico',false));exception when others then denied:=true;end;assert denied,'No se puede quitar el permiso de administrador propio';
+
  perform set_config('request.jwt.claims',jsonb_build_object('sub',u,'role','authenticated')::text,true);
  assert (select count(*) from public.banda_eventos)=0,'Público no ve eventos internos';
+ denied:=false;begin update public.perfiles set es_musico=true where id=u;exception when others then denied:=true;end;assert denied,'Autoasignación de permiso músico bloqueada';
  denied:=false;begin perform public.banda_accion('evento',payload);exception when others then denied:=true;end;assert denied,'Público no crea eventos';
  denied:=false;begin update public.perfiles set rol='admin' where id=u;exception when others then denied:=true;end;assert denied,'Autoasignación de admin bloqueada';
  denied:=false;begin update public.perfiles set rol='musico' where id=u;exception when others then denied:=true;end;assert denied,'Autoasignación de músico bloqueada';
@@ -46,6 +56,7 @@ begin
  assert exists(select 1 from public.banda_auditoria where evento_id=ev and accion='manual' and detalle->'anterior'->>'estado'='incidencia'),'Auditoría conserva el original';
  -- Segundo evento: presencia válida, QR rotado y cierre de fichaje.
  result:=public.banda_accion('evento',payload);ev2:=(result->>'id')::uuid;
+ assert not exists(select 1 from public.banda_convocados where evento_id=ev2 and usuario_id=a),'Administrador sin músico no convocado';
  perform public.banda_accion('abrir',jsonb_build_object('evento_id',ev2));
  result:=public.banda_accion('qr',jsonb_build_object('evento_id',ev2));token:=result->>'token';
  old_token:=token;result:=public.banda_accion('qr',jsonb_build_object('evento_id',ev2));token:=result->>'token';

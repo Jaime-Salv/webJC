@@ -3,9 +3,9 @@
 ## Puesta en marcha
 
 1. Cada persona inicia sesión con Google. Su perfil se crea como público general.
-2. En **Admin → Usuarios**, asignar el rol **Músico**. No hay solicitud ni elección de rol en el registro.
+2. En **Admin → Usuarios**, marcar el permiso **Músico**. **Administrador** es un permiso independiente: se pueden marcar ambos. No hay solicitud ni elección de rol en el registro.
 3. En **Ficha musical**, completar nombre, instrumento y año de incorporación. El músico puede cambiar nombre e instrumento en **Mi perfil**; el año queda reservado a administración.
-4. En **Admin → Músicos**, crear ensayo o actuación. Las horas se introducen en horario de Madrid. Los músicos y administradores actuales quedan convocados. Usar **Añadir nuevos músicos** para incorporar altas posteriores a la convocatoria.
+4. En **Admin → Músicos**, crear ensayo o actuación. Las horas se introducen en horario de Madrid. Solo las cuentas con permiso Músico quedan convocadas, incluidas las que también son administradoras. Usar **Añadir nuevos músicos** para incorporar altas posteriores a la convocatoria.
 5. El músico accede desde **Músicos** en la portada y responde **Voy / No voy** hasta el plazo. No responder se mantiene como estado independiente.
 6. Para fichar, configurar el punto de llegada y radio (150 m por defecto), abrir el fichaje desde dos horas antes del evento y mostrar el QR. La apertura dura como máximo dos horas y nunca supera el fin previsto; puede reabrirse dentro del horario permitido.
 7. Mantener una sola pantalla QR por evento. El código cambia cada 60 segundos. Escanear con la cámara del móvil, iniciar sesión y pulsar **Comprobar ubicación y fichar**. Si se inicia sesión y caduca el QR, volver a escanear.
@@ -34,4 +34,4 @@ Las escrituras pasan por `public.banda_accion` (invocador) hacia un despachador 
 - `tests/banda-browser.cjs`: recorrido de interfaz con datos simulados, confirmaciones, QR, ficha y ausencia de desbordamiento en móvil. Requiere Playwright y un servidor local en el puerto 8090. No sustituye las pruebas de permisos contra Supabase ni una prueba de GPS con móviles reales.
 - Generador QR local: qrcode-generator 1.4.4 (MIT), conservado en `js/vendor/qrcode-generator.js`. No se transmite el enlace de fichaje a un servicio externo.
 
-Los cambios de código se publican en GitHub; Netlify despliega automáticamente. `supabase_area_musicos.sql` documenta el estado completo instalado y se aplica solo una vez en una base sin este módulo.
+Los cambios de código se publican en GitHub; Netlify despliega automáticamente. `supabase_permisos_musico_admin.sql` actualiza instalaciones anteriores para separar ambos permisos. `supabase_area_musicos.sql` documenta el estado completo instalado y se aplica solo una vez en una base sin este módulo.

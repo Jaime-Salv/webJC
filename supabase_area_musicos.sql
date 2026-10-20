@@ -3,6 +3,9 @@ create schema if not exists jc_private;
 revoke all on schema jc_private from public, anon;
 grant usage on schema jc_private to authenticated;
 
+alter table public.perfiles add column es_musico boolean not null default false;
+update public.perfiles set es_musico=true where rol in ('musico','admin');
+
 create table public.banda_fichas (
  usuario_id uuid primary key references public.perfiles(id) on delete cascade,
  nombre text not null default '' check(length(nombre)<=160),
@@ -65,16 +68,21 @@ grant execute on function jc_private.rol_actual() to authenticated;
 create function jc_private.proteger_rol() returns trigger language plpgsql security definer set search_path='' as $$
 begin
  if auth.uid() is not null then
-  if TG_OP='INSERT' and coalesce(new.rol,'usuario')<>'usuario' and jc_private.rol_actual()<>'admin' then
-   raise exception 'Solo administración puede asignar roles.';
+  if TG_OP='INSERT' and (coalesce(new.rol,'usuario')<>'usuario' or new.es_musico) and jc_private.rol_actual()<>'admin' then
+   raise exception 'Solo administración puede asignar permisos.';
   end if;
-  if TG_OP='UPDATE' and new.rol is distinct from old.rol then
-   if jc_private.rol_actual()<>'admin' then raise exception 'Solo administración puede asignar roles.'; end if;
-   if old.id=auth.uid() then raise exception 'No puedes cambiar tu propio rol de administrador.'; end if;
+  if TG_OP='UPDATE' and (new.rol is distinct from old.rol or new.es_musico is distinct from old.es_musico) then
+   if jc_private.rol_actual()<>'admin' then raise exception 'Solo administración puede asignar permisos.'; end if;
+   if old.id=auth.uid() and new.rol is distinct from old.rol then raise exception 'No puedes quitarte el permiso de administrador.'; end if;
   end if;
  end if;
  if new.rol is null then new.rol:='usuario'; end if;
  if new.rol not in ('usuario','musico','admin') then raise exception 'Rol no válido.'; end if;
+ if new.rol='musico' then new.es_musico:=true;
+ elsif new.rol='usuario' then
+  if TG_OP='UPDATE' and new.rol is distinct from old.rol then new.es_musico:=false;
+  elsif new.es_musico then new.rol:='musico'; end if;
+ end if;
  return new;
 end $$;
 revoke all on function jc_private.proteger_rol() from public,anon,authenticated;
@@ -108,13 +116,14 @@ grant select on public.banda_fichas,public.banda_eventos,public.banda_convocados
 -- SECURITY DEFINER es deliberado: las tablas no admiten escrituras del cliente.
 create function jc_private.banda_accion(p_accion text,p_datos jsonb) returns jsonb language plpgsql security definer set search_path='' as $$
 declare
- actor uuid:=auth.uid(); rol text; eid uuid; uid uuid; ev public.banda_eventos%rowtype;
+ actor uuid:=auth.uid(); rol text; musico boolean; eid uuid; uid uuid; ev public.banda_eventos%rowtype;
  anterior jsonb; resultado jsonb; qr jc_private.banda_qr%rowtype;
  lat double precision; lon double precision; prec double precision; distancia double precision;
  est text; ahora timestamptz:=clock_timestamp();
 begin
  if actor is null then raise exception 'Inicia sesión para continuar.'; end if;
  rol:=jc_private.rol_actual();
+ select es_musico into musico from public.perfiles where id=actor;
  if p_accion='perfil' then
   if rol not in ('admin','musico') then raise exception 'Acceso exclusivo para músicos.'; end if;
   uid:=coalesce((p_datos->>'usuario_id')::uuid,actor);
@@ -130,11 +139,14 @@ begin
  if p_accion in ('rol','evento','cancelar','abrir','cerrar','qr','manual','convocar') and rol<>'admin' then raise exception 'Acceso exclusivo para administración.'; end if;
  if p_accion='rol' then
   uid:=(p_datos->>'usuario_id')::uuid;
-  if uid=actor then raise exception 'No puedes cambiar tu propio rol.'; end if;
+  if uid=actor and (p_datos->>'rol') is distinct from 'admin' then raise exception 'No puedes quitarte el permiso de administrador.'; end if;
+  if (p_datos->>'rol') is null or (p_datos->>'rol') not in ('usuario','musico','admin') then raise exception 'Rol no válido.'; end if;
   select to_jsonb(p) into anterior from public.perfiles p where id=uid;
   if anterior is null then raise exception 'Usuario no encontrado.'; end if;
-  update public.perfiles set rol=p_datos->>'rol',updated_at=ahora where id=uid;
-  insert into public.banda_auditoria(actor_id,accion,usuario_id,detalle) values(actor,'rol',uid,jsonb_build_object('anterior',anterior->>'rol','nuevo',p_datos->>'rol'));
+  update public.perfiles set
+   rol=case when p_datos->>'rol'='admin' then 'admin' when coalesce((p_datos->>'es_musico')::boolean,p_datos->>'rol'='musico') then 'musico' else 'usuario' end,
+   es_musico=coalesce((p_datos->>'es_musico')::boolean,p_datos->>'rol'='musico' or (p_datos->>'rol'='admin' and es_musico)),updated_at=ahora where id=uid;
+  insert into public.banda_auditoria(actor_id,accion,usuario_id,detalle) values(actor,'rol',uid,jsonb_build_object('anterior',jsonb_build_object('rol',anterior->>'rol','es_musico',anterior->'es_musico'),'nuevo',p_datos));
   return jsonb_build_object('ok',true);
  end if;
  if p_accion='evento' then
@@ -148,7 +160,7 @@ begin
   if eid is null then
    insert into public.banda_eventos(titulo,tipo,inicio,fin,lugar,notas,limite_respuesta,latitud,longitud,radio_m,creado_por)
    values(trim(p_datos->>'titulo'),p_datos->>'tipo',(p_datos->>'inicio')::timestamptz,(p_datos->>'fin')::timestamptz,trim(p_datos->>'lugar'),coalesce(p_datos->>'notas',''),(p_datos->>'limite_respuesta')::timestamptz,nullif(p_datos->>'latitud','')::float8,nullif(p_datos->>'longitud','')::float8,(p_datos->>'radio_m')::int,actor) returning id into eid;
-   insert into public.banda_convocados(evento_id,usuario_id) select eid,id from public.perfiles where perfiles.rol in ('musico','admin');
+   insert into public.banda_convocados(evento_id,usuario_id) select eid,id from public.perfiles where perfiles.es_musico;
   else
    update public.banda_eventos set titulo=trim(p_datos->>'titulo'),tipo=p_datos->>'tipo',inicio=(p_datos->>'inicio')::timestamptz,fin=(p_datos->>'fin')::timestamptz,lugar=trim(p_datos->>'lugar'),notas=coalesce(p_datos->>'notas',''),limite_respuesta=(p_datos->>'limite_respuesta')::timestamptz,latitud=nullif(p_datos->>'latitud','')::float8,longitud=nullif(p_datos->>'longitud','')::float8,radio_m=(p_datos->>'radio_m')::int where id=eid;
   end if;
@@ -160,7 +172,7 @@ begin
  if not found then raise exception 'Evento no encontrado.'; end if;
  if p_accion='convocar' then
   if ev.estado='cancelado' or ahora>ev.fin then raise exception 'El evento ya está cerrado.'; end if;
-  insert into public.banda_convocados(evento_id,usuario_id) select eid,id from public.perfiles where perfiles.rol in ('musico','admin') on conflict do nothing;
+  insert into public.banda_convocados(evento_id,usuario_id) select eid,id from public.perfiles where perfiles.es_musico on conflict do nothing;
  elsif p_accion='cancelar' then
   update public.banda_eventos set estado='cancelado',fichaje_abierto=false,abierto_hasta=null where id=eid;
   delete from jc_private.banda_qr where evento_id=eid;
@@ -177,14 +189,14 @@ begin
   on conflict(evento_id) do update set token=excluded.token,expira=excluded.expira returning * into qr;
   return jsonb_build_object('token',qr.token,'expira',qr.expira,'servidor',ahora);
  elsif p_accion='respuesta' then
-  if rol not in ('musico','admin') or not exists(select 1 from public.banda_convocados where evento_id=eid and usuario_id=actor) then raise exception 'No estás convocado a este evento.'; end if;
+  if not coalesce(musico,false) or not exists(select 1 from public.banda_convocados where evento_id=eid and usuario_id=actor) then raise exception 'No estás convocado a este evento.'; end if;
   if ev.estado<>'publicado' or ahora>ev.limite_respuesta or ahora>=ev.fin then raise exception 'El plazo de respuesta está cerrado.'; end if;
   select to_jsonb(r) into anterior from public.banda_respuestas r where evento_id=eid and usuario_id=actor;
   insert into public.banda_respuestas(evento_id,usuario_id,respuesta) values(eid,actor,p_datos->>'respuesta') on conflict(evento_id,usuario_id) do update set respuesta=excluded.respuesta,actualizado_en=ahora;
   insert into public.banda_auditoria(actor_id,accion,evento_id,usuario_id,detalle) values(actor,'respuesta',eid,actor,jsonb_build_object('anterior',anterior,'respuesta',p_datos->>'respuesta'));
   return jsonb_build_object('ok',true);
  elsif p_accion='fichar' then
-  if rol not in ('musico','admin') or not exists(select 1 from public.banda_convocados where evento_id=eid and usuario_id=actor) then raise exception 'No estás convocado a este evento.'; end if;
+  if not coalesce(musico,false) or not exists(select 1 from public.banda_convocados where evento_id=eid and usuario_id=actor) then raise exception 'No estás convocado a este evento.'; end if;
   if ev.estado<>'publicado' or not ev.fichaje_abierto or ev.abierto_hasta is null or ahora>=ev.abierto_hasta or ahora>=ev.fin or ahora<ev.inicio-interval '2 hours' then raise exception 'El fichaje está cerrado.'; end if;
   select * into qr from jc_private.banda_qr where evento_id=eid;
   if qr.token is null or (p_datos->>'token') is null or qr.token<>(p_datos->>'token')::uuid or qr.expira<=ahora then raise exception 'El QR ha caducado. Escanea el que se muestra ahora.'; end if;

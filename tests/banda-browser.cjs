@@ -4,7 +4,7 @@ const fixture=()=>{
  const uid='00000000-0000-4000-8000-000000000001',other='00000000-0000-4000-8000-000000000002',eid='00000000-0000-4000-8000-000000000010';
  const now=Date.now();
  const ev={id:eid,titulo:'Ensayo general de la banda',tipo:'ensayo',inicio:new Date(now+3600000).toISOString(),fin:new Date(now+7200000).toISOString(),limite_respuesta:new Date(now+3500000).toISOString(),lugar:'Local de ensayo',notas:'Traer partituras',estado:'publicado',radio_m:150,latitud:36.778,longitud:-6.35,fichaje_abierto:false,abierto_hasta:null};
- window.testData={uid,other,eid,role:location.pathname.includes('/admin.html')?'admin':'musico',events:[ev],profiles:[{id:uid,rol:'admin',username:'Jaime',email:'test@example.invalid'},{id:other,rol:'musico',username:'Músico de prueba'}],fichas:[{usuario_id:uid,nombre:'Jaime',instrumento:'Clarinete',incorporacion:2014}],responses:[],attendance:[],calls:[]};
+ window.testData={uid,other,eid,role:location.pathname.includes('/admin.html')?'admin':'musico',events:[ev],profiles:[{id:uid,rol:'admin',es_musico:true,username:'Jaime',email:'test@example.invalid'},{id:other,rol:'musico',es_musico:true,username:'Músico de prueba'}],fichas:[{usuario_id:uid,nombre:'Jaime',instrumento:'Clarinete',incorporacion:2014}],responses:[],attendance:[],calls:[]};
  const state=window.testData;
  function from(table){let filters=[];let single=false;
   const q=new Proxy({}, {get(t,p){if(p==='then')return (resolve,reject)=>{
@@ -16,6 +16,7 @@ const fixture=()=>{
   }});return q;
  }
  window.clienteSupabase={from,rpc:async(name,{p_accion:a,p_datos:d})=>{state.calls.push({a,d});let data={ok:true};
+  if(a==='rol'){const p=state.profiles.find(p=>p.id===d.usuario_id);if(p){p.rol=d.rol;p.es_musico=d.es_musico;}if(d.usuario_id===uid)state.role=d.rol;}
   if(a==='respuesta'){state.responses=[{evento_id:d.evento_id,usuario_id:uid,respuesta:d.respuesta,actualizado_en:new Date().toISOString()}];}
   if(a==='fichar'){state.attendance=[{evento_id:d.evento_id,usuario_id:uid,estado:'presente',metodo:'qr',registrado_en:new Date().toISOString()}];data.estado='presente';}
   if(a==='abrir'){ev.fichaje_abierto=true;ev.abierto_hasta=new Date(now+3600000).toISOString();}
@@ -31,7 +32,7 @@ const fixture=()=>{
  await context.route('https://**/*',r=>r.fulfill({status:200,body:'',contentType:r.request().resourceType()==='stylesheet'?'text/css':'application/javascript'}));
  await context.route('**/js/config.js',r=>r.fulfill({status:200,body:'',contentType:'application/javascript'}));
  const page=await context.newPage();await page.addInitScript(fixture);
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
  await page.goto('http://127.0.0.1:8090/templates/musicos.html');
  await page.locator('#banda-content').waitFor({state:'visible'});
  await page.locator('[data-response="voy"]').click();
@@ -59,6 +60,9 @@ const fixture=()=>{
  await page.locator('[data-admin-target="usuarios"]').click();
  await page.locator('[data-member-edit]').first().click();await page.locator('#ba-member-dialog').waitFor({state:'visible'});await page.locator('#ba-member-form input[name="incorporacion"]').fill('2015');await page.locator('#ba-member-form button[type="submit"]').click();await page.locator('#ba-member-dialog').waitFor({state:'hidden'});
  assert(await page.evaluate(()=>testData.calls.some(c=>c.a==='perfil'&&c.d.incorporacion==='2015')),'Año guardado por administración');
+ await page.locator('[data-permiso-musico]').first().uncheck();
+ assert(await page.evaluate(()=>testData.calls.some(c=>c.a==='rol'&&c.d.rol==='admin'&&c.d.es_musico===false)),'Desactivar músico conserva administrador');
+ assert(await page.locator('[data-permiso-admin]').first().isDisabled(),'Administrador no puede quitarse a sí mismo ese permiso');
  assert.equal(errors.length,0,errors.join('\n'));
  await page.setViewportSize({width:1280,height:900});await page.locator('[data-admin-target="banda"]').click();await page.screenshot({path:'/tmp/jc-admin-desktop.png',fullPage:true});
  await browser.close();console.log('OK: confirmaciones, QR, fichaje, ficha y diseño móvil/escritorio.');

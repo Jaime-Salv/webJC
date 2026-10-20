@@ -42,12 +42,12 @@ async function actualizarInterfazUsuarioCompleta(session) {
         try {
             const { data: perfil } = await clienteSupabase
                 .from('perfiles')
-                .select('rol, username, avatar_url')
+                .select('rol, es_musico, username, avatar_url')
                 .eq('id', session.user.id)
                 .maybeSingle();
 
             const esAdmin = perfil && perfil.rol === 'admin';
-            const esMusico = perfil && ['musico','admin'].includes(perfil.rol);
+            const esMusico = perfil && (perfil.es_musico || perfil.rol === 'musico');
             if (linkMusicos) linkMusicos.style.display = esMusico ? 'inline-flex' : 'none';
             const volverBanda = sessionStorage.getItem('jc_banda_return');
             if (volverBanda) {
