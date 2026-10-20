@@ -1,0 +1,69 @@
+/* Área privada JC: controles táctiles y calendario adaptable. */
+.banda { --oro:#d4af37; color:#eee; font:15px/1.55 'Montserrat',sans-serif; }
+.banda [hidden] { display:none !important; }
+.banda *, .banda *::before, .banda *::after { box-sizing:border-box; }
+body.banda { margin:0; background:#090b0e; }
+.banda a { color:var(--oro); }
+.banda-header { border-bottom:1px solid #303039; padding:16px max(16px,calc((100vw - 1180px)/2)); display:flex; align-items:center; gap:18px; flex-wrap:wrap; background:#101216; }
+.banda-header img { width:44px; height:44px; object-fit:contain; }
+.banda-header strong { flex:1; }
+.banda-main { max-width:1180px; margin:auto; padding:30px 18px 80px; }
+.banda .eyebrow { color:var(--oro); text-transform:uppercase; font-size:11px; font-weight:700; letter-spacing:2px; }
+.banda h1 { font-size:clamp(26px,5vw,40px); line-height:1.2; margin:8px 0 14px; }
+.banda h2 { font-size:21px; margin:0 0 14px; }
+.banda h3 { font-size:17px; margin:8px 0; }
+.banda p { margin:10px 0; }
+.banda .muted { color:#adb1bc; font-size:13px; }
+.banda button,.banda .button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:44px; padding:10px 15px; border:1px solid #454852; border-radius:8px; background:#232630; color:#fff; cursor:pointer; font:inherit; font-size:13px; text-decoration:none; }
+.banda button:hover { border-color:var(--oro); }
+.banda button:focus-visible,.banda a:focus-visible,.banda input:focus-visible,.banda select:focus-visible { outline:3px solid #d4af37; outline-offset:3px; }
+.banda button.primary,.banda .button.primary { background:var(--oro); border-color:var(--oro); color:#111; font-weight:700; }
+.banda button:disabled { opacity:.5; cursor:default; }
+.banda .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.banda .row.between { justify-content:space-between; }
+.banda .panel { margin:20px 0; padding:22px; background:#13161c; border:1px solid #30343d; border-radius:14px; min-width:0; }
+.banda .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; align-items:start; }
+.banda label { display:block; color:#bbc0cc; font-size:13px; }
+.banda input,.banda select,.banda textarea { width:100%; min-width:0; min-height:46px; margin:6px 0 14px; padding:11px; background:#090c11; color:#fff; border:1px solid #454852; border-radius:7px; font:inherit; }
+.banda textarea { min-height:90px; resize:vertical; }
+.banda input:disabled { opacity:.65; }
+.banda .notice { border-left:3px solid var(--oro); padding:12px 16px; background:#202019; border-radius:5px; overflow-wrap:anywhere; }
+.banda .notice.error { border-color:#f58888; background:#2b181b; }
+.banda .badge { display:inline-block; padding:4px 10px; background:#292d36; border-radius:20px; font-size:12px; }
+.banda .badge.good { color:#8de5b6; background:#17362c; }
+.banda .badge.warn { color:#f2cf77; background:#3c3016; }
+.banda .events { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:18px; }
+.banda .event { padding:20px; border:1px solid #343942; background:#12161c; border-radius:12px; overflow-wrap:anywhere; }
+.banda .event.selected { border-color:var(--oro); }
+.banda .event time { font-size:14px; color:#f0ce77; }
+.banda .event .notes { white-space:pre-wrap; color:#bbb; font-size:13px; }
+.banda .event .row { margin-top:13px; }
+.banda .event button[aria-pressed="true"] { background:#d4af37; color:#111; border-color:#d4af37; }
+.banda .calendar { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); border:1px solid #343942; border-radius:10px; overflow:hidden; margin:18px 0; }
+.banda .calendar .weekday { padding:9px 0; text-align:center; background:#252934; font-size:11px; }
+.banda .calendar .day { min-height:95px; padding:8px; border:1px solid #272b34; background:#11151c; font-size:12px; }
+.banda .calendar .day.empty { background:#0c0e13; }
+.banda .calendar .day.today { box-shadow:inset 0 0 0 1px var(--oro); }
+.banda .calendar button { display:block; width:100%; min-height:28px; padding:3px 5px; margin:4px 0; font-size:10px; text-align:left; border-color:#4a4430; background:#342e1c; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.banda .table-scroll { width:100%; overflow:auto; }
+.banda table { border-collapse:collapse; width:100%; font-size:13px; text-align:left; }
+.banda th,.banda td { padding:12px 10px; border-bottom:1px solid #343942; vertical-align:top; }
+.banda th { color:#d4af37; }
+.banda .qr-box { text-align:center; padding:24px; border:1px solid #d4af37; border-radius:14px; background:#11151a; }
+.banda .qr-box svg { width:min(100%,360px); height:auto; background:white; padding:16px; border-radius:8px; }
+.banda dialog { color:#fff; background:#151922; border:1px solid #65604b; border-radius:14px; max-width:600px; width:calc(100% - 24px); max-height:90vh; overflow:auto; padding:24px; }
+.banda dialog::backdrop { background:#000b; }
+.banda .stat { background:#1f2430; padding:12px 16px; border-radius:9px; }
+.banda .stat b { display:block; font-size:24px; color:var(--oro); }
+@media(max-width:680px) {
+ .banda-main { padding:22px 12px 60px; }
+ .banda .grid,.banda .events { grid-template-columns:minmax(0,1fr); }
+ .banda .panel { padding:17px 13px; }
+ .banda .calendar .day { min-height:65px; padding:4px; }
+ .banda .calendar button { font-size:9px; padding:2px; }
+ .banda-header { padding:12px; gap:10px; font-size:12px; }
+ .banda .row > button { flex:1 0 auto; }
+ .banda .event { padding:16px; }
+}
+
+.banda .panel, .banda .events, .banda .event { scroll-margin-top:120px; }

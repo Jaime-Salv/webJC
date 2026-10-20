@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'jc-pwa-v10';
+const CACHE_VERSION = 'jc-pwa-v11';
 const APP_SHELL = [
     '/',
     '/index.html',
@@ -46,6 +46,12 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(request.url);
 
     if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+
+    // Las páginas privadas y los enlaces de fichaje nunca se almacenan para uso sin conexión.
+    if (/^\/templates\/(musicos|admin|perfil|login)\.html$/.test(url.pathname) || ['/admin','/perfil','/login'].includes(url.pathname)) {
+        event.respondWith(fetch(request).catch(() => caches.match('/offline.html')));
+        return;
+    }
 
     if (request.mode === 'navigate') {
         event.respondWith(

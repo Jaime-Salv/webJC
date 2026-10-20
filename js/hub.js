@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
 async function actualizarInterfazUsuarioCompleta(session) {
     const btnLogin = document.getElementById('btn-login-google');
     const btnLogout = document.getElementById('btn-logout');
+    const linkMusicos = document.getElementById('link-musicos');
+    if (linkMusicos) linkMusicos.style.display = 'none';
     const linkAdmin = document.getElementById('link-admin');
     const linkAdminFooter = document.getElementById('link-admin-footer');
     const userZone = document.getElementById('user-header-zone');
@@ -45,6 +47,15 @@ async function actualizarInterfazUsuarioCompleta(session) {
                 .maybeSingle();
 
             const esAdmin = perfil && perfil.rol === 'admin';
+            const esMusico = perfil && ['musico','admin'].includes(perfil.rol);
+            if (linkMusicos) linkMusicos.style.display = esMusico ? 'inline-flex' : 'none';
+            const volverBanda = sessionStorage.getItem('jc_banda_return');
+            if (volverBanda) {
+                sessionStorage.removeItem('jc_banda_return');
+                if (volverBanda === '/templates/musicos.html' || volverBanda.startsWith('/templates/musicos.html#')) {
+                    window.location.replace(volverBanda); return;
+                }
+            }
 
             if (linkAdmin) {
                 linkAdmin.style.display = esAdmin ? 'inline-flex' : 'none';

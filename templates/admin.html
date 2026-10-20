@@ -1235,6 +1235,7 @@
             .btn-editar-fila:hover { transform: none; }
         }
     </style>
+<link rel="stylesheet" href="../css/musicos.css?v=1">
 </head>
 
 <body>
@@ -1289,7 +1290,8 @@
                 <button type="button" class="admin-nav-button" data-admin-target="conciertos">
                     <span class="admin-nav-icon">▤</span>Conciertos
                 </button>
-                <button type="button" class="admin-nav-button" data-admin-target="usuarios">
+                <button type="button" class="admin-nav-button" data-admin-target="banda"><span class="admin-nav-icon">♫</span>Músicos</button>
+<button type="button" class="admin-nav-button" data-admin-target="usuarios">
                     <span class="admin-nav-icon">♙</span>Usuarios
                 </button>
             </nav>
@@ -1496,7 +1498,30 @@
                 </div>
             </section>
 
-        <section class="admin-view" data-admin-view="usuarios">
+        <section class="admin-view banda" data-admin-view="banda">
+<div class="admin-view-header"><div><span>Gestión interna</span><h1>Músicos y convocatorias</h1></div><p>Confirmaciones y presencia real, registradas por separado.</p></div>
+<p id="banda-status" class="notice" role="status" aria-live="polite" hidden></p>
+<div class="row between"><a class="button" href="musicos.html">Abrir área de músicos</a><button id="ba-new" class="primary" type="button">Nueva convocatoria</button><button id="ba-refresh" type="button">Actualizar</button></div>
+<section class="panel" id="ba-editor" hidden><h2 id="ba-editor-title">Nueva convocatoria</h2>
+<form id="ba-form"><input type="hidden" name="id">
+<div class="grid"><label>Título<input name="titulo" required maxlength="180" placeholder="Ensayo general / actuación…"></label><label>Tipo<select name="tipo"><option value="ensayo">Ensayo</option><option value="actuacion">Actuación</option></select></label></div>
+<p class="muted">Todas las horas se introducen en horario de España peninsular.</p>
+<div class="grid"><label>Inicio / hora de convocatoria<input type="datetime-local" name="inicio" required></label><label>Fin previsto<input type="datetime-local" name="fin" required></label></div>
+<div class="grid"><label>Fecha límite para responder<input type="datetime-local" name="limite_respuesta" required></label><label>Lugar<input name="lugar" required maxlength="240" placeholder="Local de ensayo, punto de encuentro…"></label></div>
+<label>Información para los músicos<textarea name="notas" maxlength="4000" placeholder="Uniformidad, transporte, programa…"></textarea></label>
+<h3>Zona de fichaje</h3><p class="muted">Configura el punto donde estarán los músicos al fichar. Puedes guardar el evento sin coordenadas y completarlas antes de abrir el QR.</p>
+<div class="grid"><label>Latitud<input type="number" name="latitud" min="-90" max="90" step="any"></label><label>Longitud<input type="number" name="longitud" min="-180" max="180" step="any"></label></div>
+<div class="grid"><label>Radio permitido (metros)<input type="number" name="radio_m" min="30" max="1000" value="150" required></label><div><button id="ba-use-location" type="button">Usar mi ubicación actual</button><p class="muted">Úsalo cuando estés en el lugar del evento.</p></div></div>
+<p class="muted">Se convocan los músicos y administradores actuales. Si das de alta músicos después, usa «Añadir nuevos músicos» en el evento.</p>
+<div class="row"><button class="primary" type="submit">Guardar convocatoria</button><button id="ba-editor-close" type="button">Cerrar edición</button></div>
+</form></section>
+<div class="grid"><section class="panel"><h2>Convocatorias</h2><label>Ver<select id="ba-filter"><option value="upcoming">Próximas</option><option value="all">Todas e histórico</option></select></label><div id="ba-events"></div></section><section class="panel" id="ba-detail"><h2>Respuestas y asistencias</h2><p class="muted">Selecciona una convocatoria para ver los músicos, el estado de sus respuestas y los fichajes.</p></section></div>
+<dialog id="ba-qr-dialog"><div class="row between"><h2>Fichaje de asistencia</h2><button id="ba-qr-hide" type="button">Cerrar pantalla</button></div><p id="ba-qr-title"></p><div class="qr-box"><div id="ba-qr-image"></div><p id="ba-qr-count" role="status"></p></div><p class="muted">Escanea con la cámara del móvil. El QR caduca en 60 segundos y se renueva en esta pantalla. El músico debe iniciar sesión y permitir la ubicación. Mantén una sola pantalla QR abierta por evento.</p><p id="ba-qr-error" class="notice error" hidden></p><button id="ba-qr-retry" type="button">Renovar QR</button></dialog>
+<dialog id="ba-manual-dialog"><h2>Revisar asistencia</h2><p id="ba-manual-name"></p><form id="ba-manual-form"><label>Estado<select name="estado"><option value="presente">Presente</option><option value="ausente">Ausente</option><option value="justificada">Ausencia justificada</option><option value="incidencia">Incidencia pendiente</option></select></label><label>Motivo de la corrección<textarea name="motivo" required minlength="5" maxlength="1000"></textarea></label><p class="muted">Quedarán registrados tu usuario, el motivo y la fecha. El registro original se conserva en el historial de cambios.</p><p class="notice error" id="ba-manual-error" hidden></p><div class="row"><button class="primary" type="submit">Guardar revisión</button><button type="button" data-close="ba-manual-dialog">Cancelar</button></div></form></dialog>
+
+</section>
+
+<section class="admin-view" data-admin-view="usuarios">
             <div class="admin-view-header">
                 <div>
                     <span>Permisos y perfiles</span>
@@ -1509,7 +1534,7 @@
             <h3>Gestión de usuarios</h3>
 
             <p style="color:#aaa; font-size:0.9rem; margin-top:0;">
-                Desde aquí puedes conceder o retirar permisos de administrador a los usuarios registrados.
+                Asigna los roles de público general, músico y administrador. Completa nombre, instrumento y año desde «Ficha musical».
                 No puedes quitarte el rol a ti mismo desde esta pantalla.
             </p>
 
@@ -1833,6 +1858,7 @@
         </div>
     </main>
 
+<div class="banda"><dialog id="ba-member-dialog"><h2>Ficha del músico</h2><form id="ba-member-form"><input type="hidden" name="usuario_id"><label>Nombre completo<input name="nombre" maxlength="160"></label><label>Instrumento<input name="instrumento" maxlength="80" list="ba-instruments"></label><datalist id="ba-instruments"><option>Flauta</option><option>Oboe</option><option>Fagot</option><option>Clarinete</option><option>Saxofón alto</option><option>Saxofón tenor</option><option>Saxofón barítono</option><option>Trompeta</option><option>Trompa</option><option>Trombón</option><option>Bombardino</option><option>Tuba</option><option>Percusión</option></datalist><label>Año de incorporación<input name="incorporacion" type="number" min="1852" max="2100"></label><p class="notice error" id="ba-member-error" hidden></p><div class="row"><button class="primary" type="submit">Guardar ficha</button><button type="button" data-close="ba-member-dialog">Cancelar</button></div></form></dialog></div>
 <script src="../js/vendor/jspdf.umd.min.js?v=4.2.1"></script>
 <script src="../js/vendor/jspdf.plugin.autotable.min.js?v=5.0.8"></script>
 <script src="../js/repertorio-export.js?v=2"></script>
@@ -1842,7 +1868,10 @@
     <script src="../js/admin-repertorios.js?v=7"></script>
     <script src="../js/admin-repertorios-compat.js?v=5"></script>
     <script src="../js/admin-buscador-directo.js?v=1"></script>
-    <script src="../js/admin.js?v=4"></script>
+    <script src="../js/banda-common.js?v=1"></script>
+<script src="../js/vendor/qrcode-generator.js"></script>
+<script src="../js/admin-banda.js?v=1"></script>
+<script src="../js/admin.js?v=5"></script>
     <script src="../js/pwa.js?v=2"></script>
 
     <script>

@@ -1188,30 +1188,15 @@ async function cargarUsuariosAdmin() {
                 <td data-label="Email">${escaparHTML(emailVisible)}</td>
                 <td data-label="Rol actual">
                     <span style="color:${rolActual === 'admin' ? '#d4af37' : '#ccc'}; font-weight:bold;">
-                        ${escaparHTML(rolActual)}
+                        ${escaparHTML({usuario:'Público general',musico:'Músico',admin:'Administrador'}[rolActual] || rolActual)}
                     </span>
                 </td>
                 <td data-label="Acción">
-                    ${
-                        esMiUsuario
-                            ? `<span style="color:#777;">Tu usuario</span>`
-                            : `
-                                <button
-                                    onclick="cambiarRolUsuario('${usuario.id}', '${rolActual === 'admin' ? 'usuario' : 'admin'}')"
-                                    style="
-                                        background:${rolActual === 'admin' ? '#333' : '#d4af37'};
-                                        color:${rolActual === 'admin' ? '#fff' : '#000'};
-                                        border:1px solid rgba(212,175,55,0.5);
-                                        padding:8px 12px;
-                                        border-radius:4px;
-                                        cursor:pointer;
-                                        font-weight:bold;
-                                    "
-                                >
-                                    ${rolActual === 'admin' ? 'Quitar admin' : 'Hacer admin'}
-                                </button>
-                            `
-                    }
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    ${esMiUsuario ? '<span>Tu usuario · administrador</span>' : `<select aria-label="Rol de ${escaparHTML(nombreVisible)}" onchange="cambiarRolUsuario('${usuario.id}',this.value)" style="min-height:44px;max-width:100%;background:#141820;color:white;border:1px solid #666;border-radius:5px;padding:8px;">
+                    ${[['usuario','Público general'],['musico','Músico'],['admin','Administrador']].map(([v,n])=>`<option value="${v}" ${rolActual===v?'selected':''}>${n}</option>`).join('')}</select>`}
+                    ${['admin','musico'].includes(rolActual)?`<button class="btn-rol" data-member-edit="${usuario.id}">Ficha musical</button>`:''}
+                    </div>
                 </td>
             </tr>
         `;
@@ -1232,28 +1217,23 @@ async function cambiarRolUsuario(idUsuario, nuevoRol) {
         return;
     }
 
-    if (!['usuario', 'admin'].includes(nuevoRol)) {
+    if (!['usuario', 'musico', 'admin'].includes(nuevoRol)) {
         alert('Rol no permitido.');
         return;
     }
 
     const confirmar = confirm(`¿Seguro que quieres cambiar este usuario a rol "${nuevoRol}"?`);
 
-    if (!confirmar) {
-        return;
-    }
+    if (!confirmar) { await cargarUsuariosAdmin(); return; }
 
-    const { error } = await clienteSupabase
-        .from('perfiles')
-        .update({
-            rol: nuevoRol,
-            updated_at: new Date().toISOString()
-        })
-        .eq('id', idUsuario);
+    const { error } = await clienteSupabase.rpc('banda_accion', {
+        p_accion: 'rol', p_datos: {usuario_id:idUsuario, rol:nuevoRol}
+    });
 
     if (error) {
         console.error('Error cambiando rol:', error);
-        alert('No se ha podido cambiar el rol.');
+        alert('No se ha podido cambiar el rol: ' + error.message);
+        await cargarUsuariosAdmin();
         return;
     }
 

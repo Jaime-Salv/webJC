@@ -1,3 +1,5 @@
+let perfilTieneBanda = false;
+let datosBandaCargados = false;
 /* ============================================================
    LÓGICA DE PERFIL VINCULADA A BASE DE DATOS (Jaime Rubiales)
    ============================================================ */
@@ -31,6 +33,19 @@ async function cargarDatosPerfil() {
         .eq('id', user.id)
         .maybeSingle();
 
+    if (error) { alert('No se ha podido cargar el perfil: ' + error.message); return; }
+    perfilTieneBanda = ['musico','admin'].includes(perfil?.rol);
+    document.getElementById('perfil-banda').hidden = !perfilTieneBanda;
+    if (perfilTieneBanda) {
+        try {
+            const filas = await JCBanda.query('banda_fichas', q => q.eq('usuario_id',user.id));
+            const ficha = filas[0];
+            datosBandaCargados = true;
+            document.getElementById('perf-nombre-real').value = ficha?.nombre || '';
+            document.getElementById('perf-instrumento').value = ficha?.instrumento || '';
+            document.getElementById('perf-incorporacion').value = ficha?.incorporacion || '';
+        } catch (e) { alert('No se ha podido cargar la ficha musical: ' + e.message); }
+    }
     if (perfil) {
         document.getElementById('perf-nombre').value = perfil.username || "";
         document.getElementById('perf-bio').value = perfil.descripcion || "";
@@ -52,7 +67,8 @@ async function guardarPerfil() {
     if (!session) return;
     
     const user = session.user;
-    const btn = document.querySelector('.btn-accion');
+    if (perfilTieneBanda && !datosBandaCargados) { alert('Recarga el perfil antes de guardar la ficha musical.'); return; }
+    const btn = document.getElementById('btn-guardar-perfil');
     const inputArchivo = document.getElementById('input-avatar').files[0];
     
     try {
@@ -99,6 +115,12 @@ async function guardarPerfil() {
 
         if (upsertError) throw upsertError;
 
+        if (perfilTieneBanda) {
+            await JCBanda.rpc('perfil', {
+                nombre: document.getElementById('perf-nombre-real').value.trim(),
+                instrumento: document.getElementById('perf-instrumento').value.trim()
+            });
+        }
         alert("✅ Perfil actualizado correctamente.");
         window.location.href = "comunidad.html";
 
