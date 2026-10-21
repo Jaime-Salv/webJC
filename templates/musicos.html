@@ -1,28 +1,55 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex"><meta name="referrer" content="no-referrer">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#090b0e">
 <title>Portal músico · Julián Cerdán</title>
 <link rel="icon" href="../img/escudo.png"><link rel="manifest" href="../manifest.webmanifest">
-<link rel="stylesheet" href="../css/style.css?v=11">
-<link rel="stylesheet" href="../css/musicos.css?v=2">
+<link rel="stylesheet" href="../css/style.css?v=11"><link rel="stylesheet" href="../css/musicos.css?v=2"><link rel="stylesheet" href="../css/portal-musico.css?v=1">
 </head>
-<body class="banda">
-<header class="banda-header"><a href="../index.html"><img src="../img/escudo.png" alt="Inicio JC"></a><strong>JULIÁN CERDÁN</strong><a href="perfil.html">Mi perfil</a><a href="admin.html#banda" id="banda-admin-link" hidden>Administrar</a><a href="../index.html">Inicio</a><nav class="portal-main-nav" aria-label="Navegación principal"><a href="../index.html">Inicio</a><a href="../index.html#actuaciones">Actuaciones</a><a href="catalogo.html">Catálogo</a><a href="comunidad.html">Comunidad</a><a href="simulacion.html">Simulador</a><a href="musicos.html" aria-current="page">Portal músico</a></nav></header>
-<main class="banda-main">
-<div class="eyebrow">Tu banda, al día</div><h1>Portal músico</h1>
-<p class="muted" id="banda-identidad">Comprobando acceso…</p>
+<body class="banda portal">
+<header class="banda-header portal-header">
+<a class="portal-brand" href="../index.html"><img src="../img/escudo.png" alt="Escudo de la banda"><span>JULIÁN CERDÁN<small>Portal del músico</small></span></a>
+<div class="portal-header-actions"><a href="perfil.html">Mi perfil</a><a href="admin.html#banda" id="banda-admin-link" hidden>Administrar</a></div>
+<nav class="portal-main-nav" aria-label="Navegación principal"><a href="../index.html">Inicio</a><a href="../index.html#actuaciones">Actuaciones</a><a href="catalogo.html">Catálogo</a><a href="comunidad.html">Comunidad</a><a href="simulacion.html">Simulador</a><a href="musicos.html" aria-current="page">Portal músico</a></nav>
+</header>
+<main class="banda-main portal-main">
+<div class="portal-heading"><div><div class="eyebrow">Tu banda, al día</div><h1>Portal músico</h1><p class="muted" id="banda-identidad">Comprobando tu acceso…</p></div><button type="button" id="banda-refresh" class="portal-refresh" aria-label="Actualizar datos del portal" hidden>↻ <span>Actualizar</span></button></div>
 <p id="banda-status" class="notice" role="status" aria-live="polite" hidden></p>
+<p id="portal-offline" class="notice error" role="status" hidden>Estás sin conexión. Vuelve a conectarte para actualizar, responder o registrar asistencia.</p>
 <div id="banda-content" hidden>
-<nav class="portal-tools" aria-label="Funciones del portal"><a href="#portal-calendario">Calendario</a><a href="#portal-confirmaciones">Confirmaciones</a><a href="#portal-asistencias">Mis asistencias</a><a href="perfil.html">Mi ficha musical</a></nav>
-<section id="banda-checkin" class="panel" hidden><h2>Registrar mi asistencia</h2><p id="banda-checkin-event"></p><p class="muted">Al pulsar comprobaremos tu ubicación una sola vez. No hay seguimiento. Se guardan la hora, la distancia aproximada al evento y la precisión, sin tus coordenadas.</p><button type="button" class="primary" id="banda-fichar">Comprobar ubicación y fichar</button><p class="muted">Si has tenido que iniciar sesión y el QR ha caducado, vuelve a escanear el que aparece en el ensayo.</p></section>
-<div class="row between" id="portal-calendario"><div class="row"><button type="button" id="banda-prev" aria-label="Mes anterior">←</button><h2 id="banda-mes"></h2><button type="button" id="banda-next" aria-label="Mes siguiente">→</button></div><div class="row"><button type="button" id="banda-hoy">Hoy</button><button type="button" id="banda-refresh">Actualizar</button></div></div>
-<p class="muted">Horas de España peninsular. Elige un día del calendario o responde en las tarjetas.</p>
-<div class="calendar" id="banda-calendar" aria-label="Calendario de convocatorias"></div>
-<div class="row" id="portal-confirmaciones"><h2 id="banda-list-title">Próximas convocatorias</h2><button type="button" id="banda-all" hidden>Ver próximas</button></div>
+<nav class="portal-tools" aria-label="Funciones del portal">
+<button type="button" data-view="resumen" aria-pressed="true">Resumen</button><button type="button" data-view="calendario" aria-pressed="false">Calendario</button><button type="button" data-view="confirmaciones" aria-pressed="false">Confirmaciones <span id="portal-pending-badge" hidden></span></button><button type="button" data-view="asistencias" aria-pressed="false">Mis asistencias</button><button type="button" data-view="escanear" aria-pressed="false">Escanear QR</button>
+</nav>
+<section data-portal-panel="resumen" aria-label="Resumen personal">
+<div class="portal-dashboard">
+<section class="portal-welcome"><span class="eyebrow">Tu próxima cita</span><div id="portal-next-event"></div></section>
+<section class="portal-scan-shortcut"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 17V5h12M31 5h12v12M43 31v12H31M17 43H5V31M15 15h6v6h-6zM28 15h6v6h-6zM15 28h6v6h-6zM28 28h6v6h-6z"/></svg><h2>Ya estoy aquí</h2><p>Escanea el QR del ensayo o de la actuación para registrar tu llegada.</p><button type="button" class="primary" data-view="escanear">Escanear y fichar</button><small>Necesitarás cámara y ubicación.</small></section>
+</div>
+<div class="portal-stats" aria-label="Tu actividad"><button type="button" data-view="confirmaciones" data-pending-shortcut><strong id="portal-stat-pending">0</strong><span>Por confirmar</span></button><button type="button" data-view="confirmaciones"><strong id="portal-stat-upcoming">0</strong><span>Próximas citas</span></button><button type="button" data-view="asistencias"><strong id="portal-stat-present">0</strong><span>Presencias registradas</span></button><button type="button" data-view="asistencias"><strong id="portal-stat-incidents">0</strong><span>Incidencias pendientes</span></button></div>
+<div class="portal-info-grid"><section class="panel"><h2>Tu ficha musical</h2><div id="portal-profile"></div><a class="button" href="perfil.html">Editar mi ficha</a></section><section class="panel"><h2>Confirmar y fichar son dos pasos</h2><ol class="portal-steps"><li><b>Antes del evento</b><span>Indica si vas a asistir en Confirmaciones.</span></li><li><b>Cuando llegues</b><span>Escanea el QR y confirma tu ubicación.</span></li><li><b>Comprueba el registro</b><span>Tu resultado aparece en Mis asistencias.</span></li></ol></section></div>
+</section>
+<section data-portal-panel="calendario" aria-labelledby="portal-calendar-title" hidden>
+<div class="portal-section-heading"><div><h2 id="portal-calendar-title">Calendario de la banda</h2><p class="muted">Tus convocatorias, en horario de España peninsular.</p></div><button type="button" id="banda-hoy">Mes actual</button></div>
+<section class="panel portal-calendar-panel"><div class="portal-month-nav"><button type="button" id="banda-prev" aria-label="Mes anterior">←</button><h3 id="banda-mes"></h3><button type="button" id="banda-next" aria-label="Mes siguiente">→</button></div><div class="calendar" id="banda-calendar" aria-label="Calendario de convocatorias"></div><p class="portal-calendar-legend"><span class="legend-dot rehearsal"></span> Ensayo <span class="legend-dot performance"></span> Actuación</p></section>
+<div class="portal-section-heading"><h3 id="banda-day-title">Convocatorias del mes</h3><button type="button" id="banda-all" hidden>Ver todo el mes</button></div><div class="events" id="banda-day-events"></div>
+</section>
+<section data-portal-panel="confirmaciones" aria-labelledby="banda-list-title" hidden>
+<div class="portal-section-heading"><div><h2 id="banda-list-title">Mis confirmaciones</h2><p class="muted">Responde dentro del plazo. Puedes cambiar tu respuesta mientras siga abierto.</p></div></div>
+<div class="portal-filters"><label for="portal-event-filter">Mostrar<select id="portal-event-filter"><option value="all">Todas las próximas citas</option><option value="pending">Pendientes de respuesta</option><option value="actuacion">Actuaciones</option><option value="ensayo">Ensayos</option></select></label><label for="portal-event-search">Buscar<input type="search" id="portal-event-search" placeholder="Título o lugar…" autocomplete="off"></label></div>
 <div class="events" id="banda-events"></div>
-<section class="panel" id="portal-asistencias"><h2>Mi historial de asistencia</h2><p class="muted">Confirmar que vas no registra tu asistencia. «Sin fichaje» queda pendiente de revisión; no equivale automáticamente a una ausencia.</p><div id="banda-history"></div></section>
+</section>
+<section data-portal-panel="asistencias" aria-labelledby="portal-history-title" hidden>
+<div class="portal-section-heading"><div><h2 id="portal-history-title">Mis asistencias</h2><p class="muted">Tu registro personal de ensayos y actuaciones.</p></div></div><p class="notice">«Sin fichaje» no significa una ausencia confirmada. Si falta un registro o hay una incidencia, consulta a administración.</p><div id="banda-history" class="portal-history"></div>
+</section>
+<section data-portal-panel="escanear" aria-labelledby="portal-scan-title" hidden>
+<div class="portal-section-heading"><div><h2 id="portal-scan-title">Escanear QR y fichar</h2><p class="muted">Apunta al QR que muestra administración en el evento.</p></div></div>
+<section id="banda-checkin" class="panel portal-checkin" hidden><span class="badge good">QR leído</span><h3 id="banda-checkin-event"></h3><p id="portal-checkin-state">Confirma tu llegada para comprobar la ubicación y guardar el registro.</p><button type="button" class="primary" id="banda-fichar">Confirmar mi asistencia</button><button type="button" id="portal-scan-again">Escanear otro QR</button><p class="muted">Si el código ha caducado, escanea el que se muestra ahora en el evento.</p></section>
+<div class="portal-scanner-layout"><section class="panel portal-scanner-panel"><div class="row"><button type="button" id="portal-camera-start" class="primary">Abrir cámara</button><button type="button" id="portal-camera-stop" hidden>Cerrar cámara</button><label class="button portal-file-button" for="portal-qr-image">Leer una imagen<input type="file" id="portal-qr-image" accept="image/*"></label></div><div id="portal-camera-stage" class="portal-camera-stage"><video id="portal-camera" muted playsinline autoplay aria-label="Vista de la cámara para escanear el código QR"></video><div id="portal-camera-placeholder"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 17V5h12M31 5h12v12M43 31v12H31M17 43H5V31M15 15h6v6h-6zM28 15h6v6h-6zM15 28h6v6h-6zM28 28h6v6h-6z"/></svg><span>Coloca el QR dentro del encuadre</span></div><div class="portal-camera-frame" aria-hidden="true"></div></div><p id="portal-camera-status" role="status" aria-live="polite">La cámara solo se activa cuando pulses Abrir cámara.</p><details class="portal-paste"><summary>Tengo el enlace del QR</summary><label for="portal-qr-link">Pega el enlace de fichaje<input type="url" id="portal-qr-link" placeholder="https://…/musicos.html#evento=…" autocomplete="off" spellcheck="false"></label><button type="button" id="portal-qr-submit">Leer enlace</button></details></section>
+<aside class="panel portal-scan-help"><h3>Para que cuente tu asistencia</h3><ol class="portal-steps"><li><b>Escanea el QR actual</b><span>El código cambia cada 60 segundos.</span></li><li><b>Confirma tu llegada</b><span>Permite la ubicación cuando la solicite el móvil.</span></li><li><b>Revisa el resultado</b><span>Verás si estás presente o si requiere revisión.</span></li></ol><p class="muted">Las imágenes se leen en tu dispositivo. La cámara se apaga al salir de esta pantalla. La ubicación se consulta solo al fichar.</p><p class="muted">Si no funciona la cámara o la ubicación, administración puede registrar tu asistencia manualmente.</p></aside></div>
+
+</section>
+<p id="portal-last-update" class="portal-last-update"></p>
 </div></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/config.js"></script><script src="../js/banda-common.js?v=2"></script><script src="../js/musicos.js?v=2"></script><script src="../js/pwa.js?v=3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/config.js"></script><script src="../js/banda-common.js?v=2"></script><script src="../js/vendor/jsQR.js"></script><script src="../js/banda-scanner.js?v=1"></script><script src="../js/musicos.js?v=3"></script><script src="../js/pwa.js?v=3"></script>
 </body></html>

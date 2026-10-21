@@ -11,6 +11,16 @@
 7. Mantener una sola pantalla QR por evento. El código cambia cada 60 segundos. Escanear con la cámara del móvil, iniciar sesión y pulsar **Comprobar ubicación y fichar**. Si se inicia sesión y caduca el QR, volver a escanear.
 8. Cerrar el fichaje al terminar. Revisar incidencias y músicos sin fichaje, y exportar el CSV si se necesita.
 
+## Pantallas del portal
+
+- **Resumen:** próxima convocatoria, respuestas pendientes, presencias e incidencias y acceso a la ficha musical.
+- **Calendario:** navegar meses y consultar eventos por día; ensayos y actuaciones se distinguen por sus indicadores.
+- **Confirmaciones:** responder Voy / No voy, buscar por título o lugar y filtrar por pendientes, ensayos o actuaciones.
+- **Mis asistencias:** historial individual con el resultado y los motivos de revisión.
+- **Escanear QR:** abrir cámara tras pulsar el botón, leer una imagen de la galería o pegar el enlace. Las imágenes se procesan localmente y solo se aceptan enlaces de asistencia de esta misma web. Leer el código prepara el fichaje; pulsar Confirmar mi asistencia solicita la ubicación y envía el registro.
+
+La cámara trasera se solicita sin micrófono y se cierra al reconocer un QR, cambiar de vista, ocultar la página o salir de ella. Los mensajes ofrecen alternativas si se deniega el permiso. La política del servidor permite la cámara únicamente en la ruta del portal. Una conexión HTTPS y los permisos del navegador son necesarios para el escaneo en vivo. Se sigue pudiendo escanear desde la cámara nativa del móvil.
+
 ## Presencia y excepciones
 
 - La confirmación no acredita presencia.
@@ -32,6 +42,9 @@ Las escrituras pasan por `public.banda_accion` (invocador) hacia un despachador 
 - `node --test tests/*.test.cjs`: comprobaciones existentes de repertorios y nuevas de fechas de Madrid y escape de texto.
 - `tests/banda-permisos.sql`: prueba de integración con usuarios temporales, confirmación, QR, ubicación, corrección, privacidad y retirada de rol. Ejecutar como una única transacción en SQL Editor o MCP; termina con ROLLBACK y no deja registros.
 - `tests/banda-browser.cjs`: recorrido de interfaz con datos simulados, confirmaciones, QR, ficha y ausencia de desbordamiento en móvil. Requiere Playwright y un servidor local en el puerto 8090. No sustituye las pruebas de permisos contra Supabase ni una prueba de GPS con móviles reales.
+- `tests/banda-scanner.test.cjs`: validación de origen, ruta y formato de los QR.
+- `tests/banda-scanner-browser.cjs`: recorre cinco vistas a 320–1280 px; prueba cámara denegada, QR reales por vídeo e imagen y cierre de cámara sin dispositivos físicos.
+- Lector QR: jsQR 1.4.0 (Apache-2.0), conservado localmente con su licencia, sin servicios externos de lectura.
 - Generador QR local: qrcode-generator 1.4.4 (MIT), conservado en `js/vendor/qrcode-generator.js`. No se transmite el enlace de fichaje a un servicio externo.
 
 Los cambios de código se publican en GitHub; Netlify despliega automáticamente. `supabase_permisos_musico_admin.sql` actualiza instalaciones anteriores para separar ambos permisos. `supabase_area_musicos.sql` documenta el estado completo instalado y se aplica solo una vez en una base sin este módulo.
