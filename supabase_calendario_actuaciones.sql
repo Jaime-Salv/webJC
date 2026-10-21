@@ -71,7 +71,6 @@ create or replace function jc_private.banda_accion(p_accion text,p_datos jsonb) 
 declare
  actor uuid:=auth.uid(); rol text; musico boolean; eid uuid; uid uuid; ev public.banda_eventos%rowtype;
  anterior jsonb; resultado jsonb; qr jc_private.banda_qr%rowtype;
- lat double precision; lon double precision; prec double precision; distancia double precision;
  est text; ahora timestamptz:=clock_timestamp();
 begin
  if actor is null then raise exception 'Inicia sesión para continuar.'; end if;
@@ -89,22 +88,18 @@ begin
   insert into public.banda_auditoria(actor_id,accion,usuario_id,detalle) values(actor,'perfil',uid,jsonb_build_object('anterior',anterior,'nuevo',p_datos));
   return jsonb_build_object('ok',true);
  end if;
- if p_accion in ('ensayo','ajustes_ensayo','rol','evento','cancelar','abrir','cerrar','qr','manual','convocar') and rol<>'admin' then raise exception 'Acceso exclusivo para administración.'; end if;
+ if p_accion in ('ensayo','rol','evento','cancelar','abrir','cerrar','qr','manual','convocar') and rol<>'admin' then raise exception 'Acceso exclusivo para administración.'; end if;
 
- if p_accion='ajustes_ensayo' then
-  update public.banda_ajustes set latitud=nullif(p_datos->>'latitud','')::float8,longitud=nullif(p_datos->>'longitud','')::float8,radio_m=(p_datos->>'radio_m')::int where id=1;
-  insert into public.banda_auditoria(actor_id,accion,detalle) values(actor,'ajustes_ensayo',p_datos);
-  return jsonb_build_object('ok',true);
- elsif p_accion='ensayo' then
+ if p_accion='ensayo' then
   if coalesce(p_datos->>'plantilla','') not in ('manana','tarde') or nullif(p_datos->>'fecha','') is null then raise exception 'Selecciona fecha y tipo de ensayo.'; end if;
   perform pg_advisory_xact_lock(hashtextextended('ensayo:'||(p_datos->>'fecha')||':'||(p_datos->>'plantilla'),0));
   if exists(select 1 from public.banda_eventos where tipo='ensayo' and estado='publicado' and inicio=((p_datos->>'fecha')::date+case when p_datos->>'plantilla'='tarde' then time '20:30' else time '12:00' end) at time zone 'Europe/Madrid') then raise exception 'Este ensayo ya existe en el calendario.'; end if;
-  insert into public.banda_eventos(titulo,tipo,inicio,fin,limite_respuesta,lugar,latitud,longitud,radio_m,creado_por)
+  insert into public.banda_eventos(titulo,tipo,inicio,fin,limite_respuesta,lugar,creado_por)
   select case when p_datos->>'plantilla'='tarde' then 'Ensayo tarde' else 'Ensayo mañana' end,'ensayo',
    ((p_datos->>'fecha')::date+case when p_datos->>'plantilla'='tarde' then time '20:30' else time '12:00' end) at time zone 'Europe/Madrid',
    ((p_datos->>'fecha')::date+case when p_datos->>'plantilla'='tarde' then time '22:00' else time '14:00' end) at time zone 'Europe/Madrid',
    ((p_datos->>'fecha')::date+case when p_datos->>'plantilla'='tarde' then time '20:30' else time '12:00' end) at time zone 'Europe/Madrid',
-   'Local de la banda',latitud,longitud,radio_m,actor from public.banda_ajustes where id=1 returning id into eid;
+   'Local de la banda',actor returning id into eid;
   insert into public.banda_convocados(evento_id,usuario_id) select eid,id from public.perfiles where es_musico;
   insert into public.banda_auditoria(actor_id,accion,evento_id,detalle) values(actor,'ensayo',eid,p_datos);
   return jsonb_build_object('ok',true,'id',eid);
@@ -133,11 +128,11 @@ begin
    end if;
   end if;
   if eid is null then
-   insert into public.banda_eventos(titulo,tipo,inicio,fin,lugar,notas,limite_respuesta,latitud,longitud,radio_m,creado_por)
-   values(trim(p_datos->>'titulo'),p_datos->>'tipo',(p_datos->>'inicio')::timestamptz,(p_datos->>'fin')::timestamptz,trim(p_datos->>'lugar'),coalesce(p_datos->>'notas',''),(p_datos->>'limite_respuesta')::timestamptz,nullif(p_datos->>'latitud','')::float8,nullif(p_datos->>'longitud','')::float8,(p_datos->>'radio_m')::int,actor) returning id into eid;
+   insert into public.banda_eventos(titulo,tipo,inicio,fin,lugar,notas,limite_respuesta,creado_por)
+   values(trim(p_datos->>'titulo'),p_datos->>'tipo',(p_datos->>'inicio')::timestamptz,(p_datos->>'fin')::timestamptz,trim(p_datos->>'lugar'),coalesce(p_datos->>'notas',''),(p_datos->>'limite_respuesta')::timestamptz,actor) returning id into eid;
    insert into public.banda_convocados(evento_id,usuario_id) select eid,id from public.perfiles where perfiles.es_musico;
   else
-   update public.banda_eventos set titulo=trim(p_datos->>'titulo'),tipo=p_datos->>'tipo',inicio=(p_datos->>'inicio')::timestamptz,fin=(p_datos->>'fin')::timestamptz,lugar=trim(p_datos->>'lugar'),notas=coalesce(p_datos->>'notas',''),limite_respuesta=(p_datos->>'limite_respuesta')::timestamptz,latitud=nullif(p_datos->>'latitud','')::float8,longitud=nullif(p_datos->>'longitud','')::float8,radio_m=(p_datos->>'radio_m')::int where id=eid;
+   update public.banda_eventos set titulo=trim(p_datos->>'titulo'),tipo=p_datos->>'tipo',inicio=(p_datos->>'inicio')::timestamptz,fin=(p_datos->>'fin')::timestamptz,lugar=trim(p_datos->>'lugar'),notas=coalesce(p_datos->>'notas',''),limite_respuesta=(p_datos->>'limite_respuesta')::timestamptz where id=eid;
   end if;
   insert into public.banda_auditoria(actor_id,accion,evento_id,detalle) values(actor,'evento',eid,jsonb_build_object('anterior',anterior,'nuevo',p_datos));
   return jsonb_build_object('ok',true,'id',eid);
@@ -155,7 +150,6 @@ begin
   delete from jc_private.banda_qr where evento_id=eid;
  elsif p_accion='abrir' then
   if ev.estado<>'publicado' or ahora<ev.inicio-interval '2 hours' or ahora>ev.fin then raise exception 'El fichaje solo puede abrirse desde 2 horas antes hasta el final del evento.'; end if;
-  if ev.latitud is null then raise exception 'Configura la ubicación del evento antes de abrir el fichaje.'; end if;
   update public.banda_eventos set fichaje_abierto=true,abierto_hasta=least(ahora+interval '2 hours',fin) where id=eid;
  elsif p_accion='cerrar' then
   update public.banda_eventos set fichaje_abierto=false,abierto_hasta=null where id=eid;
@@ -179,12 +173,9 @@ begin
   select * into qr from jc_private.banda_qr where evento_id=eid;
   if qr.token is null or (p_datos->>'token') is null or qr.token<>(p_datos->>'token')::uuid or qr.expira<=ahora then raise exception 'El QR ha caducado. Escanea el que se muestra ahora.'; end if;
   if exists(select 1 from public.banda_asistencias where evento_id=eid and usuario_id=actor) then raise exception 'Ya existe un registro. Si hay una incidencia, consulta a administración.'; end if;
-  lat:=(p_datos->>'latitud')::float8; lon:=(p_datos->>'longitud')::float8; prec:=(p_datos->>'precision')::float8;
-  if lat is null or lon is null or prec is null or not(lat between -90 and 90) or not(lon between -180 and 180) or not(prec between 0 and 10000) then raise exception 'La ubicación no es válida. Activa la ubicación o solicita registro manual.'; end if;
-  distancia:=6371000*2*asin(sqrt(least(1.0,power(sin(radians(lat-ev.latitud)/2),2)+cos(radians(lat))*cos(radians(ev.latitud))*power(sin(radians(lon-ev.longitud)/2),2))));
-  est:=case when distancia<=ev.radio_m and prec<=least(100,ev.radio_m) then 'presente' else 'incidencia' end;
-  insert into public.banda_asistencias(evento_id,usuario_id,estado,metodo,distancia_m,precision_m,motivo) values(eid,actor,est,'qr',round(distancia)::int,round(prec)::int,case when est='incidencia' then 'Ubicación fuera del radio o con precisión insuficiente. Pendiente de revisión.' else '' end);
-  insert into public.banda_auditoria(actor_id,accion,evento_id,usuario_id,detalle) values(actor,'fichar',eid,actor,jsonb_build_object('estado',est,'distancia_m',round(distancia),'precision_m',round(prec)));
+  est:='presente';
+  insert into public.banda_asistencias(evento_id,usuario_id,estado,metodo) values(eid,actor,est,'qr');
+  insert into public.banda_auditoria(actor_id,accion,evento_id,usuario_id,detalle) values(actor,'fichar',eid,actor,jsonb_build_object('estado',est));
   return jsonb_build_object('ok',true,'estado',est);
  elsif p_accion='manual' then
   uid:=(p_datos->>'usuario_id')::uuid;

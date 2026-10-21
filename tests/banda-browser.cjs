@@ -22,7 +22,7 @@ const fixture=require('./helpers/banda-fixture.cjs');
  const eid=await page.evaluate(()=>testData.eid);
  await page.goto(`http://127.0.0.1:8090/templates/musicos.html#evento=${eid}&token=00000000-0000-4000-8000-000000000020`);
  await page.locator('#banda-fichar').click();await page.getByText('Asistencia registrada correctamente.',{exact:true}).waitFor();
- assert.equal(await page.locator('#banda-fichar').isDisabled(),true);
+ assert.equal(await page.locator('#banda-fichar').isDisabled(),true);assert(await page.evaluate(()=>testData.calls.filter(c=>c.a==='fichar').every(c=>!('latitud' in c.d)&&!('longitud' in c.d)&&!('precision' in c.d))),'Fichaje sin enviar coordenadas');
  assert(!page.url().includes('token='),'Token fuera de la barra de dirección');
  await page.goto('http://127.0.0.1:8090/templates/admin.html#banda');
 
@@ -34,7 +34,7 @@ const fixture=require('./helpers/banda-fixture.cjs');
  await page.locator('#ba-qr-image svg').screenshot({path:'/tmp/jc-qr.png'});
  await page.locator('#ba-qr-stop').click();await page.locator('#ba-qr-dialog').waitFor({state:'hidden'});assert(await page.evaluate(()=>testData.calls.some(c=>c.a==='cerrar')),'Cerrar fichaje desde pantalla QR');
  await page.evaluate(()=>{testData.events[0].concierto_id=72;testData.concerts=[{id_concierto:72,titulo:'Concierto de prueba',estado:'Publicado'}];});await page.locator('[data-admin-target="conciertos"]').click();await page.evaluate(()=>{conciertoAdminActual=testData.concerts[0];});await page.locator('#concierto-fichaje').click();await page.locator('#ba-qr-image svg').waitFor();assert(await page.evaluate(()=>testData.calls.filter(c=>c.a==='abrir').every(c=>c.d.evento_id===testData.eid)),'QR del concierto usa la convocatoria vinculada');await page.locator('#ba-qr-hide').click();
- await page.evaluate(()=>{testData.events[0].latitud=null;testData.events[0].longitud=null;});await page.locator(`[data-qr="${eid}"]`).click();await page.locator('#ba-editor').waitFor({state:'visible'});assert(await page.locator('#ba-qr-dialog').isHidden(),'Sin ubicación se prepara la zona de fichaje');await page.evaluate(()=>{testData.events[0].latitud=36.778;testData.events[0].longitud=-6.35;});
+ await page.evaluate(()=>{testData.events[0].latitud=null;testData.events[0].longitud=null;});await page.locator(`[data-qr="${eid}"]`).click();await page.locator('#ba-qr-image svg').waitFor();await page.locator('#ba-qr-hide').click();assert.equal(await page.locator('#ba-use-location').count(),0,'Sin configuración GPS');await page.evaluate(()=>{testData.events[0].latitud=36.778;testData.events[0].longitud=-6.35;});
 
  await page.locator('[data-action="edit"]').click();await page.locator('#ba-editor').waitFor({state:'visible'});
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Admin móvil sin desbordamiento');

@@ -22,5 +22,5 @@ module.exports=()=>{
   if(a==='abrir'){ev.fichaje_abierto=true;ev.abierto_hasta=new Date(now+3600000).toISOString();}
   if(a==='qr')data={token:'00000000-0000-4000-8000-000000000020',expira:new Date(Date.now()+60000).toISOString(),servidor:new Date().toISOString()};
   return {data,error:null};},auth:{getSession:async()=>({data:{session:{user:{id:uid,email:'test@example.invalid',user_metadata:{}}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:async()=>({})}};
- navigator.geolocation.getCurrentPosition=(ok)=>ok({coords:{latitude:36.778,longitude:-6.35,accuracy:10}});
+ navigator.geolocation.getCurrentPosition=()=>{throw Error('No debe solicitarse geolocalización.');};
 };

@@ -41,12 +41,6 @@ window.JCBanda = (() => {
   if(!profile || !['admin','musico'].includes(profile.rol)) throw Error('Tu cuenta no tiene acceso al área de músicos. El rol lo asigna administración.');
   return {user:session.user,profile,admin:profile.rol==='admin',musico:profile.es_musico===true||profile.rol==='musico'};
  }
- function geo() {
-  return new Promise((resolve,reject)=> {
-   if(!navigator.geolocation) return reject(Error('Este navegador no permite obtener la ubicación. Solicita registro manual.'));
-   navigator.geolocation.getCurrentPosition(p=>resolve({latitud:p.coords.latitude,longitud:p.coords.longitude,precision:p.coords.accuracy}),e=>reject(Error(e.code===1?'Permite el acceso a la ubicación para fichar. Si no puedes, solicita registro manual.':'No se ha conseguido una ubicación precisa. Vuelve a intentarlo o solicita registro manual.')),{enableHighAccuracy:true,timeout:18000,maximumAge:0});
-  });
- }
  function notice(text,error=false,id='banda-status') {
   const el=document.getElementById(id); if(!el) return;
   el.textContent=text; el.hidden=!text; el.className='notice'+(error?' error':'');
@@ -57,5 +51,5 @@ window.JCBanda = (() => {
   const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
  const asistencia=a=>a?({presente:'Presente',incidencia:'Incidencia pendiente',ausente:'Ausente',justificada:'Ausencia justificada'}[a.estado]||a.estado):'Sin fichaje';
- return {escape,fecha,dia,localInput,madridISO,rpc,query,access,geo,notice,csv,asistencia};
+ return {escape,fecha,dia,localInput,madridISO,rpc,query,access,notice,csv,asistencia};
 })();

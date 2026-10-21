@@ -12,9 +12,8 @@ do $$
 declare a uuid:=current_setting('jc.test_admin')::uuid;m uuid:=current_setting('jc.test_musico')::uuid; r jsonb;eid uuid;rehearsal uuid;cid bigint;pid integer;denied boolean;d date:=(now() at time zone 'Europe/Madrid')::date+30;
 begin
  perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'role','authenticated')::text,true);
- perform public.banda_accion('ajustes_ensayo','{"latitud":36.778,"longitud":-6.35,"radio_m":100}');
  r:=public.banda_accion('ensayo','{"fecha":"2027-07-01","plantilla":"tarde"}');rehearsal:=(r->>'id')::uuid;
- assert exists(select 1 from public.banda_eventos where id=rehearsal and inicio='2027-07-01 18:30Z' and fin='2027-07-01 20:00Z' and lugar='Local de la banda' and latitud=36.778 and radio_m=100),'Ensayo tarde de verano y ubicación habitual';
+ assert exists(select 1 from public.banda_eventos where id=rehearsal and inicio='2027-07-01 18:30Z' and fin='2027-07-01 20:00Z' and lugar='Local de la banda' and latitud is null and longitud is null),'Ensayo tarde de verano sin coordenadas';
  r:=public.banda_accion('ensayo','{"fecha":"2027-01-01","plantilla":"manana"}');
  assert exists(select 1 from public.banda_eventos where id=(r->>'id')::uuid and inicio='2027-01-01 11:00Z' and fin='2027-01-01 13:00Z'),'Ensayo mañana de invierno';
  denied:=false;begin perform public.banda_accion('ensayo','{"fecha":"2027-07-01","plantilla":"tarde"}');exception when others then denied:=true;end;assert denied,'Ensayo duplicado rechazado';

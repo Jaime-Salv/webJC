@@ -18,7 +18,7 @@ begin
  assert jc_private.rol_actual()='admin','Rol admin';
  perform public.banda_accion('rol',jsonb_build_object('usuario_id',a,'rol','admin','es_musico',true));
  assert jc_private.rol_actual()='admin' and (select es_musico from public.perfiles where id=a),'Administrador y músico simultáneos';
- payload:=jsonb_build_object('titulo','Prueba transaccional JC','tipo','actuacion','inicio',now()-interval '15 minutes','fin',now()+interval '1 hour','limite_respuesta',now()+interval '30 minutes','lugar','Local de prueba','latitud',36.778,'longitud',-6.35,'radio_m',150);
+ payload:=jsonb_build_object('titulo','Prueba transaccional JC','tipo','actuacion','inicio',now()-interval '15 minutes','fin',now()+interval '1 hour','limite_respuesta',now()+interval '30 minutes','lugar','Local de prueba');
  result:=public.banda_accion('evento',payload);ev:=(result->>'id')::uuid;
  assert exists(select 1 from public.banda_convocados where evento_id=ev and usuario_id=m),'Convocatoria músico';
  assert not exists(select 1 from public.banda_convocados where evento_id=ev and usuario_id=u),'Público no convocado';
@@ -37,7 +37,7 @@ begin
  denied:=false;begin perform public.banda_accion('evento',payload);exception when others then denied:=true;end;assert denied,'Público no crea eventos';
  denied:=false;begin update public.perfiles set rol='admin' where id=u;exception when others then denied:=true;end;assert denied,'Autoasignación de admin bloqueada';
  denied:=false;begin update public.perfiles set rol='musico' where id=u;exception when others then denied:=true;end;assert denied,'Autoasignación de músico bloqueada';
- denied:=false;begin perform public.banda_accion('fichar',jsonb_build_object('evento_id',ev,'token',token,'latitud',36.778,'longitud',-6.35,'precision',10));exception when others then denied:=true;end;assert denied,'Público no ficha';
+ denied:=false;begin perform public.banda_accion('fichar',jsonb_build_object('evento_id',ev,'token',token));exception when others then denied:=true;end;assert denied,'Público no ficha';
  perform set_config('request.jwt.claims',jsonb_build_object('sub',m,'role','authenticated')::text,true);
  assert (select count(*) from public.banda_eventos where id=ev)=1,'Músico ve convocatoria';
  perform public.banda_accion('perfil',jsonb_build_object('nombre','Músico prueba','instrumento','Clarinete'));
@@ -47,13 +47,14 @@ begin
  perform public.banda_accion('respuesta',jsonb_build_object('evento_id',ev,'respuesta','no_voy'));
  assert (select respuesta from public.banda_respuestas where evento_id=ev and usuario_id=m)='no_voy','Cambio de respuesta único';
  denied:=false;begin insert into public.banda_asistencias(evento_id,usuario_id,estado,metodo) values(ev,m,'presente','qr');exception when insufficient_privilege then denied:=true;end;assert denied,'Escritura directa de asistencia bloqueada';
- denied:=false;begin perform public.banda_accion('fichar',jsonb_build_object('evento_id',ev,'token',gen_random_uuid(),'latitud',36.778,'longitud',-6.35,'precision',10));exception when others then denied:=true;end;assert denied,'QR inventado bloqueado';
- result:=public.banda_accion('fichar',jsonb_build_object('evento_id',ev,'token',token,'latitud',37.4,'longitud',-5.9,'precision',10));
- assert result->>'estado'='incidencia','Ubicación distante no cuenta como presente';
+ denied:=false;begin perform public.banda_accion('fichar',jsonb_build_object('evento_id',ev,'token',gen_random_uuid()));exception when others then denied:=true;end;assert denied,'QR inventado bloqueado';
+ result:=public.banda_accion('fichar',jsonb_build_object('evento_id',ev,'token',token));
+ assert result->>'estado'='presente','QR válido registra presencia sin coordenadas';
+ assert exists(select 1 from public.banda_asistencias where evento_id=ev and usuario_id=m and distancia_m is null and precision_m is null),'No se registra ubicación';
  perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'role','authenticated')::text,true);
  denied:=false;begin perform public.banda_accion('manual',jsonb_build_object('evento_id',ev,'usuario_id',m,'estado','presente','motivo',''));exception when others then denied:=true;end;assert denied,'Corrección exige motivo';
  perform public.banda_accion('manual',jsonb_build_object('evento_id',ev,'usuario_id',m,'estado','presente','motivo','Verificado personalmente en ensayo'));
- assert exists(select 1 from public.banda_auditoria where evento_id=ev and accion='manual' and detalle->'anterior'->>'estado'='incidencia'),'Auditoría conserva el original';
+ assert exists(select 1 from public.banda_auditoria where evento_id=ev and accion='manual' and detalle->'anterior'->>'estado'='presente'),'Auditoría conserva el original';
  -- Segundo evento: presencia válida, QR rotado y cierre de fichaje.
  result:=public.banda_accion('evento',payload);ev2:=(result->>'id')::uuid;
  assert not exists(select 1 from public.banda_convocados where evento_id=ev2 and usuario_id=a),'Administrador sin músico no convocado';
@@ -61,10 +62,10 @@ begin
  result:=public.banda_accion('qr',jsonb_build_object('evento_id',ev2));token:=result->>'token';
  old_token:=token;result:=public.banda_accion('qr',jsonb_build_object('evento_id',ev2));token:=result->>'token';
  perform set_config('request.jwt.claims',jsonb_build_object('sub',m,'role','authenticated')::text,true);
- denied:=false;begin perform public.banda_accion('fichar',jsonb_build_object('evento_id',ev2,'token',old_token,'latitud',36.778,'longitud',-6.35,'precision',10));exception when others then denied:=true;end;assert denied,'QR sustituido no funciona';
- result:=public.banda_accion('fichar',jsonb_build_object('evento_id',ev2,'token',token,'latitud',36.778,'longitud',-6.35,'precision',10));
- assert result->>'estado'='presente','Ubicación válida registra presencia';
- denied:=false;begin perform public.banda_accion('fichar',jsonb_build_object('evento_id',ev2,'token',token,'latitud',36.778,'longitud',-6.35,'precision',10));exception when others then denied:=true;end;assert denied,'Fichaje duplicado bloqueado';
+ denied:=false;begin perform public.banda_accion('fichar',jsonb_build_object('evento_id',ev2,'token',old_token));exception when others then denied:=true;end;assert denied,'QR sustituido no funciona';
+ result:=public.banda_accion('fichar',jsonb_build_object('evento_id',ev2,'token',token));
+ assert result->>'estado'='presente','QR válido registra presencia sin GPS';
+ denied:=false;begin perform public.banda_accion('fichar',jsonb_build_object('evento_id',ev2,'token',token));exception when others then denied:=true;end;assert denied,'Fichaje duplicado bloqueado';
  assert (select count(*) from public.banda_asistencias where usuario_id<>m)=0,'Músico no ve asistencias ajenas';
  assert (select count(*) from public.banda_auditoria)=0,'Músico no ve auditoría interna';
  perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'role','authenticated')::text,true);

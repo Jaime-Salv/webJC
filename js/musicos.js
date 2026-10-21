@@ -30,7 +30,7 @@
  function eventCard(ev,interactive=true) {
   const r=response(ev.id),a=attended(ev.id),cancelled=ev.estado==='cancelado';
   const closed=cancelled||Date.now()>Date.parse(ev.limite_respuesta)||Date.now()>=Date.parse(ev.fin);
-  const map=ev.latitud!=null&&ev.longitud!=null?`${ev.latitud},${ev.longitud}`:ev.lugar;
+  const map=ev.lugar;
   return `<article class="event" id="${interactive?'ev':'day'}-${ev.id}"><div class="portal-event-top"><span class="badge">${ev.tipo==='ensayo'?'Ensayo':'Actuación'}</span>${cancelled?'<span class="badge warn">Cancelado</span>':''}${ev.tipo==='actuacion'&&!r&&!closed?'<span class="badge warn">Por confirmar</span>':''}</div><h3>${E(ev.titulo)}</h3><time>${B.fecha(ev.inicio)} → ${new Intl.DateTimeFormat('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}).format(new Date(ev.fin))}</time><p class="portal-event-location">${E(ev.lugar)}<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(map)}" target="_blank" rel="noopener noreferrer">Cómo llegar ↗</a></p>${ev.notas?`<p class="notes">${E(ev.notas)}</p>`:''}${interactive&&ev.tipo==='ensayo'?'<p class="muted">No requiere confirmación previa. Registra tu llegada con el QR del ensayo.</p>':interactive?`<p class="muted">${closed?'Plazo cerrado':'Responde hasta '+B.fecha(ev.limite_respuesta)}</p><div class="portal-response-row"><button data-response="voy" data-event="${ev.id}" aria-pressed="${r?.respuesta==='voy'}" ${closed||!auth.musico||!navigator.onLine?'disabled':''}>Voy</button><button data-response="no_voy" data-event="${ev.id}" aria-pressed="${r?.respuesta==='no_voy'}" ${closed||!auth.musico||!navigator.onLine?'disabled':''}>No voy</button></div><p class="portal-response-label"><span>${r?(r.respuesta==='voy'?'Confirmado: voy':'Confirmado: no voy'):'Sin responder'}</span>${r?` · <time>${B.fecha(r.actualizado_en)}</time>`:''}</p>`:`<button type="button" data-open-event="${ev.id}">Ver convocatoria</button>`}<div class="portal-event-footer">Asistencia: <b>${E(B.asistencia(a))}</b>${ev.fichaje_abierto&&Date.parse(ev.abierto_hasta)>Date.now()&&!cancelled?`<button type="button" data-view="escanear" class="portal-event-checkin">Escanear QR</button>`:''}</div></article>`;
  }
  function paintSummary() {
@@ -78,7 +78,7 @@
   $('banda-checkin-event').textContent=`${ev.titulo} · ${B.fecha(ev.inicio)}`;
   const a=attended(ev.id);$('banda-fichar').disabled=!!a||!auth.musico||!navigator.onLine;
   $('banda-fichar').textContent=a?'Asistencia ya registrada':'Confirmar mi asistencia';
-  $('portal-checkin-state').textContent=a?`Tu registro: ${B.asistencia(a)}.${a.estado==='incidencia'?' Consulta a administración para revisarlo.':''}`:'QR leído. Confirma tu llegada para comprobar la ubicación y guardar el registro.';
+  $('portal-checkin-state').textContent=a?`Tu registro: ${B.asistencia(a)}.${a.estado==='incidencia'?' Consulta a administración para revisarlo.':''}`:'QR leído. Confirma tu llegada para guardar el registro de asistencia.';
  }
  async function load() {
   if(loading)return;loading=true;$('banda-refresh').disabled=true;
@@ -122,8 +122,8 @@
   try{await B.rpc('respuesta',{evento_id:b.dataset.event,respuesta:b.dataset.response});await load();B.notice('Tu respuesta ha quedado guardada.');}finally{if(b.isConnected)b.disabled=false;}
  }));
  $('banda-fichar').addEventListener('click',event=>run(async()=>{
-  const b=event.currentTarget;if(!navigator.onLine)throw Error('Necesitas conexión para registrar la asistencia.');b.disabled=true;b.textContent='Comprobando ubicación…';B.notice('Obteniendo tu ubicación para registrar la llegada…');
-  try{const pos=await B.geo();const r=await B.rpc('fichar',{...checkin,...pos});await load();B.notice(r.estado==='presente'?'Asistencia registrada correctamente.':'Incidencia registrada. Administración debe revisar la ubicación; todavía no cuenta como presencia.');paintCheckin();}
+  const b=event.currentTarget;if(!navigator.onLine)throw Error('Necesitas conexión para registrar la asistencia.');b.disabled=true;b.textContent='Registrando asistencia…';B.notice('Registrando tu llegada…');
+  try{const r=await B.rpc('fichar',{...checkin});await load();B.notice(r.estado==='presente'?'Asistencia registrada correctamente.':'Incidencia registrada. Administración debe revisar el registro; todavía no cuenta como presencia.');paintCheckin();}
   catch(error){b.disabled=false;b.textContent='Volver a intentar el fichaje';$('portal-checkin-state').textContent=error.message;if(/caducado|fichaje est[aá] cerrado/i.test(error.message)){checkin.token=null;paintCheckin();cameraStatus(error.message,true);}throw error;}
  }));
  $('portal-camera-start').onclick=()=>{if(auth?.musico){checkin.token=null;paintCheckin();reader.start();}};
