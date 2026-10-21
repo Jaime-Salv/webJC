@@ -1,0 +1,14 @@
+.jc-date-control {display:flex;align-items:stretch;gap:6px;min-width:0;margin-bottom:14px;}
+.jc-date-control input {flex:1;min-width:0!important;width:100%!important;min-height:48px!important;margin:6px 0 0!important;font-size:16px!important;color-scheme:dark;}
+.jc-date-control button.jc-date-open {flex:0 0 auto;min-height:48px;margin-top:6px;padding:8px 10px;background:#242832;color:#f0d77a;border:1px solid #555047;border-radius:7px;font:inherit;font-size:12px;cursor:pointer;}
+.jc-date-control[data-locked=true] {opacity:.75;}.jc-date-control[data-locked=true] input {cursor:default;border-style:dashed;}.jc-date-control button:disabled {cursor:default;color:#aaa;}
+.jc-date-dialog {box-sizing:border-box;margin:auto;width:min(420px,calc(100vw - 24px));max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:20px;border:1px solid #535044;border-radius:16px;background:#13161c;color:#eee;font:15px/1.5 'Montserrat',sans-serif;}
+.jc-date-dialog::backdrop {background:#000b;}.jc-date-dialog * {box-sizing:border-box;}.jc-date-dialog [hidden] {display:none!important;}
+.jc-date-dialog h2 {font-size:19px;line-height:1.35;margin:0;}.jc-date-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}.jc-date-heading strong {text-align:center;text-transform:capitalize;}
+.jc-date-dialog button {min-height:44px;padding:8px 12px;background:#252933;border:1px solid #454852;border-radius:7px;color:#fff;font:inherit;cursor:pointer;touch-action:manipulation;}
+.jc-date-dialog button:disabled {opacity:.35;cursor:default;}.jc-date-days {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:18px;text-align:center;}.jc-date-days button {padding:4px;min-width:0;}.jc-date-days span {font-size:12px;color:#adb1bc;}
+.jc-date-days button[aria-pressed=true],.jc-date-dialog .jc-date-apply {background:#d4af37;color:#111;font-weight:700;border-color:#d4af37;}.jc-date-days button[aria-current=date] {box-shadow:inset 0 0 0 1px #d4af37;}
+.jc-date-dialog label {display:block;font-size:13px;color:#bbc0cc;margin-bottom:6px;}.jc-date-dialog input {display:block;width:100%;min-height:48px;margin:0 0 14px;padding:10px;border:1px solid #454852;border-radius:7px;background:#090c11;color:#fff;font:16px/1.4 sans-serif;}
+.jc-date-dialog :focus-visible {outline:2px solid #d4af37;outline-offset:2px;}.jc-date-actions {display:flex;justify-content:space-between;gap:12px;}.jc-date-dialog #jc-date-error {color:#ffb9b9;font-size:13px;}
+
+.jc-date-help {display:block;color:#adb1bc;font-size:12px;margin:-6px 0 14px;}

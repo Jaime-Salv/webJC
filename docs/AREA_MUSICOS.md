@@ -62,3 +62,5 @@ Aplicar `supabase_calendario_actuaciones.sql` una vez después de la instalació
 - Si un músico se incorpora después de la publicación, usar **Añadir nuevos músicos** en su convocatoria.
 - `tests/banda-agenda.sql` verifica plantillas en verano/invierno, duplicados, permisos, rechazo de RSVP en ensayos, sincronización y cancelación sin perder historial. Finaliza con ROLLBACK.
 - `tests/banda-agenda-browser.cjs` comprueba selección de fecha y plantilla, ausencia de RSVP de ensayo, formularios de publicación/edición, orden del feed público y adaptación a 320/390/1280 px.
+
+Los campos de fecha de administración abren un calendario propio al tocarlos o pulsar **Elegir**. Permite selección por día y escritura DD/MM/AAAA o DDMMYYYY; las convocatorias admiten también HH:MM o HHMM. El valor enviado sigue siendo ISO, sin conversiones por la zona del dispositivo. Las fechas vinculadas muestran **Desde publicación** y se cambian en la ficha de origen.
