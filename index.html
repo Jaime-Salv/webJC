@@ -6,7 +6,7 @@
 
     <title>Banda de Música Julián Cerdán</title>
 
-    <link rel="stylesheet" href="css/style.css?v=10">
+    <link rel="stylesheet" href="css/style.css?v=11">
     <link rel="icon" type="image/png" href="img/escudo.png">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="img/icon-192.png">
@@ -103,7 +103,7 @@
         .header-nav {
             display: flex;
             justify-content: center;
-            gap: 26px;
+            gap: 18px;
             align-items: center;
         }
 
@@ -112,12 +112,18 @@
             text-decoration: none;
             text-transform: uppercase;
             font-weight: 800;
-            font-size: 0.72rem;
-            letter-spacing: 1.5px;
+            font-size: 0.68rem;
+            letter-spacing: 1px;
+            white-space: nowrap;
             transition: color 0.2s ease;
         }
 
-        .header-nav a:hover { color: var(--color-oro); }
+        .header-nav a:hover, .header-nav a[aria-current="page"] { color: var(--color-oro); }
+        #actuaciones { scroll-margin-top:148px; }
+        @media (min-width:1051px) and (max-width:1400px) {
+            .main-header { padding:0 18px; gap:16px; }
+            .brand-text, .btn-web-ext { display:none; }
+        }
 
         .auth-side {
             display: flex;
@@ -721,17 +727,21 @@
         }
 
         @media (max-width: 1050px) {
-            .header-nav { display: none; }
+            .header-nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-column:1 / -1; grid-row:2; width:100%; min-width:0; gap:0 8px; padding:0; }
+            .header-nav a { display:flex; justify-content:center; align-items:center; min-height:36px; font-size:.61rem; letter-spacing:.7px; }
+            .header-nav a[aria-current="page"] { border-bottom:2px solid var(--color-oro); }
             .main-header {
                 grid-template-columns: auto 1fr;
                 padding: 0 18px;
-                height: 80px;
+                height: 158px;
+                grid-template-rows:64px 76px;
+                gap:4px 14px;
             }
             .auth-side { justify-self: end; }
             .brand-text { display: none; }
             .logo-side img { height: 54px; }
             body {
-                padding-top: 80px;
+                padding-top: 158px;
                 background-attachment: scroll;
             }
             .hero-home {
@@ -746,6 +756,9 @@
         }
 
         @media (max-width: 680px) {
+            .header-nav { display:none; }
+            .main-header { height:80px; grid-template-rows:1fr; }
+            body { padding-top:80px; }
             .page-shell { width: min(100vw - 22px, 1280px); }
             .btn-web-ext { display: none; }
             .btn-google-pro {
@@ -809,11 +822,13 @@
         <a href="https://bandajuliancerdan.com/" target="_blank" rel="noopener noreferrer" class="btn-web-ext">Home</a>
     </div>
 
-    <nav class="header-nav">
+    <nav class="header-nav" aria-label="Navegación principal">
+        <a href="index.html" aria-current="page">Inicio</a>
         <a href="#actuaciones">Actuaciones</a>
         <a href="templates/catalogo.html">Catálogo</a>
         <a href="templates/comunidad.html">Comunidad</a>
         <a href="templates/simulacion.html">Simulador</a>
+        <a href="templates/musicos.html" id="link-musicos">Portal músico</a>
     </nav>
 
     <div class="auth-side" id="auth-container">
@@ -823,7 +838,6 @@
         </button>
 
         <div class="header-user-side" id="user-header-zone">
-            <a href="templates/musicos.html" id="link-musicos" class="admin-link" style="display:none">Músicos</a>
             <a href="templates/admin.html" id="link-admin" class="admin-link">Admin</a>
             <a href="templates/perfil.html" class="profile-link">
                 <span id="user-header-name" class="user-header-label">Músico</span>
@@ -1035,8 +1049,8 @@
 <script src="js/consent.js?v=2"></script>
 <script src="js/analytics.js"></script>
 <script src="js/share.js"></script>
-<script src="js/pwa.js?v=2"></script>
+<script src="js/pwa.js?v=3"></script>
 <script src="js/config.js"></script>
-<script src="js/hub.js?v=3"></script>
+<script src="js/hub.js?v=4"></script>
 </body>
 </html>

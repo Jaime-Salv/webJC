@@ -4,9 +4,9 @@
 
 1. Cada persona inicia sesión con Google. Su perfil se crea como público general.
 2. En **Admin → Usuarios**, marcar el permiso **Músico**. **Administrador** es un permiso independiente: se pueden marcar ambos. No hay solicitud ni elección de rol en el registro.
-3. En **Ficha musical**, completar nombre, instrumento y año de incorporación. El músico puede cambiar nombre e instrumento en **Mi perfil**; el año queda reservado a administración.
+3. En **Ficha musical**, completar nombre, instrumento y año de incorporación. El músico puede cambiar nombre e instrumento en **Mi ficha musical**, dentro del portal; el año queda reservado a administración.
 4. En **Admin → Músicos**, crear ensayo o actuación. Las horas se introducen en horario de Madrid. Solo las cuentas con permiso Músico quedan convocadas, incluidas las que también son administradoras. Usar **Añadir nuevos músicos** para incorporar altas posteriores a la convocatoria.
-5. El músico accede desde **Músicos** en la portada y responde **Voy / No voy** hasta el plazo. No responder se mantiene como estado independiente.
+5. El músico accede desde la pestaña **Portal músico** de la navegación principal y responde **Voy / No voy** hasta el plazo. No responder se mantiene como estado independiente.
 6. Para fichar, configurar el punto de llegada y radio (150 m por defecto), abrir el fichaje desde dos horas antes del evento y mostrar el QR. La apertura dura como máximo dos horas y nunca supera el fin previsto; puede reabrirse dentro del horario permitido.
 7. Mantener una sola pantalla QR por evento. El código cambia cada 60 segundos. Escanear con la cámara del móvil, iniciar sesión y pulsar **Comprobar ubicación y fichar**. Si se inicia sesión y caduca el QR, volver a escanear.
 8. Cerrar el fichaje al terminar. Revisar incidencias y músicos sin fichaje, y exportar el CSV si se necesita.

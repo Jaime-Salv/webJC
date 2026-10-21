@@ -531,7 +531,7 @@ iframe {
         left: 8px;
         z-index: 3400;
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(6, minmax(0, 1fr));
         min-height: 62px;
         padding: 6px;
         border: 1px solid rgba(212,175,55,0.32);

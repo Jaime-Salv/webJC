@@ -37,6 +37,8 @@ async function cargarDatosPerfil() {
     perfilTieneBanda = perfil?.es_musico === true || perfil?.rol === 'musico';
     document.getElementById('perfil-banda').hidden = !perfilTieneBanda;
     if (perfilTieneBanda) {
+        document.getElementById('perfil-volver').href = 'musicos.html';
+        document.getElementById('perfil-volver').textContent = 'Volver al portal';
         try {
             const filas = await JCBanda.query('banda_fichas', q => q.eq('usuario_id',user.id));
             const ficha = filas[0];
@@ -122,7 +124,7 @@ async function guardarPerfil() {
             });
         }
         alert("✅ Perfil actualizado correctamente.");
-        window.location.href = "comunidad.html";
+        window.location.href = perfilTieneBanda ? "musicos.html" : "comunidad.html";
 
     } catch (e) {
         alert("❌ Error al guardar: " + e.message);

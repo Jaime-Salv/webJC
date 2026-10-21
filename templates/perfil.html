@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil de Usuario - Julián Cerdán</title>
     
-    <link rel="stylesheet" href="../css/style.css?v=10">
+    <link rel="stylesheet" href="../css/style.css?v=11">
     <link rel="icon" type="image/png" href="../img/escudo.png">
     <link rel="manifest" href="../manifest.webmanifest">
     <link rel="apple-touch-icon" href="../img/icon-192.png">
@@ -112,7 +112,7 @@
     <header class="main-header-pro">
         <div class="header-logo-side"><a href="../index.html"><img src="../img/escudo.png" alt="Escudo"></a></div>
         <div class="header-title-side"><h2>Mi Identidad Musical</h2></div>
-        <div class="header-action-side"><a href="comunidad.html" class="btn-volver-pro">Volver</a></div>
+        <div class="header-action-side"><a href="comunidad.html" id="perfil-volver" class="btn-volver-pro">Volver</a></div>
     </header>
 
     <main class="global-container">
@@ -146,7 +146,7 @@
                 <div class="input-group"><label for="perf-nombre-real">Nombre completo</label><input id="perf-nombre-real" class="input-sim" maxlength="160" autocomplete="name"></div>
                 <div class="input-group"><label for="perf-instrumento">Instrumento</label><input id="perf-instrumento" class="input-sim" maxlength="80" list="perfil-instrumentos"><datalist id="perfil-instrumentos"><option>Flauta</option><option>Oboe</option><option>Fagot</option><option>Clarinete</option><option>Saxofón alto</option><option>Saxofón tenor</option><option>Saxofón barítono</option><option>Trompeta</option><option>Trompa</option><option>Trombón</option><option>Bombardino</option><option>Tuba</option><option>Percusión</option></datalist></div>
                 <div class="input-group"><label for="perf-incorporacion">Año de incorporación</label><input id="perf-incorporacion" class="input-sim" readonly placeholder="Pendiente de completar por administración"></div>
-                <a href="musicos.html" style="color:#d4af37">Ir a mis convocatorias y asistencias →</a>
+                <a href="musicos.html" style="color:#d4af37">Ir a mi portal de músico →</a>
             </section>
             <section class="seccion-preferencias">
                 <h4>Tus intereses musicales</h4>
@@ -174,9 +174,9 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../js/pwa.js?v=2"></script>
+    <script src="../js/pwa.js?v=3"></script>
     <script src="../js/config.js"></script>
     <script src="../js/banda-common.js?v=2"></script>
-    <script src="../js/perfil.js?v=3"></script>
+    <script src="../js/perfil.js?v=4"></script>
 </body>
 </html>

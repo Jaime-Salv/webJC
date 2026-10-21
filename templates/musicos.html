@@ -3,24 +3,26 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex"><meta name="referrer" content="no-referrer">
-<title>Área de músicos · Julián Cerdán</title>
+<title>Portal músico · Julián Cerdán</title>
 <link rel="icon" href="../img/escudo.png"><link rel="manifest" href="../manifest.webmanifest">
-<link rel="stylesheet" href="../css/musicos.css?v=1">
+<link rel="stylesheet" href="../css/style.css?v=11">
+<link rel="stylesheet" href="../css/musicos.css?v=2">
 </head>
 <body class="banda">
-<header class="banda-header"><a href="../index.html"><img src="../img/escudo.png" alt="Inicio JC"></a><strong>JULIÁN CERDÁN · MÚSICOS</strong><a href="perfil.html">Mi perfil</a><a href="admin.html#banda" id="banda-admin-link" hidden>Administrar</a><a href="../index.html">Inicio</a></header>
+<header class="banda-header"><a href="../index.html"><img src="../img/escudo.png" alt="Inicio JC"></a><strong>JULIÁN CERDÁN</strong><a href="perfil.html">Mi perfil</a><a href="admin.html#banda" id="banda-admin-link" hidden>Administrar</a><a href="../index.html">Inicio</a><nav class="portal-main-nav" aria-label="Navegación principal"><a href="../index.html">Inicio</a><a href="../index.html#actuaciones">Actuaciones</a><a href="catalogo.html">Catálogo</a><a href="comunidad.html">Comunidad</a><a href="simulacion.html">Simulador</a><a href="musicos.html" aria-current="page">Portal músico</a></nav></header>
 <main class="banda-main">
-<div class="eyebrow">Tu banda, al día</div><h1>Área de músicos</h1>
+<div class="eyebrow">Tu banda, al día</div><h1>Portal músico</h1>
 <p class="muted" id="banda-identidad">Comprobando acceso…</p>
 <p id="banda-status" class="notice" role="status" aria-live="polite" hidden></p>
 <div id="banda-content" hidden>
+<nav class="portal-tools" aria-label="Funciones del portal"><a href="#portal-calendario">Calendario</a><a href="#portal-confirmaciones">Confirmaciones</a><a href="#portal-asistencias">Mis asistencias</a><a href="perfil.html">Mi ficha musical</a></nav>
 <section id="banda-checkin" class="panel" hidden><h2>Registrar mi asistencia</h2><p id="banda-checkin-event"></p><p class="muted">Al pulsar comprobaremos tu ubicación una sola vez. No hay seguimiento. Se guardan la hora, la distancia aproximada al evento y la precisión, sin tus coordenadas.</p><button type="button" class="primary" id="banda-fichar">Comprobar ubicación y fichar</button><p class="muted">Si has tenido que iniciar sesión y el QR ha caducado, vuelve a escanear el que aparece en el ensayo.</p></section>
-<div class="row between"><div class="row"><button type="button" id="banda-prev" aria-label="Mes anterior">←</button><h2 id="banda-mes"></h2><button type="button" id="banda-next" aria-label="Mes siguiente">→</button></div><div class="row"><button type="button" id="banda-hoy">Hoy</button><button type="button" id="banda-refresh">Actualizar</button></div></div>
+<div class="row between" id="portal-calendario"><div class="row"><button type="button" id="banda-prev" aria-label="Mes anterior">←</button><h2 id="banda-mes"></h2><button type="button" id="banda-next" aria-label="Mes siguiente">→</button></div><div class="row"><button type="button" id="banda-hoy">Hoy</button><button type="button" id="banda-refresh">Actualizar</button></div></div>
 <p class="muted">Horas de España peninsular. Elige un día del calendario o responde en las tarjetas.</p>
 <div class="calendar" id="banda-calendar" aria-label="Calendario de convocatorias"></div>
-<div class="row"><h2 id="banda-list-title">Próximas convocatorias</h2><button type="button" id="banda-all" hidden>Ver próximas</button></div>
+<div class="row" id="portal-confirmaciones"><h2 id="banda-list-title">Próximas convocatorias</h2><button type="button" id="banda-all" hidden>Ver próximas</button></div>
 <div class="events" id="banda-events"></div>
-<section class="panel"><h2>Mi historial de asistencia</h2><p class="muted">Confirmar que vas no registra tu asistencia. «Sin fichaje» queda pendiente de revisión; no equivale automáticamente a una ausencia.</p><div id="banda-history"></div></section>
+<section class="panel" id="portal-asistencias"><h2>Mi historial de asistencia</h2><p class="muted">Confirmar que vas no registra tu asistencia. «Sin fichaje» queda pendiente de revisión; no equivale automáticamente a una ausencia.</p><div id="banda-history"></div></section>
 </div></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/config.js"></script><script src="../js/banda-common.js?v=2"></script><script src="../js/musicos.js?v=2"></script><script src="../js/pwa.js?v=2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/config.js"></script><script src="../js/banda-common.js?v=2"></script><script src="../js/musicos.js?v=2"></script><script src="../js/pwa.js?v=3"></script>
 </body></html>

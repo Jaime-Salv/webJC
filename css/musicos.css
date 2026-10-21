@@ -67,3 +67,13 @@ body.banda { margin:0; background:#090b0e; }
 }
 
 .banda .panel, .banda .events, .banda .event { scroll-margin-top:120px; }
+
+/* El portal conserva las pestañas de la web en escritorio y móvil. */
+.banda .portal-main-nav { display:flex; flex-basis:100%; gap:24px; overflow-x:auto; white-space:nowrap; min-width:0; scrollbar-width:thin; }
+.banda .portal-main-nav a { display:flex; align-items:center; flex-shrink:0; min-height:44px; text-decoration:none; color:#ddd; font-size:12px; font-weight:700; }
+.banda .portal-main-nav a[aria-current="page"] { color:var(--oro); border-bottom:2px solid var(--oro); }
+.banda .portal-tools { display:flex; gap:10px; flex-wrap:wrap; margin:22px 0; }
+.banda .portal-tools a { display:inline-flex; align-items:center; min-height:44px; padding:9px 14px; border:1px solid #454852; border-radius:8px; color:#eee; text-decoration:none; font-size:13px; }
+.banda .portal-tools a:hover { color:var(--oro); border-color:var(--oro); }
+#portal-calendario, #portal-confirmaciones, #portal-asistencias { scroll-margin-top:24px; }
+@media(max-width:680px) { .banda .portal-main-nav { display:none; } }
