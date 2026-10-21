@@ -85,3 +85,12 @@ body.banda { margin:0; background:#090b0e; }
 .banda .agenda-days small {font-size:10px;line-height:1.3;text-align:left;overflow-wrap:anywhere;max-width:100%;}
 .banda #agenda-processions .event {margin-top:14px;}
 @media(max-width:540px){.banda .agenda-days button {min-height:52px;padding:5px;}.banda .agenda-days small {max-height:28px;font-size:8px;}.banda #ba-agenda {padding:12px;}}
+
+/* Previsión nominal por instrumento, con respuestas pendientes separadas. */
+.banda .ba-instrument {margin:14px 0;padding:16px;border:1px solid #353943;border-radius:10px;background:#101319;}
+.banda .ba-instrument h4 {display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 14px;font-size:16px;color:var(--oro);overflow-wrap:anywhere;}
+.banda .ba-instrument-columns {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+.banda .ba-instrument-status {min-width:0;padding:12px;border-radius:8px;background:#191d25;}
+.banda .ba-instrument-status h5 {display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;font-size:13px;}
+.banda .ba-instrument-status ul {margin:0;padding-left:18px;}.banda .ba-instrument-status li {margin:5px 0;font-size:13px;overflow-wrap:anywhere;}
+@media(max-width:760px){.banda .ba-instrument-columns {grid-template-columns:1fr;}}

@@ -66,3 +66,5 @@ Los campos de fecha de administración abren un calendario propio al tocarlos o 
 El acceso **QR de fichaje** aparece en cada convocatoria y procesión programada; los conciertos tienen **QR de fichaje de músicos**, separado del QR del programa público. Desde dos horas antes y hasta el fin, genera el QR temporal y abre la sesión de fichaje. La pantalla QR permite cerrar la sesión explícitamente; cerrar solo la pantalla no cierra el fichaje.
 
 El despachador instalado se actualizó con la migración remota `fichaje_qr_sin_geolocalizacion`. Su definición actual está en `supabase_calendario_actuaciones.sql`; las instalaciones nuevas deben aplicar este archivo después de las migraciones anteriores. El navegador tiene geolocalización deshabilitada por Permissions-Policy.
+
+La previsión de actuaciones agrupa a los convocados por instrumento y muestra sus nombres en **Voy**, **No voy** y **Sin responder**, con recuentos por columna. Los instrumentos y nombres se ordenan alfabéticamente; las fichas sin instrumento tienen su propio grupo. Las respuestas pendientes no se interpretan como negativas.

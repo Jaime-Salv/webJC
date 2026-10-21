@@ -7,7 +7,7 @@ module.exports=()=>{
  function from(table){let filters=[];let single=false;let mutation=null;
   const q=new Proxy({}, {get(t,p){if(p==='then')return (resolve,reject)=>{
     if(mutation){state.calls.push({a:table+':'+mutation.action,d:mutation.data});if(table==='maestro_procesiones'){if(mutation.action==='insert')state.processions.push({...mutation.data,id_procesion:51});else state.processions.filter(r=>filters.every(([k,v])=>r[k]===v)).forEach(r=>Object.assign(r,mutation.data));}}
-    let data=({conciertos:state.concerts,maestro_procesiones:state.processions,banda_ajustes:state.settings,perfiles:state.profiles,banda_eventos:state.events,banda_fichas:state.fichas,banda_respuestas:state.responses,banda_asistencias:state.attendance,banda_convocados:[{evento_id:eid,usuario_id:uid},{evento_id:eid,usuario_id:other}],banda_auditoria:[]}[table]||[]).filter(r=>filters.every(([k,v])=>r[k]===v));
+    let data=({conciertos:state.concerts,maestro_procesiones:state.processions,banda_ajustes:state.settings,perfiles:state.profiles,banda_eventos:state.events,banda_fichas:state.fichas,banda_respuestas:state.responses,banda_asistencias:state.attendance,banda_convocados:state.roster||[{evento_id:eid,usuario_id:uid},{evento_id:eid,usuario_id:other}],banda_auditoria:[]}[table]||[]).filter(r=>filters.every(([k,v])=>r[k]===v));
     if(table==='perfiles'&&single)data=data.map(p=>({...p,rol:state.role}));
     return Promise.resolve({data:single?(data[0]||null):data,error:null,count:data.length}).then(resolve,reject);
    };
