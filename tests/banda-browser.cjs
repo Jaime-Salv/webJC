@@ -30,9 +30,12 @@ const fixture=require('./helpers/banda-fixture.cjs');
  await page.reload();
  await page.locator('[data-admin-view="banda"].activa').waitFor({state:'visible',timeout:20000});
  await page.locator('[data-select]').first().click();await page.locator('[data-action="open"]').waitFor();
- await page.locator('[data-action="open"]').click();await page.locator('#ba-qr-image svg').waitFor();
+ await page.locator(`[data-qr="${eid}"]`).click();await page.locator('#ba-qr-image svg').waitFor();
  await page.locator('#ba-qr-image svg').screenshot({path:'/tmp/jc-qr.png'});
- await page.locator('#ba-qr-hide').click();
+ await page.locator('#ba-qr-stop').click();await page.locator('#ba-qr-dialog').waitFor({state:'hidden'});assert(await page.evaluate(()=>testData.calls.some(c=>c.a==='cerrar')),'Cerrar fichaje desde pantalla QR');
+ await page.evaluate(()=>{testData.events[0].concierto_id=72;testData.concerts=[{id_concierto:72,titulo:'Concierto de prueba',estado:'Publicado'}];});await page.locator('[data-admin-target="conciertos"]').click();await page.evaluate(()=>{conciertoAdminActual=testData.concerts[0];});await page.locator('#concierto-fichaje').click();await page.locator('#ba-qr-image svg').waitFor();assert(await page.evaluate(()=>testData.calls.filter(c=>c.a==='abrir').every(c=>c.d.evento_id===testData.eid)),'QR del concierto usa la convocatoria vinculada');await page.locator('#ba-qr-hide').click();
+ await page.evaluate(()=>{testData.events[0].latitud=null;testData.events[0].longitud=null;});await page.locator(`[data-qr="${eid}"]`).click();await page.locator('#ba-editor').waitFor({state:'visible'});assert(await page.locator('#ba-qr-dialog').isHidden(),'Sin ubicación se prepara la zona de fichaje');await page.evaluate(()=>{testData.events[0].latitud=36.778;testData.events[0].longitud=-6.35;});
+
  await page.locator('[data-action="edit"]').click();await page.locator('#ba-editor').waitFor({state:'visible'});
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Admin móvil sin desbordamiento');
  await page.screenshot({path:'/tmp/jc-admin-mobile.png',fullPage:true});
