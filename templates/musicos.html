@@ -5,7 +5,7 @@
 <meta name="robots" content="noindex"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#090b0e">
 <title>Portal músico · Julián Cerdán</title>
 <link rel="icon" href="../img/escudo.png"><link rel="manifest" href="../manifest.webmanifest">
-<link rel="stylesheet" href="../css/style.css?v=11"><link rel="stylesheet" href="../css/musicos.css?v=4"><link rel="stylesheet" href="../css/portal-musico.css?v=1">
+<link rel="stylesheet" href="../css/style.css?v=11"><link rel="stylesheet" href="../css/musicos.css?v=5"><link rel="stylesheet" href="../css/portal-musico.css?v=1"><link rel="stylesheet" href="../css/admin-fechas.css?v=2">
 </head>
 <body class="banda portal">
 <header class="banda-header portal-header">
@@ -19,7 +19,7 @@
 <p id="portal-offline" class="notice error" role="status" hidden>Estás sin conexión. Vuelve a conectarte para actualizar, responder o registrar asistencia.</p>
 <div id="banda-content" hidden>
 <nav class="portal-tools" aria-label="Funciones del portal">
-<button type="button" data-view="resumen" aria-pressed="true">Resumen</button><button type="button" data-view="calendario" aria-pressed="false">Calendario</button><button type="button" data-view="confirmaciones" aria-pressed="false">Confirmaciones <span id="portal-pending-badge" hidden></span></button><button type="button" data-view="asistencias" aria-pressed="false">Mis asistencias</button><button type="button" data-view="escanear" aria-pressed="false">Escanear QR</button>
+<button type="button" data-view="resumen" aria-pressed="true">Resumen</button><button type="button" data-view="calendario" aria-pressed="false">Calendario</button><button type="button" data-view="confirmaciones" aria-pressed="false">Confirmaciones <span id="portal-pending-badge" hidden></span></button><button type="button" data-view="avisos" aria-pressed="false">Avisos <span id="bp-unread" hidden></span></button><button type="button" data-view="asistencias" aria-pressed="false">Mis asistencias</button><button type="button" data-view="escanear" aria-pressed="false">Escanear QR</button>
 </nav>
 <section data-portal-panel="resumen" aria-label="Resumen personal">
 <div class="portal-dashboard">
@@ -40,8 +40,9 @@
 <div class="events" id="banda-events"></div>
 </section>
 <section data-portal-panel="asistencias" aria-labelledby="portal-history-title" hidden>
-<div class="portal-section-heading"><div><h2 id="portal-history-title">Mis asistencias</h2><p class="muted">Tu registro personal de ensayos y actuaciones.</p></div></div><p class="notice">«Sin fichaje» no significa una ausencia confirmada. Si falta un registro o hay una incidencia, consulta a administración.</p><div id="banda-history" class="portal-history"></div>
+<div class="portal-section-heading"><div><h2 id="portal-history-title">Mis asistencias</h2><p class="muted">Tu registro personal de ensayos y actuaciones.</p></div></div><p class="notice">«Sin fichaje» no significa una ausencia confirmada. Si falta un registro o hay una incidencia, consulta a administración.</p><section class="panel"><h3>Mi resumen de asistencia</h3><form id="bp-personal-report"><div class="grid"><label>Desde<input type="date" name="desde" required></label><label>Hasta<input type="date" name="hasta" required></label></div><button type="submit">Consultar período</button><button type="button" id="bp-personal-season">Temporada sep.–ago.</button></form><p class="muted">Presencias registradas / convocatorias finalizadas. «Sin fichaje» no significa una ausencia confirmada.</p><div id="bp-personal-summary"></div></section><div id="banda-history" class="portal-history"></div>
 </section>
+<section data-portal-panel="avisos" hidden><div class="portal-section-heading"><h2>Mis avisos</h2><button type="button" id="bp-read-all">Marcar todos como leídos</button></div><section class="panel"><h3>Avisos en el móvil</h3><p class="muted">Actívalos para recibir nuevas convocatorias, cambios y recordatorios. Los avisos también quedan guardados aquí. En iPhone puede ser necesario instalar la web en la pantalla de inicio.</p><div class="row"><button type="button" id="bp-push-enable">Activar avisos del portal</button><button type="button" id="bp-push-disable">Desactivar en este dispositivo</button></div><p id="bp-push-status" class="muted" role="status"></p></section><div id="bp-notices"></div></section>
 <section data-portal-panel="escanear" aria-labelledby="portal-scan-title" hidden>
 <div class="portal-section-heading"><div><h2 id="portal-scan-title">Escanear QR y fichar</h2><p class="muted">Apunta al QR que muestra administración en el evento.</p></div></div>
 <section id="banda-checkin" class="panel portal-checkin" hidden><span class="badge good">QR leído</span><h3 id="banda-checkin-event"></h3><p id="portal-checkin-state">Confirma tu llegada para guardar el registro de asistencia.</p><button type="button" class="primary" id="banda-fichar">Confirmar mi asistencia</button><button type="button" id="portal-scan-again">Escanear otro QR</button><p class="muted">Si el código ha caducado, escanea el que se muestra ahora en el evento.</p></section>
@@ -50,6 +51,6 @@
 
 </section>
 <p id="portal-last-update" class="portal-last-update"></p>
-</div></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/config.js"></script><script src="../js/banda-common.js?v=3"></script><script src="../js/vendor/jsQR.js"></script><script src="../js/banda-scanner.js?v=1"></script><script src="../js/musicos.js?v=5"></script><script src="../js/pwa.js?v=3"></script>
+</div></main><dialog id="bp-justify-dialog"><h2>Justificar mi ausencia</h2><p class="muted">El motivo solo lo veréis tú y administración.</p><form id="bp-justify-form"><input type="hidden" name="evento_id"><label>Motivo<textarea name="motivo" required minlength="5" maxlength="2000"></textarea></label><p id="bp-justify-error" class="notice error" hidden></p><div class="row"><button type="submit" class="primary">Enviar a revisión</button><button type="button" id="bp-justify-close">Cancelar</button></div></form></dialog>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/config.js"></script><script src="../js/banda-common.js?v=3"></script><script src="../js/vendor/jsQR.js"></script><script src="../js/banda-scanner.js?v=1"></script><script src="../js/banda-portal.js?v=1"></script><script src="../js/admin-fechas.js?v=2"></script><script src="../js/musicos.js?v=6"></script><script src="../js/pwa.js?v=3"></script>
 </body></html>

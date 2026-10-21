@@ -1,0 +1,80 @@
+-- Verifica las ocho ampliaciones en una transacción, sin eventos ni avisos persistentes.
+begin;
+do $$
+declare a uuid:=gen_random_uuid();m uuid:=gen_random_uuid();u uuid:=gen_random_uuid();
+begin
+ perform set_config('jc.plus_admin',a::text,true);perform set_config('jc.plus_member',m::text,true);perform set_config('jc.plus_public',u::text,true);
+ insert into auth.users(id,email) values(a,'jc-plus-admin-'||a||'@example.invalid'),(m,'jc-plus-member-'||m||'@example.invalid'),(u,'jc-plus-public-'||u||'@example.invalid');
+ update public.perfiles set rol='admin' where id=a;update public.perfiles set rol='musico' where id=m;
+end $$;
+set local role authenticated;
+do $$
+declare a uuid:=current_setting('jc.plus_admin')::uuid;m uuid:=current_setting('jc.plus_member')::uuid;u uuid:=current_setting('jc.plus_public')::uuid;eid uuid;past uuid;cid bigint;r jsonb;denied boolean;d date:=(now() at time zone 'Europe/Madrid')::date+10;called timestamptz;token text;
+begin
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'role','authenticated')::text,true);
+ insert into public.conciertos(titulo,fecha,hora,fin_hora,lugar,estado) values('Prueba portal completo',d,'20:00','22:00','Teatro','Publicado') returning id_concierto into cid;
+ select id into eid from public.banda_eventos where concierto_id=cid;
+ called:=(d+time '18:30') at time zone 'Europe/Madrid';
+ perform public.banda_portal_accion('detalle',jsonb_build_object('evento_id',eid,'convocatoria',called,'uniformidad','Uniforme','transporte','Autobús','encuentro','Plaza','partituras','Carpeta azul','contacto','Delegado','objetivos',jsonb_build_object('Clarinete',4)));
+ assert (select convocatoria from public.banda_detalles where evento_id=eid)=called,'Convocatoria independiente de inicio público';
+ assert (select hora from public.conciertos where id_concierto=cid)=time '20:00','La hora pública no cambia';
+ assert (select limite_respuesta from public.banda_eventos where id=eid)<=called,'Plazo ajustado a convocatoria';
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',m,'role','authenticated')::text,true);
+ assert exists(select 1 from public.banda_detalles where evento_id=eid and transporte='Autobús'),'Músico ve información práctica';
+ assert exists(select 1 from public.banda_avisos where evento_id=eid and tipo='convocatoria'),'Nueva convocatoria crea aviso privado';
+ denied:=false;begin perform public.banda_portal_accion('detalle',jsonb_build_object('evento_id',eid));exception when others then denied:=true;end;assert denied,'Músico no edita detalles';
+ perform public.banda_accion('respuesta',jsonb_build_object('evento_id',eid,'respuesta','no_voy'));
+ perform public.banda_portal_accion('justificar',jsonb_build_object('evento_id',eid,'motivo','Turno de trabajo incompatible'));
+ assert (select estado from public.banda_justificaciones where evento_id=eid and usuario_id=m)='pendiente','Motivo privado pendiente';
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',u,'role','authenticated')::text,true);
+ assert not exists(select 1 from public.banda_detalles where evento_id=eid),'Público no ve convocatoria interna';
+ assert not exists(select 1 from public.banda_justificaciones where evento_id=eid),'Público no ve motivos';
+ assert not exists(select 1 from public.banda_avisos where evento_id=eid),'Público no ve avisos';
+ denied:=false;begin perform public.banda_portal_accion('informe','{}');exception when others then denied:=true;end;assert denied,'Público no consulta informes';
+ denied:=false;begin perform public.banda_avisos_lote();exception when others then denied:=true;end;assert denied,'El cliente no procesa envíos push';
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'role','authenticated')::text,true);
+ perform public.banda_portal_accion('revisar',jsonb_build_object('evento_id',eid,'usuario_id',m,'estado','aceptada','revision','Revisado por la junta'));
+ assert (select estado from public.banda_justificaciones where evento_id=eid and usuario_id=m)='aceptada','Junta revisa justificación';
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',m,'role','authenticated')::text,true);
+ perform public.banda_accion('respuesta',jsonb_build_object('evento_id',eid,'respuesta','voy'));
+ assert not exists(select 1 from public.banda_justificaciones where evento_id=eid and usuario_id=m),'Confirmar Voy retira el justificante anterior';
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'role','authenticated')::text,true);
+ update public.conciertos set hora='21:00',fin_hora='23:00' where id_concierto=cid;
+ assert (select convocatoria from public.banda_detalles where evento_id=eid)=called+interval '1 hour','Reprogramar conserva margen de convocatoria';
+ r:=public.banda_portal_accion('repetir',jsonb_build_object('desde',d,'hasta',d+6,'plantilla','tarde','dias',jsonb_build_array(0,1,2,3,4,5,6),'excluir',jsonb_build_array((d+1)::text)));
+ assert (r->>'creados')::int=6,'Seis ensayos, un día excluido';
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',m,'role','authenticated')::text,true);
+ assert exists(select 1 from public.banda_avisos where usuario_id=m and tipo='serie'),'Aviso agrupado de ensayos';
+ assert not exists(select 1 from public.banda_avisos a join public.banda_eventos e on e.id=a.evento_id where a.usuario_id=m and e.tipo='ensayo' and e.inicio>now() and a.push_estado='pendiente'),'No inundar el móvil con cada ensayo de la serie';
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'role','authenticated')::text,true);
+ r:=public.banda_portal_accion('repetir',jsonb_build_object('desde',d,'hasta',d+6,'plantilla','tarde','dias',jsonb_build_array(0,1,2,3,4,5,6),'excluir',jsonb_build_array((d+1)::text)));
+ assert (r->>'creados')::int=0 and (r->>'existentes')::int=6,'Repetición idempotente';
+ r:=public.banda_accion('evento',jsonb_build_object('titulo','Historial prueba','tipo','ensayo','inicio',now()-interval '3 hours','fin',now()-interval '1 hour','limite_respuesta',now()-interval '3 hours','lugar','Local'));past:=(r->>'id')::uuid;
+ r:=public.banda_portal_accion('informe',jsonb_build_object('desde',(now()-interval '1 day')::date,'hasta',now()::date,'usuario_id',m));
+ assert jsonb_array_length(r)>0 and (r->0->>'sin_fichaje')::int=1 and (r->0->>'ausentes')::int=0,'Sin fichaje no es ausencia confirmada';
+ perform public.banda_accion('manual',jsonb_build_object('evento_id',past,'usuario_id',m,'estado','presente','motivo','Llegada comprobada por junta'));
+ r:=public.banda_accion('evento',jsonb_build_object('titulo','Convocatoria anticipada prueba','tipo','actuacion','inicio',now()+interval '5 hours','fin',now()+interval '7 hours','limite_respuesta',now()+interval '4 hours','lugar','Punto de encuentro'));eid:=(r->>'id')::uuid;
+ perform set_config('jc.plus_reminder_event',eid::text,true);
+ perform public.banda_portal_accion('detalle',jsonb_build_object('evento_id',eid,'convocatoria',now()+interval '1 hour'));
+ perform public.banda_accion('abrir',jsonb_build_object('evento_id',eid));
+ r:=public.banda_accion('qr',jsonb_build_object('evento_id',eid));token:=r->>'token';
+ r:=public.banda_portal_accion('recordar',jsonb_build_object('evento_id',eid));assert (r->>'avisos')::int>0,'Recordatorio dirigido a pendientes';
+ r:=public.banda_portal_accion('recordar',jsonb_build_object('evento_id',eid));assert (r->>'avisos')::int=0,'No repetir recordatorios manuales';
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',m,'role','authenticated')::text,true);
+ r:=public.banda_accion('fichar',jsonb_build_object('evento_id',eid,'token',token));assert r->>'estado'='presente','QR sigue convocatoria interna, no inicio público, y no usa GPS';
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',m,'role','authenticated')::text,true);
+ r:=public.banda_portal_accion('informe',jsonb_build_object('desde',(now()-interval '1 day')::date,'hasta',now()::date,'usuario_id',a));
+ assert not exists(select 1 from jsonb_array_elements(r) z where z->>'usuario_id'<>m::text),'Músico solo obtiene su informe aunque pida otro usuario';
+ perform public.banda_portal_accion('leer','{}');assert not exists(select 1 from public.banda_avisos where leido_en is null),'Avisos propios marcados leídos';
+end $$;
+reset role;
+set local role service_role;
+do $$
+declare eid uuid:=current_setting('jc.plus_reminder_event')::uuid;m uuid:=current_setting('jc.plus_member')::uuid;n bigint;
+begin
+ perform public.banda_avisos_lote();
+ assert exists(select 1 from public.banda_avisos where evento_id=eid and usuario_id=m and clave like 'auto:%'),'El programador genera recordatorio de las próximas 24 horas';
+ select count(*) into n from public.banda_avisos where evento_id=eid and usuario_id=m and clave like 'auto:%';perform public.banda_avisos_lote();
+ assert (select count(*) from public.banda_avisos where evento_id=eid and usuario_id=m and clave like 'auto:%')=n,'El recordatorio automático no se duplica';
+end $$;
+rollback;

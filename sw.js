@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'jc-pwa-v21';
+const CACHE_VERSION = 'jc-pwa-v22';
 const APP_SHELL = [
     '/',
     '/index.html',
@@ -103,7 +103,7 @@ self.addEventListener('push', (event) => {
             url: data.url || '/index.html'
         },
         actions: [
-            { action: 'open', title: 'Ver directo' }
+            { action: 'open', title: String(data.url || '').startsWith('/templates/musicos') ? 'Abrir portal' : 'Ver directo' }
         ]
     };
 
