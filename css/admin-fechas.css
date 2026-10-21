@@ -12,3 +12,5 @@
 .jc-date-dialog :focus-visible {outline:2px solid #d4af37;outline-offset:2px;}.jc-date-actions {display:flex;justify-content:space-between;gap:12px;}.jc-date-dialog #jc-date-error {color:#ffb9b9;font-size:13px;}
 
 .jc-date-help {display:block;color:#adb1bc;font-size:12px;margin:-6px 0 14px;}
+
+.jc-time-selects {display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0;}.jc-time-selects select {display:block;width:100%;min-height:48px;padding:10px;font-size:18px;background:#090c11;color:#fff;border:1px solid #454852;border-radius:7px;}
