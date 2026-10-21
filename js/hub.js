@@ -149,7 +149,8 @@ async function inicializarHub() {
         cargarUltimaActuacion(),
         cargarResumenCatalogo(),
         cargarActuacionesRecientes(),
-        cargarConciertosHome()
+        cargarConciertosHome(),
+        cargarProximasActuaciones()
     ]);
 }
 
@@ -383,12 +384,14 @@ async function cargarConciertosHome() {
             throw error;
         }
 
-        if (!conciertos || conciertos.length === 0) {
-            gridConciertos.innerHTML = `<div class="empty-state">Todavía no hay conciertos publicados.</div>`;
+        const hoy = new Intl.DateTimeFormat('sv-SE', {timeZone:'Europe/Madrid'}).format(new Date());
+        const anteriores = (conciertos || []).filter(c => !c.fecha || c.fecha < hoy);
+        if (anteriores.length === 0) {
+            gridConciertos.innerHTML = `<div class="empty-state">Todavía no hay conciertos anteriores publicados.</div>`;
             return;
         }
 
-        gridConciertos.innerHTML = conciertos.map((concierto) => crearTarjetaConcierto(concierto)).join('');
+        gridConciertos.innerHTML = anteriores.map((concierto) => crearTarjetaConcierto(concierto)).join('');
 
     } catch (error) {
         console.error('Error cargando conciertos:', error);
@@ -499,4 +502,19 @@ function escaparHTML(valor) {
 
 function escaparAtributo(valor) {
     return escaparHTML(valor).replaceAll('`', '&#096;');
+}
+
+// Publicaciones públicas únicamente: nunca consulta convocatorias ni datos de músicos.
+async function cargarProximasActuaciones() {
+ const grid=document.getElementById('grid-proximas-home');if(!grid)return;
+ try {
+  const hoy=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Madrid'}).format(new Date());
+  const [c,p]=await Promise.all([
+   clienteSupabase.from('conciertos').select('id_concierto,titulo,fecha,hora,fin_hora,lugar,localidad,cartel_url').eq('estado','Publicado').gte('fecha',hoy).order('fecha'),
+   clienteSupabase.from('maestro_procesiones').select('id_procesion,hermandad,fecha,hora,fin_hora,lugar,localidad,descripcion,url_foto').eq('estado','Programada').gte('fecha',hoy).order('fecha')
+  ]);
+  if(c.error||p.error)throw c.error||p.error;
+  const list=[...(c.data||[]).map(e=>({...e,titulo:e.titulo,tipo:'Concierto'})),...(p.data||[]).map(e=>({...e,titulo:e.hermandad,tipo:'Procesión'}))].sort((a,b)=>(a.fecha+(a.hora||'')).localeCompare(b.fecha+(b.hora||'')));
+  grid.innerHTML=list.map(e=>`<article class="proxima-card"><span class="proxima-type">${escaparHTML(e.tipo)}</span><h3>${escaparHTML(e.titulo)}</h3><p class="proxima-date">${escaparHTML(formatearFecha(e.fecha))}${e.hora?' · '+escaparHTML(e.hora.slice(0,5)):''}</p><p>${escaparHTML([e.lugar,e.localidad].filter(Boolean).join(' · '))}</p>${e.descripcion?`<p>${escaparHTML(e.descripcion)}</p>`:''}${e.id_concierto?`<a href="templates/concierto.html?id=${e.id_concierto}">Ver programa →</a>`:'<span class="proxima-info">Información de la próxima procesión</span>'}</article>`).join('')||'<div class="empty-state">Próximamente anunciaremos nuevas actuaciones.</div>';
+ }catch(e){console.error('Próximas actuaciones:',e);grid.innerHTML='<div class="empty-state">No se han podido cargar las próximas actuaciones. Recarga para intentarlo de nuevo.</div>';}
 }

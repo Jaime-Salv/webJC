@@ -1638,6 +1638,7 @@ async function cargarConciertosAdmin() {
 }
 
 function nuevoConciertoAdmin() {
+    setValorAdmin('concierto-fin-hora', '');
     conciertoAdminActual = null;
 
     const campos = [
@@ -1706,6 +1707,7 @@ function pintarConciertoAdmin(concierto) {
     setValorAdmin('concierto-titulo', concierto.titulo || '');
     setValorAdmin('concierto-fecha', concierto.fecha || '');
     setValorAdmin('concierto-hora', concierto.hora ? String(concierto.hora).slice(0, 5) : '');
+    setValorAdmin('concierto-fin-hora', concierto.fin_hora ? String(concierto.fin_hora).slice(0, 5) : '');
     setValorAdmin('concierto-lugar', concierto.lugar || '');
     setValorAdmin('concierto-localidad', concierto.localidad || '');
     setValorAdmin('concierto-cartel-url', concierto.cartel_url || '');
@@ -1755,6 +1757,7 @@ async function guardarConciertoAdmin() {
         titulo,
         fecha,
         hora,
+        fin_hora: document.getElementById('concierto-fin-hora')?.value || null,
         lugar,
         localidad,
         descripcion,
@@ -1801,10 +1804,11 @@ async function guardarConciertoAdmin() {
 
         if (estadoTexto) {
             estadoTexto.style.color = '#27ae60';
-            estadoTexto.textContent = 'Concierto guardado correctamente.';
+            estadoTexto.textContent = estado === 'Publicado' ? 'Concierto publicado. Si es próximo y tiene horario completo, su convocatoria ya está en el portal músico.' : 'Borrador guardado. Publica con fecha, inicio, fin y lugar para convocar músicos.';
         }
 
         await cargarConciertosAdmin();
+        document.dispatchEvent(new Event('agenda:refresh'));
 
         const selector = document.getElementById('select-concierto-admin');
         if (selector && conciertoAdminActual?.id_concierto) {

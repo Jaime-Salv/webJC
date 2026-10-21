@@ -21,7 +21,8 @@ async function iniciarAuditoriaGlobal() {
         const { data: proc, error: errProc } = await clienteSupabase
             .from('maestro_procesiones')
             .select('*')
-            .eq('tipo', tipo);
+            .eq('tipo', tipo)
+            .eq('estado', 'Finalizada');
 
         if (errProc || !proc || proc.length === 0) {
             console.warn("No se encontraron procesiones para este ciclo.");

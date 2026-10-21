@@ -581,3 +581,10 @@ iframe {
 @media (min-width: 681px) {
     .mobile-app-nav { display: none !important; }
 }
+
+.proxima-card {flex:0 0 min(360px,85vw);min-width:250px;padding:26px;border:1px solid #38352b;border-radius:16px;background:linear-gradient(145deg,#201e16,#111319);color:#eee;}
+.proxima-card h3 {font-size:22px;line-height:1.25;margin:14px 0;}
+.proxima-card p {line-height:1.6;color:#b7bac3;white-space:pre-line;}
+.proxima-card .proxima-type,.proxima-card .proxima-date,.proxima-card a {color:#d4af37;}
+.proxima-type {text-transform:uppercase;font-size:11px;letter-spacing:2px;font-weight:700;}
+.proxima-info {font-size:12px;color:#8f939c;}

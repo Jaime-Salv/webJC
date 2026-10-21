@@ -5,7 +5,7 @@
 <meta name="robots" content="noindex"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#090b0e">
 <title>Portal músico · Julián Cerdán</title>
 <link rel="icon" href="../img/escudo.png"><link rel="manifest" href="../manifest.webmanifest">
-<link rel="stylesheet" href="../css/style.css?v=11"><link rel="stylesheet" href="../css/musicos.css?v=2"><link rel="stylesheet" href="../css/portal-musico.css?v=1">
+<link rel="stylesheet" href="../css/style.css?v=11"><link rel="stylesheet" href="../css/musicos.css?v=3"><link rel="stylesheet" href="../css/portal-musico.css?v=1">
 </head>
 <body class="banda portal">
 <header class="banda-header portal-header">
@@ -27,7 +27,7 @@
 <section class="portal-scan-shortcut"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 17V5h12M31 5h12v12M43 31v12H31M17 43H5V31M15 15h6v6h-6zM28 15h6v6h-6zM15 28h6v6h-6zM28 28h6v6h-6z"/></svg><h2>Ya estoy aquí</h2><p>Escanea el QR del ensayo o de la actuación para registrar tu llegada.</p><button type="button" class="primary" data-view="escanear">Escanear y fichar</button><small>Necesitarás cámara y ubicación.</small></section>
 </div>
 <div class="portal-stats" aria-label="Tu actividad"><button type="button" data-view="confirmaciones" data-pending-shortcut><strong id="portal-stat-pending">0</strong><span>Por confirmar</span></button><button type="button" data-view="confirmaciones"><strong id="portal-stat-upcoming">0</strong><span>Próximas citas</span></button><button type="button" data-view="asistencias"><strong id="portal-stat-present">0</strong><span>Presencias registradas</span></button><button type="button" data-view="asistencias"><strong id="portal-stat-incidents">0</strong><span>Incidencias pendientes</span></button></div>
-<div class="portal-info-grid"><section class="panel"><h2>Tu ficha musical</h2><div id="portal-profile"></div><a class="button" href="perfil.html">Editar mi ficha</a></section><section class="panel"><h2>Confirmar y fichar son dos pasos</h2><ol class="portal-steps"><li><b>Antes del evento</b><span>Indica si vas a asistir en Confirmaciones.</span></li><li><b>Cuando llegues</b><span>Escanea el QR y confirma tu ubicación.</span></li><li><b>Comprueba el registro</b><span>Tu resultado aparece en Mis asistencias.</span></li></ol></section></div>
+<div class="portal-info-grid"><section class="panel"><h2>Tu ficha musical</h2><div id="portal-profile"></div><a class="button" href="perfil.html">Editar mi ficha</a></section><section class="panel"><h2>Confirmar y fichar son dos pasos</h2><ol class="portal-steps"><li><b>Antes de una actuación</b><span>Indica si vas a asistir. Los ensayos no requieren confirmación previa.</span></li><li><b>Cuando llegues</b><span>Escanea el QR y confirma tu ubicación.</span></li><li><b>Comprueba el registro</b><span>Tu resultado aparece en Mis asistencias.</span></li></ol></section></div>
 </section>
 <section data-portal-panel="calendario" aria-labelledby="portal-calendar-title" hidden>
 <div class="portal-section-heading"><div><h2 id="portal-calendar-title">Calendario de la banda</h2><p class="muted">Tus convocatorias, en horario de España peninsular.</p></div><button type="button" id="banda-hoy">Mes actual</button></div>
@@ -35,7 +35,7 @@
 <div class="portal-section-heading"><h3 id="banda-day-title">Convocatorias del mes</h3><button type="button" id="banda-all" hidden>Ver todo el mes</button></div><div class="events" id="banda-day-events"></div>
 </section>
 <section data-portal-panel="confirmaciones" aria-labelledby="banda-list-title" hidden>
-<div class="portal-section-heading"><div><h2 id="banda-list-title">Mis confirmaciones</h2><p class="muted">Responde dentro del plazo. Puedes cambiar tu respuesta mientras siga abierto.</p></div></div>
+<div class="portal-section-heading"><div><h2 id="banda-list-title">Mis confirmaciones</h2><p class="muted">Las actuaciones requieren respuesta dentro del plazo. Los ensayos solo requieren fichar al llegar.</p></div></div>
 <div class="portal-filters"><label for="portal-event-filter">Mostrar<select id="portal-event-filter"><option value="all">Todas las próximas citas</option><option value="pending">Pendientes de respuesta</option><option value="actuacion">Actuaciones</option><option value="ensayo">Ensayos</option></select></label><label for="portal-event-search">Buscar<input type="search" id="portal-event-search" placeholder="Título o lugar…" autocomplete="off"></label></div>
 <div class="events" id="banda-events"></div>
 </section>
@@ -51,5 +51,5 @@
 </section>
 <p id="portal-last-update" class="portal-last-update"></p>
 </div></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/config.js"></script><script src="../js/banda-common.js?v=2"></script><script src="../js/vendor/jsQR.js"></script><script src="../js/banda-scanner.js?v=1"></script><script src="../js/musicos.js?v=3"></script><script src="../js/pwa.js?v=3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/config.js"></script><script src="../js/banda-common.js?v=2"></script><script src="../js/vendor/jsQR.js"></script><script src="../js/banda-scanner.js?v=1"></script><script src="../js/musicos.js?v=4"></script><script src="../js/pwa.js?v=3"></script>
 </body></html>

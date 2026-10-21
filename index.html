@@ -6,7 +6,7 @@
 
     <title>Banda de Música Julián Cerdán</title>
 
-    <link rel="stylesheet" href="css/style.css?v=11">
+    <link rel="stylesheet" href="css/style.css?v=12">
     <link rel="icon" type="image/png" href="img/escudo.png">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="img/icon-192.png">
@@ -918,7 +918,12 @@
         </div>
     </section>
 
-    <section id="actuaciones" class="page-shell section-block bloque-principal-actuaciones">
+    <section class="page-shell section-block" id="actuaciones">
+        <div class="section-heading"><div><h2>PRÓXIMAS ACTUACIONES</h2><p>Los próximos conciertos y procesiones de la banda.</p></div></div>
+        <div id="grid-proximas-home" class="recent-carousel" aria-live="polite"><div class="empty-state">Cargando próximas actuaciones…</div></div>
+    </section>
+
+    <section id="historial-actuaciones" class="page-shell section-block bloque-principal-actuaciones">
         <div class="section-heading">
             <div>
                 <h2>Actuaciones recientes</h2>
@@ -1051,6 +1056,6 @@
 <script src="js/share.js"></script>
 <script src="js/pwa.js?v=3"></script>
 <script src="js/config.js"></script>
-<script src="js/hub.js?v=4"></script>
+<script src="js/hub.js?v=5"></script>
 </body>
 </html>

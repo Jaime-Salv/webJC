@@ -18,7 +18,7 @@ begin
  assert jc_private.rol_actual()='admin','Rol admin';
  perform public.banda_accion('rol',jsonb_build_object('usuario_id',a,'rol','admin','es_musico',true));
  assert jc_private.rol_actual()='admin' and (select es_musico from public.perfiles where id=a),'Administrador y músico simultáneos';
- payload:=jsonb_build_object('titulo','Prueba transaccional JC','tipo','ensayo','inicio',now()-interval '15 minutes','fin',now()+interval '1 hour','limite_respuesta',now()+interval '30 minutes','lugar','Local de prueba','latitud',36.778,'longitud',-6.35,'radio_m',150);
+ payload:=jsonb_build_object('titulo','Prueba transaccional JC','tipo','actuacion','inicio',now()-interval '15 minutes','fin',now()+interval '1 hour','limite_respuesta',now()+interval '30 minutes','lugar','Local de prueba','latitud',36.778,'longitud',-6.35,'radio_m',150);
  result:=public.banda_accion('evento',payload);ev:=(result->>'id')::uuid;
  assert exists(select 1 from public.banda_convocados where evento_id=ev and usuario_id=m),'Convocatoria músico';
  assert not exists(select 1 from public.banda_convocados where evento_id=ev and usuario_id=u),'Público no convocado';

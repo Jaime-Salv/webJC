@@ -1235,7 +1235,7 @@
             .btn-editar-fila:hover { transform: none; }
         }
     </style>
-<link rel="stylesheet" href="../css/musicos.css?v=2">
+<link rel="stylesheet" href="../css/musicos.css?v=3">
 </head>
 
 <body>
@@ -1379,7 +1379,7 @@
                 <p id="txt-lugar-activa" style="font-size: 0.8rem; color: #ccc; margin: 5px 0 0 0;"></p>
             </div>
 
-            <div id="form-nueva-procesion">
+            <div id="form-nueva-procesion"><div class="banda"><h3>Activar una procesión programada</h3><select id="agenda-live-select"><option value="">Selecciona una procesión…</option></select><button type="button" id="agenda-live-start">Activar directo de esta procesión</button><p class="muted">Conserva su convocatoria y respuestas. También puedes iniciar un directo sin programación con el formulario inferior.</p></div>
                 <input type="text" id="adm-hermandad" class="input-admin" placeholder="Hermandad...">
                 <input type="text" id="adm-localidad" class="input-admin" placeholder="Localidad...">
                 <input type="date" id="adm-fecha" class="input-admin">
@@ -1501,13 +1501,19 @@
         <section class="admin-view banda" data-admin-view="banda">
 <div class="admin-view-header"><div><span>Gestión interna</span><h1>Músicos y convocatorias</h1></div><p>Confirmaciones y presencia real, registradas por separado.</p></div>
 <p id="banda-status" class="notice" role="status" aria-live="polite" hidden></p>
-<div class="row between"><a class="button" href="musicos.html">Abrir portal músico</a><button id="ba-new" class="primary" type="button">Nueva convocatoria</button><button id="ba-refresh" type="button">Actualizar</button></div>
+<div class="row between"><a class="button" href="musicos.html">Abrir portal músico</a><button id="ba-refresh" type="button">Actualizar</button></div>
+<section class="panel" id="ba-agenda"><div class="row between"><div><h2>Calendario de la banda</h2><p class="muted">Elige un día y coloca un ensayo. Las actuaciones se publican desde su ficha.</p></div><div class="row"><button type="button" id="agenda-prev" aria-label="Mes anterior">←</button><strong id="agenda-month"></strong><button type="button" id="agenda-next" aria-label="Mes siguiente">→</button></div></div>
+<div id="agenda-days" class="agenda-days" aria-label="Calendario de administración"></div>
+<form id="agenda-rehearsal"><div class="grid"><label>Día seleccionado<input type="date" name="fecha" required></label><label>Plantilla de ensayo<select name="plantilla"><option value="tarde">Ensayo tarde · 20:30–22:00</option><option value="manana">Ensayo mañana · 12:00–14:00</option></select></label></div><div class="row"><span class="muted">Local de la banda · Sin confirmación previa</span><button type="submit" class="primary">Colocar ensayo</button></div></form>
+<details><summary>Ubicación habitual del local</summary><p class="muted">Se copiará en los próximos ensayos que crees. Los ya creados mantienen su ubicación.</p><form id="agenda-settings"><div class="grid"><label>Latitud<input name="latitud" type="number" min="-90" max="90" step="any"></label><label>Longitud<input name="longitud" type="number" min="-180" max="180" step="any"></label></div><label>Radio de fichaje (metros)<input name="radio_m" type="number" min="30" max="1000" value="150" required></label><div class="row"><button type="button" id="agenda-location">Usar mi ubicación en el local</button><button type="submit">Guardar ubicación habitual</button></div></form></details></section>
+<section class="panel"><h2>Programar una actuación</h2><p class="muted">Al publicarla se mostrará en «Próximas actuaciones» y se convocará a los músicos para que confirmen. Las horas son de España peninsular; un fin anterior al inicio corresponde al día siguiente.</p><div class="row"><button type="button" data-admin-go="conciertos">Crear o editar concierto</button><button type="button" id="agenda-new-procession">Programar procesión</button></div>
+<form id="agenda-procession" hidden><input type="hidden" name="estado" value="Programada"><input type="hidden" name="id_procesion"><h3 id="agenda-procession-title">Nueva procesión programada</h3><div class="grid"><label>Hermandad / título<input name="hermandad" maxlength="180" required></label><label>Tipo<select name="tipo"><option>Semana Santa</option><option>Gloria</option></select></label></div><div class="grid"><label>Fecha<input type="date" name="fecha" required></label><label>Localidad<input name="localidad" maxlength="100" required></label></div><div class="grid"><label>Hora de inicio<input type="time" name="hora" required></label><label>Hora de fin prevista<input type="time" name="fin_hora" required></label></div><label>Lugar de encuentro<input name="lugar" maxlength="130" required></label><label>Descripción pública<textarea name="descripcion" maxlength="3000"></textarea></label><label>URL de la imagen<input name="url_foto" type="url"></label><div class="row"><button type="submit" class="primary">Publicar y convocar músicos</button><button type="button" id="agenda-procession-close">Cerrar</button></div></form><div id="agenda-processions"></div></section>
 <section class="panel" id="ba-editor" hidden><h2 id="ba-editor-title">Nueva convocatoria</h2>
-<form id="ba-form"><input type="hidden" name="id">
+<form id="ba-form"><input type="hidden" name="id"><p id="ba-source-info" class="notice" hidden></p>
 <div class="grid"><label>Título<input name="titulo" required maxlength="180" placeholder="Ensayo general / actuación…"></label><label>Tipo<select name="tipo"><option value="ensayo">Ensayo</option><option value="actuacion">Actuación</option></select></label></div>
 <p class="muted">Todas las horas se introducen en horario de España peninsular.</p>
 <div class="grid"><label>Inicio / hora de convocatoria<input type="datetime-local" name="inicio" required></label><label>Fin previsto<input type="datetime-local" name="fin" required></label></div>
-<div class="grid"><label>Fecha límite para responder<input type="datetime-local" name="limite_respuesta" required></label><label>Lugar<input name="lugar" required maxlength="240" placeholder="Local de ensayo, punto de encuentro…"></label></div>
+<div class="grid"><label id="ba-deadline-label">Fecha límite para responder<input type="datetime-local" name="limite_respuesta" required></label><label>Lugar<input name="lugar" required maxlength="240" placeholder="Local de ensayo, punto de encuentro…"></label></div>
 <label>Información para los músicos<textarea name="notas" maxlength="4000" placeholder="Uniformidad, transporte, programa…"></textarea></label>
 <h3>Zona de fichaje</h3><p class="muted">Configura el punto donde estarán los músicos al fichar. Puedes guardar el evento sin coordenadas y completarlas antes de abrir el QR.</p>
 <div class="grid"><label>Latitud<input type="number" name="latitud" min="-90" max="90" step="any"></label><label>Longitud<input type="number" name="longitud" min="-180" max="180" step="any"></label></div>
@@ -1680,7 +1686,7 @@
             <h3>Datos y programa del concierto</h3>
 
             <p style="color:#aaa; font-size:0.9rem; margin-top:0;">
-                Crea conciertos independientes de las procesiones. Cada concierto tendrá su propio programa de obras,
+                Publica una próxima actuación con fecha, inicio, fin y lugar para crear también su convocatoria musical. Cada concierto tendrá su propio programa de obras,
                 enlace público y QR para insertar en carteles.
             </p>
 
@@ -1717,6 +1723,7 @@
                         Hora
                     </label>
                     <input type="time" id="concierto-hora" class="input-admin">
+                    <label for="concierto-fin-hora">Hora de fin prevista (para convocar músicos)</label><input type="time" id="concierto-fin-hora" class="input-admin"><small>Si termina después de medianoche, indica la hora del día siguiente.</small>
 
                     <label style="font-size:0.65rem; color:#888; text-transform:uppercase; display:block; margin-bottom:6px;">
                         Lugar
@@ -1870,8 +1877,9 @@
     <script src="../js/admin-buscador-directo.js?v=1"></script>
     <script src="../js/banda-common.js?v=2"></script>
 <script src="../js/vendor/qrcode-generator.js"></script>
-<script src="../js/admin-banda.js?v=2"></script>
-<script src="../js/admin.js?v=6"></script>
+<script src="../js/admin-banda.js?v=3"></script>
+<script src="../js/admin-agenda.js?v=1"></script>
+<script src="../js/admin.js?v=7"></script>
     <script src="../js/pwa.js?v=3"></script>
 
     <script>

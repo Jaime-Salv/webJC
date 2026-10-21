@@ -77,3 +77,11 @@ body.banda { margin:0; background:#090b0e; }
 .banda .portal-tools a:hover { color:var(--oro); border-color:var(--oro); }
 #portal-calendario, #portal-confirmaciones, #portal-asistencias { scroll-margin-top:24px; }
 @media(max-width:680px) { .banda .portal-main-nav { display:none; } }
+/* Agenda de administración: fecha y plantilla antes de crear el ensayo. */
+.banda .agenda-days {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:20px 0;}
+.banda .agenda-days>span {text-align:center;}
+.banda .agenda-days button {display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;min-height:76px;padding:8px;overflow:hidden;}
+.banda .agenda-days button[aria-pressed=true] {border-color:var(--oro);background:#38301b;}
+.banda .agenda-days small {font-size:10px;line-height:1.3;text-align:left;overflow-wrap:anywhere;max-width:100%;}
+.banda #agenda-processions .event {margin-top:14px;}
+@media(max-width:540px){.banda .agenda-days button {min-height:52px;padding:5px;}.banda .agenda-days small {max-height:28px;font-size:8px;}.banda #ba-agenda {padding:12px;}}
