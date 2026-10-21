@@ -14,7 +14,7 @@ module.exports=()=>{
    return (...args)=>{if(p==='insert'||p==='update')mutation={action:p,data:Array.isArray(args[0])?args[0][0]:args[0]};if(p==='eq')filters.push(args);if(p==='maybeSingle'||p==='single')single=true;return q;};
   }});return q;
  }
- window.clienteSupabase={from,rpc:async(name,{p_accion:a,p_datos:d})=>{state.calls.push({a,d});let data={ok:true};
+ window.clienteSupabase={from,storage:{from:bucket=>({upload:async(path,file)=>{state.calls.push({a:'storage:upload',d:{bucket,path,name:file.name,type:file.type}});return state.uploadError?{error:{message:'Fallo de subida de prueba'}}:{error:null};},getPublicUrl:path=>({data:{publicUrl:'https://example.invalid/'+bucket+'/'+path}})})},rpc:async(name,{p_accion:a,p_datos:d})=>{state.calls.push({a,d});let data={ok:true};
   if(a==='ensayo'){data.id='00000000-0000-4000-8000-000000000011';}
   if(a==='rol'){const p=state.profiles.find(p=>p.id===d.usuario_id);if(p){p.rol=d.rol;p.es_musico=d.es_musico;}if(d.usuario_id===uid)state.role=d.rol;}
   if(a==='respuesta'){state.responses=[{evento_id:d.evento_id,usuario_id:uid,respuesta:d.respuesta,actualizado_en:new Date().toISOString()}];}

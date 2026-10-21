@@ -588,3 +588,5 @@ iframe {
 .proxima-card .proxima-type,.proxima-card .proxima-date,.proxima-card a {color:#d4af37;}
 .proxima-type {text-transform:uppercase;font-size:11px;letter-spacing:2px;font-weight:700;}
 .proxima-info {font-size:12px;color:#8f939c;}
+
+.proxima-cover {display:block;width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:18px;}
