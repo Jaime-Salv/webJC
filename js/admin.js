@@ -9,6 +9,7 @@ let ordenEnEdicion = null;
 let historialDirectoCache = [];
 let guardandoMarchaDirecto = false;
 let sincronizandoMarchasPendientes = false;
+let eliminandoMarchaDirecto = false;
 const CLAVE_MARCHAS_PENDIENTES = 'jc_marchas_directo_pendientes';
 
 let usuarioActual = null;
@@ -913,7 +914,7 @@ async function sincronizarMarchasPendientes() {
 
 async function inyectarMarcha() {
     window.sincronizarEntradaDirecto?.();
-    if (guardandoMarchaDirecto) return;
+    if (guardandoMarchaDirecto || eliminandoMarchaDirecto) return;
     if (!procesionActiva) {
         alert('No hay proceso activo.');
         return;
@@ -1062,6 +1063,7 @@ async function cargarHistorialTransaccional() {
                 <td class="col-fase">${escaparHTML(registro.fase)}</td>
                 <td class="col-acciones">
                     <button class="btn-editar-fila" title="Editar marcha" onclick="prepararEdicion(${registro.orden}, ${registro.id_marcha}, '${escaparAtributo(registro.fase)}')">✏️</button>
+                    <button type="button" class="btn-editar-fila btn-eliminar-marcha" title="Eliminar del directo" aria-label="Eliminar ${escaparAtributo(nombreMostrar)} del directo" onclick="eliminarMarchaDirecto(${registro.orden}, this)">🗑️</button>
                 </td>
             </tr>
         `;
@@ -1069,6 +1071,37 @@ async function cargarHistorialTransaccional() {
 
     pintarAccesosMarchasRecientes(data);
     pintarMarchasPendientes();
+}
+
+async function eliminarMarchaDirecto(orden, boton) {
+    if (!procesionActiva || eliminandoMarchaDirecto || guardandoMarchaDirecto || sincronizandoMarchasPendientes) return;
+    const registro = historialDirectoCache.find((item) => Number(item.orden) === Number(orden));
+    if (!registro) return;
+    if (!navigator.onLine) {
+        actualizarEstadoInyeccion('Necesitas conexión para eliminar una marcha del directo.', 'error');
+        return;
+    }
+    if (!confirm(`¿Eliminar «${registro.titulo}» (#${registro.orden}) de este directo?\n\nLa marcha seguirá en el catálogo.`)) return;
+    eliminandoMarchaDirecto = true;
+    if (boton) boton.disabled = true;
+    try {
+        const { data, error } = await clienteSupabase.from('repertorio_transaccional')
+            .delete().eq('id_procesion', procesionActiva.id_procesion)
+            .eq('orden', registro.orden).eq('id_marcha', registro.id_marcha).select('orden');
+        if (error) throw error;
+        if (!data?.length) throw new Error('No se ha eliminado ninguna entrada. Puede haber cambiado o faltar permisos.');
+        ordenEnEdicion = null;
+        document.dispatchEvent(new CustomEvent('directo:edicion-cancelada'));
+        limpiarFormularioMarcha();
+        establecerGuardadoDirecto(false);
+        await cargarHistorialTransaccional();
+        actualizarEstadoInyeccion('Marcha eliminada del directo.', 'correcto');
+    } catch (error) {
+        actualizarEstadoInyeccion('No se ha podido eliminar: ' + error.message + ' Revisa el historial antes de reintentar.', 'error');
+    } finally {
+        eliminandoMarchaDirecto = false;
+        if (boton) boton.disabled = false;
+    }
 }
 
 function obtenerDatosExportacionDirecto() {

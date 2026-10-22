@@ -11,6 +11,7 @@
     let marchasTemporada = [];
     let catalogoRepertorio = [];
     let ordenEdicionDirecto = null;
+    document.addEventListener('directo:edicion-cancelada', () => { ordenEdicionDirecto = null; });
     let guardandoOrden = false;
     let mapaActivoCache = null;
     let mapaActivoId = null;
@@ -690,6 +691,7 @@
     }
 
     async function inyectarMarchaPorNumeroAnual() {
+        if (eliminandoMarchaDirecto) return;
         window.sincronizarEntradaDirecto?.();
         const valorNumero = document.getElementById('inp-id-marcha')?.value.trim() || '';
         const numero = valorNumero ? Number(valorNumero) : null;

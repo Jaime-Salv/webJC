@@ -417,7 +417,7 @@ function activarSuscripcionesRealtime() {
             (payload) => {
                 const idCambio = payload.new?.id_procesion || payload.old?.id_procesion;
 
-                if (Number(idCambio) === Number(idProcesion)) {
+                if (payload.eventType === 'DELETE' || Number(idCambio) === Number(idProcesion)) {
                     cargarMarchas();
                 }
             }
