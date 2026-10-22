@@ -9,7 +9,7 @@
  const empty=(title,detail)=>`<div class="portal-empty"><strong>${E(title)}</strong><p>${E(detail)}</p></div>`;
  const response=id=>responses.find(x=>x.evento_id===id);
  const attended=id=>attendance.find(x=>x.evento_id===id);
- const upcoming=()=>events.filter(e=>Date.parse(e.fin)>=Date.now()&&e.estado!=='cancelado');
+ const upcoming=()=>events.filter(e=>Date.parse(e.fin)>=Date.now()&&e.estado!=='cancelado'&&!e.finalizado);
  const pending=()=>auth?.musico?upcoming().filter(e=>e.tipo==='actuacion'&&Date.parse(e.limite_respuesta)>=Date.now()&&!response(e.id)):[];
  const cameraStatus=(text,error=false)=>{$('portal-camera-status').textContent=text;$('portal-camera-status').dataset.error=String(error);};
  const reader=JCQRScanner.create({video:$('portal-camera'),onRead:acceptQR,onStatus:cameraStatus,onState:state=>{
@@ -63,7 +63,7 @@
   $('banda-events').innerHTML=list.map(e=>eventCard(e)).join('')||empty('No hay convocatorias en esta selección',filter==='pending'?'Has respondido a todas las convocatorias abiertas.':'Prueba con otro filtro o espera a que se publique una nueva convocatoria.');
  }
  function paintHistory() {
-  const list=events.filter(e=>Date.parse(e.inicio)<=Date.now()||attended(e.id)).slice().reverse();
+  const list=events.filter(e=>e.finalizado||Date.parse(e.inicio)<=Date.now()||attended(e.id)).slice().reverse();
   $('banda-history').innerHTML=list.map(e=>{
    const a=attended(e.id),status=e.estado==='cancelado'?'Cancelado':B.asistencia(a);
    return `<article class="portal-history-item"><div><h3>${E(e.titulo)}</h3><p class="muted">${B.fecha(e.inicio)} · ${E(e.lugar)}</p>${a?`<p class="portal-history-meta">Registro: ${B.fecha(a.registrado_en)} · ${a.metodo==='qr'?'QR':'Registro manual'}</p>`:''}${a?.motivo?`<p class="portal-history-note">${E(a.motivo)}</p>`:''}${e.justificacion?`<p class="muted">Justificación: ${E(e.justificacion.estado)}</p>`:''}</div><span class="badge ${a?.estado==='presente'?'good':a?.estado==='incidencia'?'warn':''}">${E(status)}</span></article>`;
@@ -84,7 +84,7 @@
   if(loading)return;loading=true;$('banda-refresh').disabled=true;
   try {
    const data=await Promise.all([B.query('banda_eventos',q=>q.order('inicio')),B.query('banda_respuestas',q=>q.eq('usuario_id',auth.user.id)),B.query('banda_asistencias',q=>q.eq('usuario_id',auth.user.id)),B.query('banda_fichas',q=>q.eq('usuario_id',auth.user.id)),B.query('banda_detalles'),B.query('banda_justificaciones',q=>q.eq('usuario_id',auth.user.id))]);
-   [events,responses,attendance]=data;profile=data[3][0]||null;events.forEach(e=>{e.extra=data[4].find(d=>d.evento_id===e.id)||{};e.justificacion=data[5].find(j=>j.evento_id===e.id)||null;});events.sort((a,b)=>Date.parse(a.extra.convocatoria||a.inicio)-Date.parse(b.extra.convocatoria||b.inicio));paint();document.dispatchEvent(new CustomEvent('portal:ready',{detail:{auth,events}}));
+   [events,responses,attendance]=data;const finales=await B.query('maestro_procesiones',q=>q.eq('estado','Finalizada').order('fecha',{ascending:false}));events.forEach(e=>e.finalizado=finales.some(p=>(e.procesion_id&&String(p.id_procesion)===String(e.procesion_id))||(e.concierto_id&&String(p.concierto_id)===String(e.concierto_id))));profile=data[3][0]||null;events.forEach(e=>{e.extra=data[4].find(d=>d.evento_id===e.id)||{};e.justificacion=data[5].find(j=>j.evento_id===e.id)||null;});events.sort((a,b)=>Date.parse(a.extra.convocatoria||a.inicio)-Date.parse(b.extra.convocatoria||b.inicio));paint();document.dispatchEvent(new CustomEvent('portal:ready',{detail:{auth,events}}));
    $('portal-last-update').textContent='Actualizado a las '+new Intl.DateTimeFormat('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}).format(new Date())+' · Hora peninsular';
   }finally{loading=false;$('banda-refresh').disabled=!navigator.onLine;}
  }
@@ -140,4 +140,6 @@
  window.addEventListener('hashchange',()=>{if(auth)route();});window.addEventListener('popstate',()=>{if(auth)route();});
  document.addEventListener('visibilitychange',()=>{if(document.hidden){reader.stop();cameraStatus('Cámara pausada. Pulsa Abrir cámara para continuar.');}});
  window.addEventListener('pagehide',()=>reader.stop());
+ const autoRefresh=()=>{if(auth&&!document.hidden&&!loading&&currentView!=='escanear'&&!document.querySelector('dialog[open]')&&!document.activeElement?.matches('input,textarea,select'))run(load);};
+ setInterval(autoRefresh,30000);document.addEventListener('visibilitychange',autoRefresh);
 })();

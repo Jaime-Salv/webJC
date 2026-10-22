@@ -49,6 +49,13 @@ async function cargarConcierto() {
         }
 
         renderizarConcierto(concierto, obras || []);
+        const {data:directo,error:directoError}=await clienteSupabase.from('maestro_procesiones').select('id_procesion,estado').eq('concierto_id',idConcierto).maybeSingle();
+        if(!directoError&&directo&&['Activa','Finalizada'].includes(directo.estado)){
+            const enlace=document.createElement('a');enlace.className='btn-send';
+            enlace.textContent=directo.estado==='Activa'?'Seguir concierto en directo':'Ver repertorio interpretado';
+            enlace.href=(directo.estado==='Activa'?'live.html?id=':'analisis.html?id=')+encodeURIComponent(directo.id_procesion);
+            contenedor.prepend(enlace);
+        }
 
     } catch (error) {
         console.error('Error cargando concierto:', error);

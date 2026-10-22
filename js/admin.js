@@ -1257,6 +1257,7 @@ async function cambiarPermisosUsuario(idUsuario) {
     try {
         await JCBanda.rpc('rol', permisos);
         await cargarUsuariosAdmin();
+        document.dispatchEvent(new Event('agenda:refresh'));
     } catch (error) {
         alert('No se han podido guardar los permisos: ' + error.message);
         await cargarUsuariosAdmin();
@@ -1592,6 +1593,7 @@ async function subirAudioMarcha(archivoAudio, marcha) {
 ------------------------------------------------------------ */
 
 async function finalizarEvento() {
+    if (guardandoMarchaDirecto || sincronizandoMarchasPendientes || eliminandoMarchaDirecto) { alert('Espera a que termine el guardado o la sincronización antes de finalizar.'); return; }
     if (!procesionActiva) {
         return;
     }

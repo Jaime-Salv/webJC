@@ -344,7 +344,7 @@ async function cargarActuacionesRecientes() {
         const lista = procesiones || [];
 
         const semanaSanta = lista.filter((p) => p.tipo === 'Semana Santa');
-        const glorias = lista.filter((p) => p.tipo !== 'Semana Santa');
+        const glorias = lista.filter((p) => p.tipo !== 'Semana Santa' && p.tipo !== 'Concierto');
 
         if (semanaSanta.length === 0) {
             gridSemanaSanta.innerHTML = `<div class="empty-state">Todavía no hay actuaciones de Semana Santa publicadas.</div>`;
@@ -385,7 +385,9 @@ async function cargarConciertosHome() {
         }
 
         const hoy = new Intl.DateTimeFormat('sv-SE', {timeZone:'Europe/Madrid'}).format(new Date());
-        const anteriores = (conciertos || []).filter(c => !c.fecha || c.fecha < hoy);
+        const {data: directos,error: errorDirectos} = await clienteSupabase.from('maestro_procesiones').select('concierto_id,estado').eq('tipo','Concierto');
+        if(errorDirectos) throw errorDirectos;
+        const anteriores = (conciertos || []).filter(c => (directos||[]).some(d=>String(d.concierto_id)===String(c.id_concierto)&&d.estado==='Finalizada') || ((!c.fecha || c.fecha < hoy)&&!(directos||[]).some(d=>String(d.concierto_id)===String(c.id_concierto)&&d.estado==='Activa')));
         if (anteriores.length === 0) {
             gridConciertos.innerHTML = `<div class="empty-state">Todavía no hay conciertos anteriores publicados.</div>`;
             return;
@@ -509,12 +511,13 @@ async function cargarProximasActuaciones() {
  const grid=document.getElementById('grid-proximas-home');if(!grid)return;
  try {
   const hoy=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Madrid'}).format(new Date());
-  const [c,p]=await Promise.all([
+  const [c,p,live]=await Promise.all([
    clienteSupabase.from('conciertos').select('id_concierto,titulo,fecha,hora,fin_hora,lugar,localidad,cartel_url').eq('estado','Publicado').gte('fecha',hoy).order('fecha'),
-   clienteSupabase.from('maestro_procesiones').select('id_procesion,hermandad,fecha,hora,fin_hora,lugar,localidad,descripcion,url_foto').eq('estado','Programada').gte('fecha',hoy).order('fecha')
+   clienteSupabase.from('maestro_procesiones').select('id_procesion,hermandad,fecha,hora,fin_hora,lugar,localidad,descripcion,url_foto').eq('estado','Programada').gte('fecha',hoy).order('fecha'),
+   clienteSupabase.from('maestro_procesiones').select('concierto_id,estado').eq('tipo','Concierto')
   ]);
-  if(c.error||p.error)throw c.error||p.error;
-  const list=[...(c.data||[]).map(e=>({...e,titulo:e.titulo,tipo:'Concierto'})),...(p.data||[]).map(e=>({...e,titulo:e.hermandad,tipo:'Procesión'}))].sort((a,b)=>(a.fecha+(a.hora||'')).localeCompare(b.fecha+(b.hora||'')));
+  if(c.error||p.error||live.error)throw c.error||p.error||live.error;
+  const list=[...(c.data||[]).filter(e=>!(live.data||[]).some(l=>String(l.concierto_id)===String(e.id_concierto)&&['Activa','Finalizada'].includes(l.estado))).map(e=>({...e,titulo:e.titulo,tipo:'Concierto'})),...(p.data||[]).map(e=>({...e,titulo:e.hermandad,tipo:'Procesión'}))].sort((a,b)=>(a.fecha+(a.hora||'')).localeCompare(b.fecha+(b.hora||'')));
   grid.innerHTML=list.map(e=>`<article class="proxima-card">${e.url_foto||e.cartel_url?`<img class="proxima-cover" src="${escaparAtributo(e.url_foto||e.cartel_url)}" alt="" loading="lazy">`: ''}<span class="proxima-type">${escaparHTML(e.tipo)}</span><h3>${escaparHTML(e.titulo)}</h3><p class="proxima-date">${escaparHTML(formatearFecha(e.fecha))}${e.hora?' · '+escaparHTML(e.hora.slice(0,5)):''}</p><p>${escaparHTML([e.lugar,e.localidad].filter(Boolean).join(' · '))}</p>${e.descripcion?`<p>${escaparHTML(e.descripcion)}</p>`:''}${e.id_concierto?`<a href="templates/concierto.html?id=${e.id_concierto}">Ver programa →</a>`:'<span class="proxima-info">Información de la próxima procesión</span>'}</article>`).join('')||'<div class="empty-state">Próximamente anunciaremos nuevas actuaciones.</div>';
  }catch(e){console.error('Próximas actuaciones:',e);grid.innerHTML='<div class="empty-state">No se han podido cargar las próximas actuaciones. Recarga para intentarlo de nuevo.</div>';}
 }
