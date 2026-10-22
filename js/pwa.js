@@ -9,6 +9,13 @@
     let eventoInstalacion = null;
     let registroSW = null;
     let recargarTrasActualizar = false;
+    let avisoPospuesto = false;
+    const CLAVE_POSPONER_VERSION = 'jc_actualizacion_pospuesta_hasta';
+    function actualizacionPospuesta() {
+        if (avisoPospuesto) return true;
+        try { return Number(sessionStorage.getItem(CLAVE_POSPONER_VERSION)) > Date.now(); }
+        catch (_) { return false; }
+    }
 
     if (!('serviceWorker' in navigator)) return;
 
@@ -37,7 +44,12 @@
         });
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (recargarTrasActualizar) window.location.reload();
+        document.getElementById('aviso-version-web')?.remove();
+        if (recargarTrasActualizar) {
+            recargarTrasActualizar = false;
+            try { sessionStorage.removeItem(CLAVE_POSPONER_VERSION); } catch (_) {}
+            window.location.reload();
+        }
     });
 
     function observarActualizaciones(registro) {
@@ -54,15 +66,19 @@
     }
 
     function mostrarActualizacion(registro) {
-        if (document.getElementById('aviso-version-web')) return;
+        if (actualizacionPospuesta() || document.getElementById('aviso-version-web')) return;
         const aviso = document.createElement('aside');
         aviso.id = 'aviso-version-web';
         aviso.className = 'aviso-version-web';
         aviso.setAttribute('role', 'status');
-        aviso.innerHTML = '<strong>Nueva versión disponible</strong><span>Actualiza cuando hayas terminado de añadir marchas.</span><div><button type="button" data-pwa-actualizar>Actualizar</button><button type="button" data-pwa-despues>Después</button></div>';
-        aviso.querySelector('[data-pwa-despues]').addEventListener('click', () => aviso.remove());
+        aviso.innerHTML = '<strong>Nueva versión disponible</strong><span>Hay mejoras de la web disponibles. Guarda lo que estés haciendo antes de actualizar.</span><div><button type="button" data-pwa-actualizar>Actualizar</button><button type="button" data-pwa-despues>Después</button></div>';
+        aviso.querySelector('[data-pwa-despues]').addEventListener('click', () => {
+            avisoPospuesto = true;
+            try { sessionStorage.setItem(CLAVE_POSPONER_VERSION, String(Date.now() + 4 * 60 * 60 * 1000)); } catch (_) {}
+            aviso.remove();
+        });
         aviso.querySelector('[data-pwa-actualizar]').addEventListener('click', () => {
-            if (!registro.waiting) return;
+            if (!registro.waiting) { aviso.remove(); return; }
             recargarTrasActualizar = true;
             aviso.querySelector('[data-pwa-actualizar]').disabled = true;
             registro.waiting.postMessage({ type: 'ACTIVAR_ACTUALIZACION' });
