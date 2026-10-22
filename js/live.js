@@ -8,6 +8,7 @@ let idProcesion = parametrosURL.get('id');
 
 let catalogoMaestro = [];
 let canalDirecto = null;
+let enviandoMensaje = false;
 let CLAVE_CACHE_DIRECTO = `jc_directo_cache_${idProcesion || 'sin-id'}`;
 
 document.addEventListener('DOMContentLoaded', inicializarDirecto);
@@ -140,7 +141,7 @@ async function cargarCabeceraEvento() {
 async function cargarCatalogoEnMemoria() {
     const { data, error } = await clienteSupabase
         .from('catalogo_marchas')
-        .select('id_marcha, titulo');
+        .select('id_marcha, titulo, autor');
 
     if (error) {
         console.error('Error cargando catálogo:', error);
@@ -185,7 +186,7 @@ async function cargarMarchas() {
             data = null;
         }
     } else {
-        localStorage.setItem(CLAVE_CACHE_DIRECTO, JSON.stringify({ data: data || [], actualizadaEn: new Date().toISOString() }));
+        try { localStorage.setItem(CLAVE_CACHE_DIRECTO, JSON.stringify({ data: data || [], actualizadaEn: new Date().toISOString() })); } catch (_) { /* El directo sigue funcionando sin almacenamiento. */ }
     }
 
     limpiarElemento(contenedor);
@@ -197,6 +198,7 @@ async function cargarMarchas() {
         return;
     }
 
+    if (data?.some((r) => !catalogoMaestro.some((m) => Number(m.id_marcha) === Number(r.id_marcha)))) await cargarCatalogoEnMemoria();
     actualizarResumenDirecto(data || [], usandoCache);
 
     if (!data || data.length === 0) {
@@ -232,6 +234,13 @@ async function cargarMarchas() {
 
         info.appendChild(fase);
         info.appendChild(titulo);
+        const marcha = catalogoMaestro.find((m) => Number(m.id_marcha) === Number(registro.id_marcha));
+        if (marcha?.autor) {
+            const autor = document.createElement('small');
+            autor.className = 'ml-autor';
+            autor.textContent = marcha.autor;
+            info.appendChild(autor);
+        }
 
         card.appendChild(info);
         card.appendChild(orden);
@@ -350,12 +359,17 @@ async function enviarMensaje() {
         return;
     }
 
+    if (enviandoMensaje) return;
     const texto = inputChat.value.trim();
 
     if (!texto) {
         return;
     }
 
+    enviandoMensaje = true;
+    const boton = document.getElementById('btn-enviar-chat');
+    if (boton) boton.disabled = true;
+    try {
     const { data: sesionData, error: errorSesion } = await clienteSupabase.auth.getSession();
 
     if (errorSesion) {
@@ -383,8 +397,6 @@ async function enviarMensaje() {
 
     const nombreUsuario = perfil?.username || session.user.email.split('@')[0];
 
-    inputChat.value = '';
-
     const { error } = await clienteSupabase
         .from('directo_chat')
         .insert([{
@@ -394,9 +406,14 @@ async function enviarMensaje() {
             mensaje: texto
         }]);
 
-    if (error) {
+    if (error) throw error;
+    if (inputChat.value.trim() === texto) inputChat.value = '';
+    } catch (error) {
         console.error('Error enviando mensaje:', error);
-        alert('No se ha podido enviar el mensaje.');
+        alert('No se ha podido enviar el mensaje. El texto se conserva para reintentarlo.');
+    } finally {
+        enviandoMensaje = false;
+        if (boton) boton.disabled = false;
     }
 }
 
