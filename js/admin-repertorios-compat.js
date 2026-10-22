@@ -217,6 +217,7 @@
                 idProcesion: directo.id_procesion,
                 idIntroducido: relacion ? Number(relacion.id_marcha) : null,
                 titulo: relacion?.catalogo_marchas?.titulo || tituloManual,
+                autor: document.getElementById('inp-autor-marcha')?.value.trim() || '',
                 fase,
                 numeroRepertorio: numero,
                 idLocal: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,

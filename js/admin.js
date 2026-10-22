@@ -681,7 +681,7 @@ function normalizarTituloCatalogo(titulo) {
         .toLocaleLowerCase('es');
 }
 
-async function obtenerOCrearMarcha(idIntroducido, tituloIntroducido) {
+async function obtenerOCrearMarcha(idIntroducido, tituloIntroducido, autorIntroducido = '') {
     if (Number.isInteger(idIntroducido)) {
         const marchaPorId = catalogoCache.find((marcha) => Number(marcha.id_marcha) === idIntroducido);
 
@@ -703,11 +703,11 @@ async function obtenerOCrearMarcha(idIntroducido, tituloIntroducido) {
 
     // Tras un corte de red, la creación pudo completarse sin que llegase la respuesta.
     const { data: yaCreada, error: errorConsulta } = await clienteSupabase
-        .from('catalogo_marchas').select('id_marcha,titulo').eq('titulo', titulo).limit(1).maybeSingle();
+        .from('catalogo_marchas').select('id_marcha,titulo,autor').eq('titulo', titulo).limit(1).maybeSingle();
     if (errorConsulta) throw errorConsulta;
     if (yaCreada) { catalogoCache.push(yaCreada); return yaCreada; }
 
-    const nuevaMarcha = { titulo };
+    const nuevaMarcha = { titulo, autor: String(autorIntroducido || '').trim() || null };
 
     if (Number.isInteger(idIntroducido)) {
         nuevaMarcha.id_marcha = idIntroducido;
@@ -716,7 +716,7 @@ async function obtenerOCrearMarcha(idIntroducido, tituloIntroducido) {
     const { data, error } = await clienteSupabase
         .from('catalogo_marchas')
         .insert([nuevaMarcha])
-        .select('id_marcha, titulo')
+        .select('id_marcha, titulo, autor')
         .single();
 
     if (error) {
@@ -857,7 +857,7 @@ async function insertarMarchaPendiente(item) {
     if (errorBusqueda) throw errorBusqueda;
     if (existente) return;
     await cargarHistorialTransaccional();
-    const marcha = await obtenerOCrearMarcha(item.idIntroducido, item.titulo);
+    const marcha = await obtenerOCrearMarcha(item.idIntroducido, item.titulo, item.autor);
     const { error } = await clienteSupabase.from('repertorio_transaccional').insert([{
         id_procesion: item.idProcesion,
         id_marcha: Number(marcha.id_marcha),
@@ -941,7 +941,8 @@ async function inyectarMarcha() {
     try {
         const marcha = await obtenerOCrearMarcha(
             Number.isInteger(inputId) ? inputId : null,
-            tituloInput
+            tituloInput,
+            document.getElementById('inp-autor-marcha')?.value.trim() || ''
         );
         const idMarcha = Number(marcha.id_marcha);
 
@@ -1002,6 +1003,7 @@ async function inyectarMarcha() {
                 idProcesion: procesionActiva.id_procesion,
                 idIntroducido: Number.isInteger(inputId) ? inputId : null,
                 titulo: tituloInput,
+                autor: document.getElementById('inp-autor-marcha')?.value.trim() || '',
                 fase,
                 idLocal: idOperacion
             });

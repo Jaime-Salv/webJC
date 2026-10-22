@@ -22,6 +22,19 @@
         buscador.focus();
     }
 
+    function sincronizarAutor() {
+        const campo = document.getElementById('inp-autor-marcha');
+        const titulo = document.getElementById('inp-titulo-marcha')?.value || '';
+        if (!campo) return;
+        const clave = normalizar(titulo);
+        const existente = (typeof catalogoCache === 'undefined' ? [] : catalogoCache)
+            .find((m) => normalizar(m.titulo) === clave);
+        if (campo.dataset.titulo !== clave) campo.value = existente?.autor || '';
+        campo.dataset.titulo = clave;
+        campo.readOnly = Boolean(existente);
+        campo.placeholder = existente ? 'Autor del catálogo' : 'Autor o compositor (opcional)';
+    }
+
     function sincronizar() {
         const buscador = document.getElementById('inp-buscar-marcha');
         const numero = document.getElementById('inp-id-marcha');
@@ -39,6 +52,7 @@
         titulo.readOnly = false;
         titulo.value = marcha?.catalogo_marchas?.titulo || (/^\d+$/.test(valor) ? '' : valor);
         if (numero.value) numero.dispatchEvent(new Event('input', { bubbles: true }));
+        sincronizarAutor();
     }
 
     function sugerir() {
@@ -75,8 +89,13 @@
         buscador.value = titulo || '';
         buscador.dataset.numero = numero ? String(numero) : '';
         document.getElementById('sugerencias-marchas').hidden = true;
+        sincronizarAutor();
     };
-    window.limpiarEntradaDirecto = () => window.reflejarMarchaDirecto('', '');
+    window.limpiarEntradaDirecto = () => {
+        window.reflejarMarchaDirecto('', '');
+        const campo = document.getElementById('inp-autor-marcha');
+        if (campo) { campo.value = ''; campo.dataset.titulo = ''; campo.readOnly = false; }
+    };
 
     document.addEventListener('admin:ready', () => {
         const buscador = document.getElementById('inp-buscar-marcha');

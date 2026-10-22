@@ -41,3 +41,20 @@ test('una marcha pendiente conserva su identificador y su número anual al envia
     assert.equal(inserts[0].numero_repertorio, 27);
     assert.equal(inserts[0].id_marcha, 20);
 });
+
+test('una marcha nueva guarda el autor al sincronizar una entrada manual pendiente', async () => {
+    const { contexto, inserts } = montarCola(false);
+    let creada;
+    contexto.clienteSupabase.from = (tabla) => ({
+        select() { return this; }, eq() { return this; }, limit() { return this; },
+        async maybeSingle() { return { data: null, error: null }; },
+        insert(registros) {
+            if (tabla === 'catalogo_marchas') { creada = registros[0]; return this; }
+            inserts.push(...registros); return Promise.resolve({ error: null });
+        },
+        async single() { return { data: { ...creada, id_marcha: 99 }, error: null }; }
+    });
+    await vm.runInContext(`insertarMarchaPendiente(${JSON.stringify({ ...pendiente, idIntroducido: null, titulo: 'Marcha nueva', autor: 'José Pérez' })})`, contexto);
+    assert.equal(creada.autor, 'José Pérez');
+    assert.equal(inserts[0].id_marcha, 99);
+});

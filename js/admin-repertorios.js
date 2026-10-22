@@ -753,7 +753,7 @@
         }
 
         try {
-            const marcha = relacion || await obtenerOCrearMarcha(null, tituloManual);
+            const marcha = relacion || await obtenerOCrearMarcha(null, tituloManual, document.getElementById('inp-autor-marcha')?.value.trim() || '');
             if (ordenEdicionDirecto !== null) {
                 const { error } = await clienteSupabase
                     .from('repertorio_transaccional')
