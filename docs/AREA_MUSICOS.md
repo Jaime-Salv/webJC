@@ -100,3 +100,5 @@ Validación: `tests/banda-portal.sql` termina en ROLLBACK y comprueba privacidad
 ## Ensayos separados de actuaciones
 
 El músico dispone de una pestaña Ensayos para consultar fechas y fichar. Actuaciones y el resumen principal excluyen ensayos; el calendario permite elegir cada tipo o ambos. Los ensayos no generan avisos de alta, cambios ni series recurrentes, y se han retirado los avisos antiguos de ensayos sin alterar sus convocatorias o asistencias. Administración tiene un filtro separado por tipo.
+
+El calendario muestra ensayos y actuaciones juntos por defecto. La lista de ensayos es compacta (día, hora y fichaje); las actuaciones se ordenan por convocatoria de más próxima a más lejana. Se retira la pestaña de avisos, manteniendo la activación de notificaciones móviles en Resumen. Los enlaces antiguos a #avisos abren Resumen.

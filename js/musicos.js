@@ -1,6 +1,6 @@
 (() => {
  const B=JCBanda,E=B.escape,$=id=>document.getElementById(id);
- const views=['resumen','ensayos','calendario','confirmaciones','asistencias','escanear','avisos'];
+ const views=['resumen','ensayos','calendario','confirmaciones','asistencias','escanear'];
  let auth,events=[],responses=[],attendance=[],profile=null,selectedDay=null,currentView='resumen',focusedEvent=null,loading=false;
  const today=B.dia(new Date());let year=Number(today.slice(0,4)),month=Number(today.slice(5,7))-1;
  const incoming=new URLSearchParams(location.hash.slice(1));
@@ -18,6 +18,7 @@
   $('portal-camera-placeholder').hidden=state==='scanning';
  }});
  function view(name,writeHash=true) {
+  if(name==='avisos')name='resumen';
   if(!views.includes(name))name='resumen';
   if(name!==currentView)B.notice('');
   if(currentView==='escanear'&&name!=='escanear')reader.stop();
@@ -59,12 +60,12 @@
  }
  function paintConfirmations() {
   const filter=$('portal-event-filter').value,search=$('portal-event-search').value.trim().toLocaleLowerCase('es');
-  const list=events.filter(e=>e.tipo==='actuacion').filter(e=>focusedEvent?e.id===focusedEvent:Date.parse(e.fin)>=Date.now()).filter(e=>filter==='all'||(filter==='pending'?pending().some(p=>p.id===e.id):e.tipo===filter)).filter(e=>!search||(e.titulo+' '+e.lugar).toLocaleLowerCase('es').includes(search));
+  const list=events.filter(e=>e.tipo==='actuacion').filter(e=>focusedEvent?e.id===focusedEvent:Date.parse(e.fin)>=Date.now()).filter(e=>filter==='all'||(filter==='pending'?pending().some(p=>p.id===e.id):e.tipo===filter)).filter(e=>!search||(e.titulo+' '+e.lugar).toLocaleLowerCase('es').includes(search)).sort((a,b)=>Date.parse(a.extra?.convocatoria||a.inicio)-Date.parse(b.extra?.convocatoria||b.inicio));
   $('banda-events').innerHTML=list.map(e=>eventCard(e)).join('')||empty('No hay convocatorias en esta selección',filter==='pending'?'Has respondido a todas las convocatorias abiertas.':'Prueba con otro filtro o espera a que se publique una nueva convocatoria.');
  }
  function paintRehearsals(){
-  const list=events.filter(e=>e.tipo==='ensayo'&&(focusedEvent?e.id===focusedEvent:Date.parse(e.fin)>=Date.now()&&!e.finalizado));
-  $('banda-rehearsals').innerHTML=list.map(e=>eventCard(e)).join('')||empty('Sin próximos ensayos','Consulta aquí las fechas y ficha con el QR al llegar.');
+  const list=events.filter(e=>e.tipo==='ensayo'&&(focusedEvent?e.id===focusedEvent:Date.parse(e.fin)>=Date.now()&&!e.finalizado)).sort((a,b)=>Date.parse(a.inicio)-Date.parse(b.inicio));
+  $('banda-rehearsals').innerHTML=list.map(e=>`<article class="panel"><div class="row"><div><strong>${B.fecha(e.inicio)}</strong><p class="muted">${E(e.titulo)} · ${E(e.lugar)} · Fin: ${new Intl.DateTimeFormat('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}).format(new Date(e.fin))}</p></div>${e.estado==='cancelado'?'<span class="badge warn">Cancelado</span>':e.fichaje_abierto&&Date.parse(e.abierto_hasta)>Date.now()?'<button type="button" data-view="escanear">Escanear QR y fichar</button>':''}</div></article>`).join('')||empty('Sin próximos ensayos','Consulta aquí las fechas y ficha con el QR al llegar.');
  }
  function paintHistory() {
   const list=events.filter(e=>e.finalizado||Date.parse(e.inicio)<=Date.now()||attended(e.id)).slice().reverse();
