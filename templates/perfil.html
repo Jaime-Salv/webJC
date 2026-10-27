@@ -142,10 +142,10 @@
 
             <section class="seccion-preferencias" id="perfil-banda" hidden>
                 <h4>Mi ficha de músico</h4>
-                <p>Información privada para la gestión de la banda. El rol y el año de incorporación los gestiona administración.</p>
+                <p>Información privada para la gestión de la banda. Puedes editar tu nombre, instrumento y año de incorporación. Los permisos los gestiona administración.</p>
                 <div class="input-group"><label for="perf-nombre-real">Nombre completo</label><input id="perf-nombre-real" class="input-sim" maxlength="160" autocomplete="name"></div>
                 <div class="input-group"><label for="perf-instrumento">Instrumento</label><input id="perf-instrumento" class="input-sim" maxlength="80" list="perfil-instrumentos"><datalist id="perfil-instrumentos"><option>Flauta</option><option>Oboe</option><option>Fagot</option><option>Clarinete</option><option>Saxofón alto</option><option>Saxofón tenor</option><option>Saxofón barítono</option><option>Trompeta</option><option>Trompa</option><option>Trombón</option><option>Bombardino</option><option>Tuba</option><option>Percusión</option></datalist></div>
-                <div class="input-group"><label for="perf-incorporacion">Año de incorporación</label><input id="perf-incorporacion" class="input-sim" readonly placeholder="Pendiente de completar por administración"></div>
+                <div class="input-group"><label for="perf-incorporacion">Año de incorporación</label><input id="perf-incorporacion" class="input-sim" type="number" min="1852" max="2100" step="1" placeholder="Ej.: 2015"></div>
                 <a href="musicos.html" style="color:#d4af37">Ir a mi portal de músico →</a>
             </section>
             <section class="seccion-preferencias">
@@ -177,6 +177,6 @@
     <script src="../js/pwa.js?v=3"></script>
     <script src="../js/config.js"></script>
     <script src="../js/banda-common.js?v=3"></script>
-    <script src="../js/perfil.js?v=4"></script>
+    <script src="../js/perfil.js?v=5"></script>
 </body>
 </html>

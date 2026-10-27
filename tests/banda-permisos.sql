@@ -41,7 +41,7 @@ begin
  perform set_config('request.jwt.claims',jsonb_build_object('sub',m,'role','authenticated')::text,true);
  assert (select count(*) from public.banda_eventos where id=ev)=1,'Músico ve convocatoria';
  perform public.banda_accion('perfil',jsonb_build_object('nombre','Músico prueba','instrumento','Clarinete'));
- denied:=false;begin perform public.banda_accion('perfil',jsonb_build_object('nombre','Prueba','instrumento','Clarinete','incorporacion',2000));exception when others then denied:=true;end;assert denied,'Año reservado a administración';
+ perform public.banda_accion('perfil',jsonb_build_object('nombre','Prueba','instrumento','Clarinete','incorporacion',2000));assert (select incorporacion from public.banda_fichas where usuario_id=m)=2000,'Músico cambia su año de incorporación';
  denied:=false;begin perform public.banda_accion('perfil',jsonb_build_object('usuario_id',a,'nombre','Cambio ajeno'));exception when others then denied:=true;end;assert denied,'Perfil ajeno bloqueado';
  perform public.banda_accion('respuesta',jsonb_build_object('evento_id',ev,'respuesta','voy'));
  perform public.banda_accion('respuesta',jsonb_build_object('evento_id',ev,'respuesta','no_voy'));

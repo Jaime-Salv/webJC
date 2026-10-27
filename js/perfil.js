@@ -70,6 +70,8 @@ async function guardarPerfil() {
     
     const user = session.user;
     if (perfilTieneBanda && !datosBandaCargados) { alert('Recarga el perfil antes de guardar la ficha musical.'); return; }
+    const incorporacion = document.getElementById('perf-incorporacion').value.trim();
+    if (perfilTieneBanda && incorporacion && (!/^\d{4}$/.test(incorporacion) || Number(incorporacion) < 1852 || Number(incorporacion) > 2100)) { alert('Introduce un año de incorporación válido, entre 1852 y 2100, o deja el campo vacío.'); return; }
     const btn = document.getElementById('btn-guardar-perfil');
     const inputArchivo = document.getElementById('input-avatar').files[0];
     
@@ -120,7 +122,8 @@ async function guardarPerfil() {
         if (perfilTieneBanda) {
             await JCBanda.rpc('perfil', {
                 nombre: document.getElementById('perf-nombre-real').value.trim(),
-                instrumento: document.getElementById('perf-instrumento').value.trim()
+                instrumento: document.getElementById('perf-instrumento').value.trim(),
+                incorporacion
             });
         }
         alert("✅ Perfil actualizado correctamente.");

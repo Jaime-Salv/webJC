@@ -4,7 +4,7 @@
 
 1. Cada persona inicia sesión con Google. Su perfil se crea como público general.
 2. En **Admin → Usuarios**, marcar el permiso **Músico**. **Administrador** es un permiso independiente: se pueden marcar ambos. No hay solicitud ni elección de rol en el registro.
-3. En **Ficha musical**, completar nombre, instrumento y año de incorporación. El músico puede cambiar nombre e instrumento en **Mi ficha musical**, dentro del portal; el año queda reservado a administración.
+3. En **Ficha musical**, completar nombre, instrumento y año de incorporación. El músico puede cambiar nombre e instrumento en **Mi ficha musical**, dentro del portal; también puede cambiar su año de incorporación desde su perfil.
 4. En **Admin → Músicos**, seleccionar un día del calendario y colocar **Ensayo tarde** (20:30–22:00) o **Ensayo mañana** (12:00–14:00), en el local de la banda. Programar las actuaciones desde su publicación de concierto o procesión. Las horas se introducen en horario de Madrid. Solo las cuentas con permiso Músico quedan convocadas, incluidas las que también son administradoras. Usar **Añadir nuevos músicos** para incorporar altas posteriores a la convocatoria.
 5. El músico accede desde la pestaña **Portal músico** de la navegación principal y responde **Voy / No voy** en las actuaciones hasta el plazo. Los ensayos no requieren respuesta previa ni cuentan como pendientes. No responder se mantiene como estado independiente.
 6. Para fichar, abrir el fichaje desde dos horas antes del evento y mostrar el QR. La apertura dura como máximo dos horas y nunca supera el fin previsto; puede reabrirse dentro del horario permitido.
