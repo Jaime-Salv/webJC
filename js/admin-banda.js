@@ -13,7 +13,7 @@
   paintEvents();if(selected)await details(selected);
  }
  function paintEvents() {
-  const list=events.filter(e=>$('ba-filter').value==='all'||Date.parse(e.fin)>=Date.now()&&!e.finalizado);
+  const list=events.filter(e=>$('ba-kind').value==='all'||e.tipo===$('ba-kind').value).filter(e=>$('ba-filter').value==='all'||Date.parse(e.fin)>=Date.now()&&!e.finalizado);
   $('ba-events').innerHTML=list.map(e=>`<article class="event ${e.id===selected?'selected':''}" style="margin-bottom:12px"><span class="badge">${e.tipo==='ensayo'?'Ensayo':'Actuación'}</span>${e.finalizado?' <span class="badge">Finalizada</span>':''}${e.estado==='cancelado'?' <span class="badge warn">Cancelado</span>':''}<h3>${E(e.titulo)}</h3><p class="muted">${B.fecha(e.inicio)}<br>${E(e.lugar)}</p><div class="row"><button data-select="${e.id}" type="button">Respuestas y asistencia</button><button type="button" class="primary" data-qr="${e.id}" ${e.estado==='cancelado'||e.finalizado||Date.parse(e.fin)<=Date.now()?'disabled':''}>QR de fichaje</button></div></article>`).join('')||'<p class="muted">No hay convocatorias. Crea la primera.</p>';
  }
  async function details(id) {
@@ -70,7 +70,7 @@
  async function memberEdit(id){members=await B.query('banda_fichas');const f=$('ba-member-form'),m=member(id);f.reset();f.elements.usuario_id.value=id;f.elements.nombre.value=m?.nombre||profiles.find(p=>p.id===id)?.nombre_completo||'';f.elements.instrumento.value=m?.instrumento||'';f.elements.incorporacion.value=m?.incorporacion||'';$('ba-member-error').hidden=true;$('ba-member-dialog').showModal();}
  document.addEventListener('admin:ready',()=>run(async()=>{
   $('ba-editor-close').onclick=()=>$('ba-editor').hidden=true;
-  $('ba-refresh').onclick=()=>run(load);$('ba-filter').onchange=paintEvents;
+  $('ba-refresh').onclick=()=>run(load);$('ba-filter').onchange=paintEvents;$('ba-kind').onchange=paintEvents;
   $('ba-events').onclick=e=>{const b=e.target.closest('[data-select],[data-qr]');if(!b)return;run(async()=>{b.disabled=true;try{const id=b.dataset.qr||b.dataset.select;await details(id);if(b.dataset.qr)await openQr(id);}finally{if(b.isConnected)b.disabled=false;}});};
   document.addEventListener('banda:select',e=>run(async()=>{await load();await details(e.detail);$('ba-detail').scrollIntoView({behavior:'smooth'});}));
   document.addEventListener('banda:qr-evento',e=>run(async()=>{await load();await details(e.detail);await openQr(e.detail);}));

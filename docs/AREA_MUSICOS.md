@@ -96,3 +96,7 @@ Validación: `tests/banda-portal.sql` termina en ROLLBACK y comprueba privacidad
 - Los conciertos enlazan una fila del motor de directo con su publicación original; no se genera otra convocatoria ni se pierden las confirmaciones.
 - Finalizar conserva el histórico del directo y cierra el fichaje asociado. El concierto sale de próximas actuaciones y aparece en el archivo; su página enlaza al repertorio interpretado.
 - Verificación: alta de músico posterior, inicio de procesión y concierto, ausencia de duplicados, denegación sin administrador y cierre de fichaje, todos con rollback. Navegador: botones, navegación y anchos 320/390/1280, además de los flujos previos de agenda y portal.
+
+## Ensayos separados de actuaciones
+
+El músico dispone de una pestaña Ensayos para consultar fechas y fichar. Actuaciones y el resumen principal excluyen ensayos; el calendario permite elegir cada tipo o ambos. Los ensayos no generan avisos de alta, cambios ni series recurrentes, y se han retirado los avisos antiguos de ensayos sin alterar sus convocatorias o asistencias. Administración tiene un filtro separado por tipo.

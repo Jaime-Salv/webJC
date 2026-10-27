@@ -44,7 +44,7 @@ begin
  r:=public.banda_portal_accion('repetir',jsonb_build_object('desde',d,'hasta',d+6,'plantilla','tarde','dias',jsonb_build_array(0,1,2,3,4,5,6),'excluir',jsonb_build_array((d+1)::text)));
  assert (r->>'creados')::int=6,'Seis ensayos, un día excluido';
  perform set_config('request.jwt.claims',jsonb_build_object('sub',m,'role','authenticated')::text,true);
- assert exists(select 1 from public.banda_avisos where usuario_id=m and tipo='serie'),'Aviso agrupado de ensayos';
+ assert not exists(select 1 from public.banda_avisos where usuario_id=m and tipo='serie'),'Ensayos recurrentes sin avisos';
  assert not exists(select 1 from public.banda_avisos a join public.banda_eventos e on e.id=a.evento_id where a.usuario_id=m and e.tipo='ensayo' and e.inicio>now() and a.push_estado='pendiente'),'No inundar el móvil con cada ensayo de la serie';
  perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'role','authenticated')::text,true);
  r:=public.banda_portal_accion('repetir',jsonb_build_object('desde',d,'hasta',d+6,'plantilla','tarde','dias',jsonb_build_array(0,1,2,3,4,5,6),'excluir',jsonb_build_array((d+1)::text)));

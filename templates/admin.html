@@ -1533,7 +1533,7 @@
 <p class="muted">Se convocan las cuentas con permiso Músico, incluidas las que también son administradoras. Si das de alta músicos después, usa «Añadir nuevos músicos» en el evento.</p>
 <div class="row"><button class="primary" type="submit">Guardar convocatoria</button><button id="ba-editor-close" type="button">Cerrar edición</button></div>
 </form></section>
-<div class="grid"><section class="panel"><h2>Convocatorias</h2><label>Ver<select id="ba-filter"><option value="upcoming">Próximas</option><option value="all">Todas e histórico</option></select></label><div id="ba-events"></div></section><section class="panel" id="ba-detail"><h2>Respuestas y asistencias</h2><p class="muted">Selecciona una convocatoria para ver los músicos, el estado de sus respuestas y los fichajes.</p></section></div>
+<div class="grid"><section class="panel"><h2>Convocatorias</h2><label>Ver<select id="ba-kind" aria-label="Tipo de convocatoria"><option value="actuacion">Actuaciones</option><option value="ensayo">Ensayos</option><option value="all">Todo</option></select><select id="ba-filter"><option value="upcoming">Próximas</option><option value="all">Todas e histórico</option></select></label><div id="ba-events"></div></section><section class="panel" id="ba-detail"><h2>Respuestas y asistencias</h2><p class="muted">Selecciona una convocatoria para ver los músicos, el estado de sus respuestas y los fichajes.</p></section></div>
 <dialog id="ba-qr-dialog"><div class="row between"><h2>Fichaje de asistencia</h2><button id="ba-qr-hide" type="button">Cerrar pantalla</button></div><p id="ba-qr-title"></p><div class="qr-box"><div id="ba-qr-image"></div><p id="ba-qr-count" role="status"></p></div><p class="muted">Escanea con la cámara del móvil. El QR caduca en 60 segundos y se renueva en esta pantalla. El músico debe iniciar sesión y confirmar su llegada. No se solicita ubicación. Mantén una sola pantalla QR abierta por evento.</p><p id="ba-qr-error" class="notice error" hidden></p><div class="row"><button id="ba-qr-retry" type="button">Renovar QR</button><button id="ba-qr-stop" type="button">Cerrar fichaje de esta convocatoria</button></div></dialog>
 <dialog id="ba-manual-dialog"><h2>Revisar asistencia</h2><p id="ba-manual-name"></p><form id="ba-manual-form"><label>Estado<select name="estado"><option value="presente">Presente</option><option value="ausente">Ausente</option><option value="justificada">Ausencia justificada</option><option value="incidencia">Incidencia pendiente</option></select></label><label>Motivo de la corrección<textarea name="motivo" required minlength="5" maxlength="1000"></textarea></label><p class="muted">Quedarán registrados tu usuario, el motivo y la fecha. El registro original se conserva en el historial de cambios.</p><p class="notice error" id="ba-manual-error" hidden></p><div class="row"><button class="primary" type="submit">Guardar revisión</button><button type="button" data-close="ba-manual-dialog">Cancelar</button></div></form></dialog>
 
@@ -1893,7 +1893,7 @@
     <script src="../js/banda-common.js?v=3"></script>
 <script src="../js/vendor/qrcode-generator.js"></script>
 <script src="../js/banda-portal.js?v=1"></script>
-<script src="../js/admin-banda.js?v=8"></script>
+<script src="../js/admin-banda.js?v=9"></script>
 <script src="../js/admin-agenda.js?v=5"></script>
 <script src="../js/admin-fechas.js?v=2"></script>
 <script src="../js/admin.js?v=10"></script>
