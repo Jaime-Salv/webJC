@@ -216,25 +216,18 @@
     }
 })();
 
-/* Navegación móvil pública. Es aditiva: no sustituye las cabeceras existentes. */
+/* Menú móvil público: evita que el distintivo de alojamiento tape los enlaces. */
 (() => {
-    const ruta = window.location.pathname.toLowerCase();
-    const paginasConNavegacion = [
-        '/',
-        '/index.html',
-        '/templates/catalogo',
-        '/templates/catalogo.html',
-        '/templates/comunidad',
-        '/templates/comunidad.html',
-        '/templates/simulacion',
-        '/templates/simulacion.html',
-        '/templates/perfil',
-        '/templates/perfil.html',
-        '/templates/musicos',
-        '/templates/musicos.html'
-    ];
-
-    if (!paginasConNavegacion.includes(ruta)) return;
+    const ruta = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+    const paginasConNavegacion = new Set([
+        '/', '/index.html',
+        '/templates/catalogo', '/templates/catalogo.html',
+        '/templates/comunidad', '/templates/comunidad.html',
+        '/templates/simulacion', '/templates/simulacion.html',
+        '/templates/perfil', '/templates/perfil.html',
+        '/templates/musicos', '/templates/musicos.html'
+    ]);
+    if (!paginasConNavegacion.has(ruta)) return;
 
     const destinos = [
         { clave: 'inicio', icono: '⌂', texto: 'Inicio', href: '/' },
@@ -254,29 +247,90 @@
         return 'inicio';
     }
 
-    function montarNavegacion() {
-        if (document.querySelector('.mobile-app-nav')) return;
+    function montarMenu() {
+        if (document.querySelector('.mobile-menu-jc')) return;
+        const envoltorio = document.createElement('div');
+        envoltorio.className = 'mobile-menu-jc';
+        envoltorio.innerHTML = `
+            <button type="button" class="mobile-menu-jc-trigger" aria-controls="mobile-menu-jc-panel"
+                    aria-expanded="false" aria-label="Abrir menú de navegación">
+                <span class="mobile-menu-jc-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span>Menú</span>
+            </button>
+            <div class="mobile-menu-jc-backdrop" hidden></div>
+            <nav id="mobile-menu-jc-panel" class="mobile-menu-jc-panel"
+                 aria-label="Navegación principal móvil" hidden>
+                <strong class="mobile-menu-jc-heading">Navegación</strong>
+                ${destinos.map((destino) => `
+                    <a class="mobile-menu-jc-link" data-seccion="${destino.clave}" href="${destino.href}">
+                        <span class="mobile-menu-jc-icon" aria-hidden="true">${destino.icono}</span>
+                        <span>${destino.texto}</span>
+                    </a>
+                `).join('')}
+            </nav>`;
+        document.body.appendChild(envoltorio);
 
-        const activa = detectarSeccionActiva();
-        const nav = document.createElement('nav');
-        nav.className = 'mobile-app-nav';
-        nav.setAttribute('aria-label', 'Navegación principal móvil');
-        nav.innerHTML = destinos.map((destino) => `
-            <a class="mobile-app-nav-item${destino.clave === activa ? ' activo' : ''}"
-               href="${destino.href}"
-               ${destino.clave === activa ? 'aria-current="page"' : ''}>
-                <span class="mobile-app-nav-icon" aria-hidden="true">${destino.icono}</span>
-                <span>${destino.texto}</span>
-            </a>
-        `).join('');
+        const boton = envoltorio.querySelector('.mobile-menu-jc-trigger');
+        const panel = envoltorio.querySelector('.mobile-menu-jc-panel');
+        const fondo = envoltorio.querySelector('.mobile-menu-jc-backdrop');
+        const enlaces = [...panel.querySelectorAll('a')];
+        let abierto = false;
 
-        document.body.appendChild(nav);
-        document.body.classList.add('con-mobile-app-nav');
+        function actualizarActivo() {
+            const seccion = detectarSeccionActiva();
+            enlaces.forEach((enlace) => {
+                const activo = enlace.dataset.seccion === seccion;
+                enlace.classList.toggle('activo', activo);
+                if (activo) enlace.setAttribute('aria-current', 'page');
+                else enlace.removeAttribute('aria-current');
+            });
+        }
+        function cambiarEstado(abrir, devolverFoco = false) {
+            abierto = abrir;
+            panel.hidden = !abrir;
+            fondo.hidden = !abrir;
+            boton.setAttribute('aria-expanded', String(abrir));
+            boton.setAttribute('aria-label', abrir ? 'Cerrar menú de navegación' : 'Abrir menú de navegación');
+            envoltorio.classList.toggle('abierto', abrir);
+            document.body.classList.toggle('mobile-menu-jc-abierto', abrir);
+            if (abrir) {
+                actualizarActivo();
+                panel.querySelector('a')?.focus();
+            } else if (devolverFoco) {
+                boton.focus();
+            }
+        }
+
+        boton.addEventListener('click', () => cambiarEstado(!abierto));
+        fondo.addEventListener('click', () => cambiarEstado(false, true));
+        panel.addEventListener('click', (evento) => {
+            if (evento.target.closest('a')) cambiarEstado(false);
+        });
+        document.addEventListener('keydown', (evento) => {
+            if (!abierto) return;
+            if (evento.key === 'Escape') cambiarEstado(false, true);
+            if (evento.key === 'Tab') {
+                const controles = [boton, ...enlaces];
+                const indice = controles.indexOf(document.activeElement);
+                if (evento.shiftKey && indice === 0) {
+                    evento.preventDefault();
+                    enlaces[enlaces.length - 1].focus();
+                } else if (!evento.shiftKey && indice === controles.length - 1) {
+                    evento.preventDefault();
+                    boton.focus();
+                }
+            }
+        });
+        window.addEventListener('hashchange', actualizarActivo);
+        window.matchMedia('(min-width: 681px)').addEventListener('change', (evento) => {
+            if (evento.matches && abierto) cambiarEstado(false);
+        });
+        actualizarActivo();
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', montarNavegacion, { once: true });
+        document.addEventListener('DOMContentLoaded', montarMenu, { once: true });
     } else {
-        montarNavegacion();
+        montarMenu();
     }
 })();
