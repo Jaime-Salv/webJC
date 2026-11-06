@@ -90,7 +90,15 @@ async function cargarCatalogoMaestro() {
             .maybeSingle();
 
         if (errorTemporada) throw errorTemporada;
-        if (!temporadaActiva) throw new Error('No hay un repertorio activo disponible.');
+        if (!temporadaActiva) {
+            catalogoGlobal = [];
+            poblarSelectores(catalogoGlobal);
+            renderizarTabla(catalogoGlobal);
+            calcularKPIs(catalogoGlobal);
+            const tbody = document.getElementById('tabla-catalogo-body');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#d4af37;">El repertorio de la nueva temporada está en preparación. Las marchas disponibles se publicarán cuando la banda lo apruebe.</td></tr>';
+            return;
+        }
 
         const { data: marchasTemporada, error: errorMarchas } = await clienteSupabase
             .from('repertorio_temporada_marchas')
