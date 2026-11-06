@@ -350,12 +350,14 @@ async function cargarActuacionesRecientes() {
             gridSemanaSanta.innerHTML = `<div class="empty-state">Todavía no hay actuaciones de Semana Santa publicadas.</div>`;
         } else {
             gridSemanaSanta.innerHTML = semanaSanta.map((p) => crearTarjetaActuacion(p)).join('');
+            activarImagenesDiferidas(gridSemanaSanta);
         }
 
         if (glorias.length === 0) {
             gridGlorias.innerHTML = `<div class="empty-state">Todavía no hay actuaciones de Glorias o Extraordinarias publicadas.</div>`;
         } else {
             gridGlorias.innerHTML = glorias.map((p) => crearTarjetaActuacion(p)).join('');
+            activarImagenesDiferidas(gridGlorias);
         }
 
     } catch (error) {
@@ -394,11 +396,37 @@ async function cargarConciertosHome() {
         }
 
         gridConciertos.innerHTML = anteriores.map((concierto) => crearTarjetaConcierto(concierto)).join('');
+        activarImagenesDiferidas(gridConciertos);
 
     } catch (error) {
         console.error('Error cargando conciertos:', error);
         gridConciertos.innerHTML = `<div class="empty-state">No se han podido cargar los conciertos.</div>`;
     }
+}
+
+// Evita descargar todas las portadas históricas nada más abrir la página.
+// Las imágenes de cada carrusel se solicitan cuando sus tarjetas están cerca de la pantalla.
+function activarImagenesDiferidas(contenedor) {
+    if (!contenedor) return;
+    const tarjetas = contenedor.querySelectorAll('[data-bg]');
+    const mostrar = (elemento) => {
+        const url = elemento.dataset.bg;
+        if (!url) return;
+        elemento.style.backgroundImage = 'url(' + JSON.stringify(url) + ')';
+        delete elemento.dataset.bg;
+    };
+    if (!('IntersectionObserver' in window)) {
+        tarjetas.forEach(mostrar);
+        return;
+    }
+    const observador = new IntersectionObserver((entradas) => {
+        entradas.forEach((entrada) => {
+            if (!entrada.isIntersecting) return;
+            mostrar(entrada.target);
+            observador.unobserve(entrada.target);
+        });
+    }, { rootMargin: '250px 0px', threshold: 0.01 });
+    tarjetas.forEach((tarjeta) => observador.observe(tarjeta));
 }
 
 function crearTarjetaConcierto(concierto) {
@@ -412,7 +440,7 @@ function crearTarjetaConcierto(concierto) {
 
     return `
         <article class="tarjeta-compartible">
-            <a href="templates/concierto.html?id=${concierto.id_concierto}" class="tarjeta-procesion-home tarjeta-concierto-home" style="background-image: url('${escaparAtributo(foto)}')">
+            <a href="templates/concierto.html?id=${concierto.id_concierto}" class="tarjeta-procesion-home tarjeta-concierto-home" data-bg="${escaparAtributo(foto)}">
                 <div class="card-date">${escaparHTML(fecha)}</div>
                 <div class="card-gradient"></div>
 
@@ -435,7 +463,7 @@ function crearTarjetaActuacion(procesion) {
 
     return `
         <article class="tarjeta-compartible">
-            <a href="templates/analisis.html?id=${procesion.id_procesion}" class="tarjeta-procesion-home" style="background-image: url('${escaparAtributo(foto)}')">
+            <a href="templates/analisis.html?id=${procesion.id_procesion}" class="tarjeta-procesion-home" data-bg="${escaparAtributo(foto)}">
                 <div class="card-date">${escaparHTML(fecha)}</div>
                 <div class="card-gradient"></div>
 
