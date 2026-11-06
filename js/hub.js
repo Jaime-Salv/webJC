@@ -196,6 +196,21 @@ async function verificarTelemetriaDirecto() {
     }
 }
 
+let promesaAniosAbiertos = null;
+function obtenerAniosActividadAbiertos() {
+    if (!promesaAniosAbiertos) {
+        promesaAniosAbiertos = clienteSupabase
+            .from('temporadas_actividad')
+            .select('anio')
+            .eq('estado', 'Abierta')
+            .then(({data,error}) => {
+                if (error) throw error;
+                return new Set((data || []).map(t => Number(t.anio)));
+            });
+    }
+    return promesaAniosAbiertos;
+}
+
 async function cargarUltimaActuacion() {
     const contenedor = document.getElementById('contenedor-ultima-actuacion');
 
@@ -208,19 +223,18 @@ async function cargarUltimaActuacion() {
             .from('maestro_procesiones')
             .select('*')
             .eq('estado', 'Finalizada')
-            .order('fecha', { ascending: false })
-            .limit(1);
+            .order('fecha', { ascending: false });
 
         if (error) {
             throw error;
         }
 
-        if (!data || data.length === 0) {
-            contenedor.innerHTML = `<div class="empty-state">Todavía no hay actuaciones finalizadas publicadas.</div>`;
+        const aniosAbiertos = await obtenerAniosActividadAbiertos();
+        const actuacion = (data || []).find(p => aniosAbiertos.has(Number(p.fecha?.slice(0,4))));
+        if (!actuacion) {
+            contenedor.innerHTML = '<div class="empty-state">Sin actuaciones finalizadas en las temporadas abiertas. Consulta «Recuerda» para temporadas anteriores.</div>';
             return;
         }
-
-        const actuacion = data[0];
 
         const [likesRes, comentariosRes, repertorioRes] = await Promise.all([
             clienteSupabase
@@ -341,7 +355,8 @@ async function cargarActuacionesRecientes() {
             throw error;
         }
 
-        const lista = procesiones || [];
+        const aniosAbiertos = await obtenerAniosActividadAbiertos();
+        const lista = (procesiones || []).filter(p => aniosAbiertos.has(Number(p.fecha?.slice(0,4))));
 
         const semanaSanta = lista.filter((p) => p.tipo === 'Semana Santa');
         const glorias = lista.filter((p) => p.tipo !== 'Semana Santa' && p.tipo !== 'Concierto');
@@ -395,7 +410,13 @@ async function cargarConciertosHome() {
             return;
         }
 
-        gridConciertos.innerHTML = anteriores.map((concierto) => crearTarjetaConcierto(concierto)).join('');
+        const aniosAbiertos = await obtenerAniosActividadAbiertos();
+        const conciertosActuales = anteriores.filter(c => aniosAbiertos.has(Number(c.fecha?.slice(0,4))));
+        if (!conciertosActuales.length) {
+            gridConciertos.innerHTML = '<div class="empty-state">Conciertos anteriores disponibles en «Recuerda».</div>';
+            return;
+        }
+        gridConciertos.innerHTML = conciertosActuales.map((concierto) => crearTarjetaConcierto(concierto)).join('');
         activarImagenesDiferidas(gridConciertos);
 
     } catch (error) {
