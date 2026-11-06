@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090909"><title>Recuerda · Julián Cerdán</title>
+<link rel="icon" href="../img/escudo.png"><link rel="stylesheet" href="../css/style.css">
+<style>
+:root{color-scheme:dark}body{background:#090909;color:#eee;font-family:Montserrat,Arial,sans-serif;margin:0;padding:0}
+.rec-shell{max-width:1120px;margin:auto;padding:24px 20px 70px}
+.rec-header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0 30px}
+.rec-header a{color:#d4af37;text-decoration:none;font-size:.85rem}.rec-logo{height:56px}
+.rec-hero{border-bottom:1px solid #393222;padding:24px 0 35px}
+.rec-kicker{font-size:.75rem;color:#d4af37;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+.rec-hero h1{font-size:clamp(2.4rem,7vw,5rem);line-height:1.1;margin:12px 0;color:#fff}
+.rec-hero p{color:#aaa;line-height:1.65;max-width:670px}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin:28px 0}
+.rec-stat{border:1px solid #34302a;background:#141414;padding:22px 16px;border-radius:12px}
+.rec-stat strong{display:block;font-size:2rem;color:#d4af37}.rec-stat span{color:#aaa;font-size:.75rem}
+.rec-block{margin:40px 0}.rec-block h2{font-size:1.35rem;margin:0 0 10px}.rec-block>p{color:#aaa;font-size:.86rem}
+.rec-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:14px;margin-top:18px}
+.rec-card{display:block;border:1px solid #34302a;border-radius:12px;padding:17px;background:#161616;color:white;text-decoration:none}
+.rec-card:hover{border-color:#d4af37}.rec-card time,.rec-meta{font-size:.72rem;color:#d4af37}
+.rec-card h3{font-size:1rem;margin:8px 0}.rec-card p{color:#aaa;font-size:.78rem;line-height:1.5;margin:0}
+.rec-table{width:100%;border-collapse:collapse;margin:14px 0}.rec-table th,.rec-table td{padding:12px 8px;text-align:left;border-bottom:1px solid #303030;font-size:.82rem}
+.rec-table th{color:#d4af37}.rec-muted{color:#aaa;font-size:.8rem;line-height:1.6}
+.rec-link{color:#d4af37;text-decoration:underline;text-underline-offset:3px}
+.rec-tag{display:inline-block;color:#d4af37;border:1px solid #66551e;border-radius:30px;padding:7px 11px;font-size:.77rem;margin-top:10px}
+@media(max-width:680px){.rec-shell{padding:16px 14px 50px}.rec-stat{padding:14px 12px}.rec-stat strong{font-size:1.45rem}.rec-table th,.rec-table td{font-size:.73rem}}
+</style></head><body>
+<main class="rec-shell">
+<header class="rec-header"><a href="../index.html"><img class="rec-logo" src="../img/escudo.png" alt="Banda Julián Cerdán"></a><a href="../index.html">← Volver al inicio</a></header>
+<section class="rec-hero"><div class="rec-kicker">Archivo histórico · Banda de Música Julián Cerdán</div><h1 id="rec-title">Recuerda</h1><p>Un año de música: actuaciones, marchas interpretadas, compositores y repertorio oficial. Cada actuación conserva el acceso a su ficha individual.</p><span id="rec-status" class="rec-tag">Comprobando archivo…</span></section>
+<div class="rec-grid" id="rec-stats"></div>
+<section class="rec-block"><h2>Actuaciones del año</h2><p>Accede al repertorio y análisis de cada actuación registrada.</p><div class="rec-cards" id="rec-events"></div></section>
+<section class="rec-block"><h2>Estudio general</h2><p>Estadísticas calculadas a partir de los registros reales disponibles.</p><div id="rec-analysis"></div></section>
+<section class="rec-block"><h2>Repertorio de la temporada</h2><p>Listado histórico de las marchas disponibles en ese año, independiente del catálogo actualmente activo.</p><div id="rec-repertoire"></div></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/config.js"></script><script src="../js/recuerda.js?v=1"></script></body></html>
