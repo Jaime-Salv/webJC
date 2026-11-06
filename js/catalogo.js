@@ -80,17 +80,40 @@ async function cargarFavoritasUsuario() {
 
 async function cargarCatalogoMaestro() {
     try {
-        const { data, error } = await clienteSupabase
-            .from('catalogo_marchas')
-            .select('*')
-            .order('id_marcha', { ascending: true });
+        // El catálogo público solo muestra las marchas disponibles en la temporada activa.
+        const { data: temporadaActiva, error: errorTemporada } = await clienteSupabase
+            .from('repertorios_temporada')
+            .select('id_repertorio')
+            .eq('estado', 'Activo')
+            .order('activado_en', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        if (error) {
-            throw error;
+        if (errorTemporada) throw errorTemporada;
+        if (!temporadaActiva) throw new Error('No hay un repertorio activo disponible.');
+
+        const { data: marchasTemporada, error: errorMarchas } = await clienteSupabase
+            .from('repertorio_temporada_marchas')
+            .select('id_marcha')
+            .eq('id_repertorio', temporadaActiva.id_repertorio);
+
+        if (errorMarchas) throw errorMarchas;
+
+        const idsActivos = [...new Set((marchasTemporada || []).map((m) => m.id_marcha))];
+        let data = [];
+
+        if (idsActivos.length) {
+            const respuesta = await clienteSupabase
+                .from('catalogo_marchas')
+                .select('*')
+                .in('id_marcha', idsActivos)
+                .order('id_marcha', { ascending: true });
+
+            if (respuesta.error) throw respuesta.error;
+            data = respuesta.data || [];
         }
 
-        catalogoGlobal = data || [];
-
+        catalogoGlobal = data;
         poblarSelectores(catalogoGlobal);
         renderizarTabla(catalogoGlobal);
         calcularKPIs(catalogoGlobal);
