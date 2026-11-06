@@ -630,17 +630,33 @@
         };
 
         window.iniciarNuevaProcesion = async function() {
-            if (!repertorioActivo) {
-                alert('No hay ningún repertorio activo. Activa una temporada desde Administración > Repertorio.');
+            const fecha = document.getElementById('adm-fecha')?.value || '';
+            const anioActuacion = Number(fecha.slice(0, 4));
+            if (!fecha || !Number.isInteger(anioActuacion)) {
+                alert('Introduce la fecha de la actuación antes de iniciar el directo.');
+                return;
+            }
+            const { data: temporada, error: errorTemporada } = await clienteSupabase
+                .from('temporadas_actividad')
+                .select('estado')
+                .eq('anio', anioActuacion)
+                .maybeSingle();
+            if (errorTemporada) {
+                alert('No se pudo comprobar la temporada: ' + errorTemporada.message);
+                return;
+            }
+            if (temporada?.estado !== 'Abierta') {
+                alert('Abre primero la temporada de actividad ' + anioActuacion + ' desde Administración > Temporadas.');
                 return;
             }
             await originalIniciar?.();
             const { data: activa } = await clienteSupabase
                 .from('maestro_procesiones')
-                .select('id_procesion,id_repertorio')
+                .select('id_procesion,id_repertorio,fecha')
                 .eq('estado', 'Activa')
                 .maybeSingle();
-            if (activa && !activa.id_repertorio) {
+            // Nunca asignar el repertorio de un año diferente a un directo nuevo.
+            if (activa && !activa.id_repertorio && repertorioActivo && Number(activa.fecha?.slice(0, 4)) === Number(repertorioActivo.temporada)) {
                 await clienteSupabase
                     .from('maestro_procesiones')
                     .update({ id_repertorio: repertorioActivo.id_repertorio })
@@ -706,8 +722,17 @@
             return;
         }
         if (!repertorioActivo) await cargarRepertorioActivo();
-        if (!repertorioActivo) {
-            alert('No hay repertorio activo.');
+        const { data: directoActual, error: errorDirectoActual } = await clienteSupabase
+            .from('maestro_procesiones')
+            .select('fecha')
+            .eq('estado', 'Activa')
+            .maybeSingle();
+        if (errorDirectoActual || !directoActual) {
+            alert('No se pudo comprobar la fecha del directo.');
+            return;
+        }
+        if (valorNumero && (!repertorioActivo || Number(directoActual.fecha?.slice(0,4)) !== Number(repertorioActivo.temporada))) {
+            alert('Esta actuación todavía no tiene un repertorio anual activo. Deja el número vacío y registra la marcha por su título.');
             return;
         }
 
@@ -740,7 +765,7 @@
             return;
         }
 
-        if (!procesion.id_repertorio) {
+        if (!procesion.id_repertorio && repertorioActivo && Number(directoActual.fecha?.slice(0,4)) === Number(repertorioActivo.temporada)) {
             await clienteSupabase
                 .from('maestro_procesiones')
                 .update({ id_repertorio: repertorioActivo.id_repertorio })
