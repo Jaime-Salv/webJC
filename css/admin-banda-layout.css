@@ -1,0 +1,42 @@
+/* JC · Gestión musical, interfaz operativa */
+[data-admin-view="banda"] .jc-operations-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:18px 0 24px;padding:7px;background:#14171d;border:1px solid #333740;border-radius:15px}
+[data-admin-view="banda"] .jc-operations-tabs button{min-height:52px;padding:12px 9px;border:0;border-radius:10px;background:transparent;color:#bfc2cc;font:600 13px/1.35 'Montserrat',sans-serif;cursor:pointer}
+[data-admin-view="banda"] .jc-operations-tabs button[aria-pressed="true"]{background:#d4af37;color:#171717}
+[data-admin-view="banda"] .jc-operations-tabs button span{margin-right:6px;font-size:17px}
+[data-admin-view="banda"] .jc-operation-panel[hidden]{display:none!important}
+[data-admin-view="banda"] .jc-operation-panel{min-width:0;display:grid;gap:18px}
+[data-admin-view="banda"] .jc-operation-heading{margin:0;padding:6px 0 2px}
+[data-admin-view="banda"] .jc-operation-heading h2{font-size:clamp(21px,2.7vw,29px);margin:0 0 5px}
+[data-admin-view="banda"] .jc-operation-heading p{margin:0;color:#b1b5c0;font-size:13px}
+[data-admin-view="banda"] .jc-admin-quick-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+[data-admin-view="banda"] .jc-admin-stat{padding:17px;background:#15191f;border:1px solid #343942;border-radius:12px}
+[data-admin-view="banda"] .jc-admin-stat strong{font-size:25px;display:block;color:#edd079}
+[data-admin-view="banda"] .jc-admin-stat span{font-size:12px;color:#b9bdc7}
+[data-admin-view="banda"] .jc-operation-panel > .panel{margin:0}
+[data-admin-view="banda"] .jc-operation-panel .grid{min-width:0}
+[data-admin-view="banda"] #ba-events{max-height:690px;overflow-y:auto;padding-right:4px}
+[data-admin-view="banda"] #ba-events .event{padding:15px!important;margin-bottom:9px!important}
+[data-admin-view="banda"] #ba-events .event h3{font-size:15px;margin:7px 0}
+[data-admin-view="banda"] .jc-detail-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:18px 0}
+[data-admin-view="banda"] .jc-detail-summary .stat{padding:12px 5px;background:#191d22;border:1px solid #333843;border-radius:10px;margin:0;text-align:center}
+[data-admin-view="banda"] .jc-detail-summary .stat b{display:block;font-size:25px}
+[data-admin-view="banda"] .jc-detail-tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+[data-admin-view="banda"] .jc-detail-tools details{width:100%;padding:12px;border:1px solid #343942;border-radius:11px;background:#14181d}
+[data-admin-view="banda"] .jc-detail-tools summary{cursor:pointer;color:#f2d47e;font-weight:700}
+[data-admin-view="banda"] .jc-detail-tools details .row{margin-top:14px}
+[data-admin-view="banda"] .jc-detail-people{border:1px solid #383d47;border-radius:12px;margin:16px 0;padding:14px;background:#13171c}
+[data-admin-view="banda"] .jc-detail-people summary{font-weight:700;cursor:pointer}
+[data-admin-view="banda"] .jc-detail-people .table-scroll{max-height:490px;overflow:auto;margin-top:12px}
+[data-admin-view="banda"] .jc-member-shortcut{border:1px solid #3a414c;background:#15191f;border-radius:14px;padding:25px}
+[data-admin-view="banda"] .jc-report-empty{padding:22px;border:1px dashed #454a50;border-radius:12px;text-align:center}
+@media(max-width:750px){
+ [data-admin-view="banda"] .jc-operations-tabs{grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:4px;position:sticky;top:0;z-index:5}
+ [data-admin-view="banda"] .jc-operations-tabs button{font-size:11px;padding:9px 3px;min-height:48px}
+ [data-admin-view="banda"] .jc-operations-tabs button span{display:block;margin:0 auto 2px}
+ [data-admin-view="banda"] .jc-admin-quick-stats{gap:7px}
+ [data-admin-view="banda"] .jc-admin-stat{padding:12px 8px}
+ [data-admin-view="banda"] .jc-admin-stat strong{font-size:20px}
+ [data-admin-view="banda"] .jc-admin-stat span{font-size:10px}
+ [data-admin-view="banda"] .jc-detail-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ [data-admin-view="banda"] #ba-events{max-height:none}
+}
