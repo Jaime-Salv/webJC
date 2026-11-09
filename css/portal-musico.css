@@ -123,3 +123,35 @@ body.portal { --portal-line:#2a2c30; --portal-panel:#121418; --portal-muted:#a9a
 
 .portal .portal-welcome, .portal .panel, .portal .portal-history-item { overflow-wrap:anywhere; }
 .portal .event .portal-event-checkin { display:flex; width:100%; margin-top:12px; }
+
+/* Rediseño de flujo 2026: navegación corta y opciones secundarias plegadas */
+.portal .portal-tools {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible;gap:5px;padding:6px;margin:16px 0 20px}
+.portal .portal-tools button {white-space:normal;min-width:0;padding:12px 6px;min-height:48px;border-radius:9px}
+.portal .portal-tools button:nth-child(n+5) {font-size:12px;background:#171a20;border:1px solid #323740}
+.portal .portal-dashboard {grid-template-columns:minmax(0,1.35fr) minmax(230px,.8fr);gap:12px}
+.portal .portal-welcome,.portal .portal-scan-shortcut{padding:22px;border-radius:14px}
+.portal .portal-welcome h2{font-size:clamp(19px,2.5vw,27px);margin:10px 0}
+.portal .portal-stats {grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:13px 0}
+.portal .portal-stats button {padding:13px}
+.portal .portal-stats strong {font-size:23px}
+.portal .portal-secondary {margin:12px 0!important;border:1px solid #343943;background:#14171b;border-radius:11px;padding:14px 17px!important}
+.portal .portal-secondary > summary {cursor:pointer;font-weight:700;color:#e4e6eb;list-style-position:inside}
+.portal .portal-secondary-body{padding:16px 0 2px}
+.portal .portal-secondary-body .portal-info-grid {margin-top:10px}
+.portal .portal-section-heading{margin-top:15px}
+.portal .portal-history{max-width:100%}
+.portal [data-portal-panel="confirmaciones"] .events{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.portal [data-portal-panel="confirmaciones"] .event{padding:17px}
+.portal .portal-next-time{font-size:15px}
+@media(max-width:680px){
+ .portal .portal-tools {grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;overflow:visible;margin:12px 0 18px}
+ .portal .portal-tools button{padding:9px 2px;font-size:11px;min-height:46px}
+ .portal .portal-tools button:nth-child(n+5){grid-column:span 2;font-size:11px;min-height:40px}
+ .portal .portal-dashboard{grid-template-columns:minmax(0,1fr);gap:10px}
+ .portal .portal-welcome,.portal .portal-scan-shortcut{padding:17px}
+ .portal .portal-scan-shortcut h2{font-size:17px}
+ .portal .portal-welcome h2{font-size:21px}
+ .portal .portal-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .portal .portal-secondary{padding:13px!important}
+ .portal [data-portal-panel="confirmaciones"] .events{grid-template-columns:1fr}
+}
