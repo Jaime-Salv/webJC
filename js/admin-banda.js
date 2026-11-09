@@ -14,7 +14,7 @@
  }
  function paintEvents() {
   const list=events.filter(e=>$('ba-kind').value==='all'||e.tipo===$('ba-kind').value).filter(e=>$('ba-filter').value==='all'||Date.parse(e.fin)>=Date.now()&&!e.finalizado);
-  $('ba-events').innerHTML=list.map(e=>`<article class="event ${e.id===selected?'selected':''}" style="margin-bottom:12px"><span class="badge">${e.tipo==='ensayo'?'Ensayo':'Actuación'}</span>${e.finalizado?' <span class="badge">Finalizada</span>':''}${e.estado==='cancelado'?' <span class="badge warn">Cancelado</span>':''}<h3>${E(e.titulo)}</h3><p class="muted">${B.fecha(e.inicio)}<br>${E(e.lugar)}</p><div class="row"><button data-select="${e.id}" type="button">Respuestas y asistencia</button><button type="button" class="primary" data-qr="${e.id}" ${e.estado==='cancelado'||e.finalizado||Date.parse(e.fin)<=Date.now()?'disabled':''}>QR de fichaje</button></div></article>`).join('')||'<p class="muted">No hay convocatorias. Crea la primera.</p>';
+  $('ba-events').innerHTML=list.map(e=>`<article class="event ${e.id===selected?'selected':''}" style="margin-bottom:12px"><span class="badge">${e.tipo==='ensayo'?'Ensayo':e.tipo==='extraordinario'?'Extraordinario · Privado':'Actuación'}</span>${e.finalizado?' <span class="badge">Finalizada</span>':''}${e.estado==='cancelado'?' <span class="badge warn">Cancelado</span>':''}<h3>${E(e.titulo)}</h3><p class="muted">${B.fecha(e.inicio)}<br>${E(e.lugar)}</p><div class="row"><button data-select="${e.id}" type="button">Respuestas y asistencia</button><button type="button" class="primary" data-qr="${e.id}" ${e.estado==='cancelado'||e.finalizado||Date.parse(e.fin)<=Date.now()?'disabled':''}>QR de fichaje</button></div></article>`).join('')||'<p class="muted">No hay convocatorias. Crea la primera.</p>';
  }
  async function details(id) {
   selected=id;const ev=events.find(e=>e.id===id);if(!ev)return;
@@ -44,9 +44,9 @@
   if(ev){for(const k of ['titulo','tipo','lugar','notas'])f.elements[k].value=ev[k]??'';for(const k of ['inicio','fin','limite_respuesta'])f.elements[k].value=B.localInput(ev[k]);}
   const linked=ev&&(ev.concierto_id||ev.procesion_id);
   for(const k of ['titulo','inicio','fin','lugar'])f.elements[k].readOnly=!!linked;
-  f.elements.tipo.disabled=true; $('ba-deadline-label').hidden=ev?.tipo==='ensayo';
+  f.elements.tipo.value=ev?.tipo||'extraordinario';f.elements.tipo.disabled=true; $('ba-deadline-label').hidden=ev?.tipo==='ensayo';
   $('ba-source-info').hidden=!linked;$('ba-source-info').textContent=linked?'Actuación vinculada a una publicación. Fecha, título y lugar se editan en su ficha pública. Aquí puedes ajustar el plazo de respuesta y las notas privadas.':'';
-  $('ba-editor-title').textContent='Ajustes de convocatoria';$('ba-editor').hidden=false;$('ba-editor').scrollIntoView({behavior:'smooth'});f.elements.titulo.focus();
+  $('ba-editor-title').textContent=ev?'Ajustes de convocatoria':'Nuevo evento extraordinario · Privado';$('ba-editor').hidden=false;$('ba-editor').scrollIntoView({behavior:'smooth'});f.elements.titulo.focus();
  }
  function stopQr(){clearInterval(qrTimer);qrTimer=null;$('ba-qr-image').innerHTML='';qrDeadline=0;qrEvent=null;$('ba-qr-print').disabled=true;}
  async function refreshQr() {
@@ -74,16 +74,17 @@
   clearInterval(qrTimer);
 
   await load();}
- function exportCsv(){const ev=events.find(e=>e.id===selected);B.csv([['Evento','Inicio (Madrid)','Músico','Instrumento','Confirmación','Respuesta registrada','Asistencia','Método','Registro de llegada','Última revisión','Revisado por','Motivo'],...roster.map(c=>{const r=responses.find(x=>x.usuario_id===c.usuario_id),a=attendance.find(x=>x.usuario_id===c.usuario_id);return [ev.titulo,B.fecha(ev.inicio),name(c.usuario_id),instrument(c.usuario_id),ev.tipo==='ensayo'?'No requerida':r?.respuesta||'Sin responder',r?B.fecha(r.actualizado_en):'',B.asistencia(a),a?.metodo||'',a?B.fecha(a.registrado_en):'',a?B.fecha(a.actualizado_en):'',a?.revisado_por?name(a.revisado_por):'',a?.motivo||''];})],`asistencia-${B.dia(ev.inicio)}.csv`);}
+ function exportCsv(){const ev=events.find(e=>e.id===selected);B.csv([['Evento','Inicio (Madrid)','Músico','Instrumento','Confirmación','Respuesta registrada','Asistencia','Método','Registro de llegada','Última revisión','Revisado por','Motivo'],...roster.map(c=>{const r=responses.find(x=>x.usuario_id===c.usuario_id),a=attendance.find(x=>x.usuario_id===c.usuario_id);return [ev.titulo,B.fecha(ev.inicio),name(c.usuario_id),instrument(c.usuario_id),ev.tipo==='ensayo'?'No requerida':r?.respuesta||'Sin responder',r?B.fecha(r.actualizado_en):'',B.asistencia(a),a?.metodo||'',a?B.fecha(a.registrado_en):'',a?B.fecha(a.actualizado_en):'',a?.revisado_por?name(a.revisado_por):'',a?.motivo||''];})],`asistencia-${ev.tipo}-${B.dia(ev.inicio)}.csv`);}
  async function memberEdit(id){members=await B.query('banda_fichas');const f=$('ba-member-form'),m=member(id);f.reset();f.elements.usuario_id.value=id;f.elements.nombre.value=m?.nombre||profiles.find(p=>p.id===id)?.nombre_completo||'';f.elements.instrumento.value=m?.instrumento||'';f.elements.incorporacion.value=m?.incorporacion||'';$('ba-member-error').hidden=true;$('ba-member-dialog').showModal();}
  document.addEventListener('admin:ready',()=>run(async()=>{
   $('ba-editor-close').onclick=()=>$('ba-editor').hidden=true;
+  $('ba-create-extra').onclick=()=>edit(null);
   $('ba-refresh').onclick=()=>run(load);$('ba-filter').onchange=paintEvents;$('ba-kind').onchange=paintEvents;
   $('ba-events').onclick=e=>{const b=e.target.closest('[data-select],[data-qr]');if(!b)return;run(async()=>{b.disabled=true;try{const id=b.dataset.qr||b.dataset.select;await details(id);if(b.dataset.qr)await openQr(id);}finally{if(b.isConnected)b.disabled=false;}});};
   document.addEventListener('banda:select',e=>run(async()=>{await load();await details(e.detail);$('ba-detail').scrollIntoView({behavior:'smooth'});}));
   document.addEventListener('banda:qr-evento',e=>run(async()=>{await load();await details(e.detail);await openQr(e.detail);}));
   document.addEventListener('banda:qr-publicacion',e=>run(async()=>{document.querySelector('[data-admin-target="banda"]').click();await load();const ev=events.find(x=>e.detail.concierto_id?String(x.concierto_id)===String(e.detail.concierto_id):String(x.procesion_id)===String(e.detail.procesion_id));if(!ev)throw Error('Publica primero la actuación con fecha, inicio, fin y lugar para generar su convocatoria y QR de asistencia.');await details(ev.id);await openQr(ev.id);}));
-  $('ba-form').onsubmit=e=>{e.preventDefault();run(async()=>{const b=e.submitter;b.disabled=true;try{const data=Object.fromEntries(new FormData(e.target));data.tipo=events.find(ev=>ev.id===data.id)?.tipo;for(const k of ['inicio','fin','limite_respuesta'])data[k]=B.madridISO(data[k]);const r=await B.rpc('evento',data);selected=r.id;$('ba-editor').hidden=true;await load();document.dispatchEvent(new Event('agenda:refresh'));B.notice('Convocatoria guardada.');}finally{b.disabled=false;}});};
+  $('ba-form').onsubmit=e=>{e.preventDefault();run(async()=>{const b=e.submitter;b.disabled=true;try{const data=Object.fromEntries(new FormData(e.target));data.tipo=events.find(ev=>ev.id===data.id)?.tipo||'extraordinario';for(const k of ['inicio','fin','limite_respuesta'])data[k]=B.madridISO(data[k]);const r=await B.rpc('evento',data);selected=r.id;$('ba-editor').hidden=true;await load();document.dispatchEvent(new Event('agenda:refresh'));B.notice('Convocatoria guardada.');}finally{b.disabled=false;}});};
   $('ba-detail').onclick=e=>run(async()=>{const b=e.target.closest('button');if(!b)return;
    if(b.dataset.manual){manualUser=b.dataset.manual;const a=attendance.find(x=>x.usuario_id===manualUser);$('ba-manual-name').textContent=name(manualUser);$('ba-manual-form').reset();$('ba-manual-form').elements.estado.value=a?.estado||'presente';$('ba-manual-error').hidden=true;$('ba-manual-dialog').showModal();return;}
    const act=b.dataset.action;if(!act)return;b.disabled=true;
