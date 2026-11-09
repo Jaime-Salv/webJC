@@ -1,7 +1,7 @@
 (() => {
  const B=JCBanda,E=B.escape,$=id=>document.getElementById(id);
  const views=['resumen','ensayos','calendario','confirmaciones','asistencias','escanear'];
- let auth,events=[],responses=[],attendance=[],profile=null,selectedDay=null,currentView='resumen',focusedEvent=null,loading=false;
+ let auth,events=[],responses=[],attendance=[],profile=null,selectedDay=null,currentView='resumen',focusedEvent=null,loading=false,historyExpanded=false;
  const today=B.dia(new Date());let year=Number(today.slice(0,4)),month=Number(today.slice(5,7))-1;
  const incoming=new URLSearchParams(location.hash.slice(1));
  const checkin={evento_id:incoming.get('evento'),token:incoming.get('token')};
@@ -35,8 +35,8 @@
   return `<article class="event" id="${interactive?'ev':'day'}-${ev.id}"><div class="portal-event-top"><span class="badge">${ev.tipo==='ensayo'?'Ensayo':ev.tipo==='extraordinario'?'Extraordinario · Privado':'Actuación'}</span>${cancelled?'<span class="badge warn">Cancelado</span>':''}${ev.tipo!=='ensayo'&&!r&&!closed?'<span class="badge warn">Por confirmar</span>':''}</div><h3>${E(ev.titulo)}</h3><time>${B.fecha(ev.extra?.convocatoria||ev.inicio)} → ${new Intl.DateTimeFormat('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}).format(new Date(ev.fin))}</time><p class="portal-event-location">${E(ev.lugar)}<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(map)}" target="_blank" rel="noopener noreferrer">Cómo llegar ↗</a></p>${JCPortal.info(ev)}${ev.notas?`<p class="notes">${E(ev.notas)}</p>`:''}${interactive&&ev.tipo==='ensayo'?'<p class="muted">No requiere confirmación previa. Registra tu llegada con el QR del ensayo.</p>':interactive?`<p class="muted">${closed?'Plazo cerrado':'Responde hasta '+B.fecha(ev.limite_respuesta)}</p><div class="portal-response-row"><button data-response="voy" data-event="${ev.id}" aria-pressed="${r?.respuesta==='voy'}" ${closed||!auth.musico||!navigator.onLine?'disabled':''}>Voy</button><button data-response="no_voy" data-event="${ev.id}" aria-pressed="${r?.respuesta==='no_voy'}" ${closed||!auth.musico||!navigator.onLine?'disabled':''}>No voy</button></div><p class="portal-response-label"><span>${r?(r.respuesta==='voy'?'Confirmado: voy':'Confirmado: no voy'):'Sin responder'}</span>${r?` · <time>${B.fecha(r.actualizado_en)}</time>`:''}</p>`:`<button type="button" data-open-event="${ev.id}">Ver convocatoria</button>`}${interactive?JCPortal.reason(ev,r,auth):''}<div class="portal-event-footer">Asistencia: <b>${E(B.asistencia(a))}</b>${ev.fichaje_abierto&&Date.parse(ev.abierto_hasta)>Date.now()&&!cancelled?`<button type="button" data-view="escanear" class="portal-event-checkin">Escanear QR</button>`:''}</div></article>`;
  }
  function paintSummary() {
-  const next=upcoming().find(e=>e.tipo!=='ensayo'),p=pending();
-  $('portal-next-event').innerHTML=next?`<h2>${E(next.titulo)}</h2><p class="portal-next-time">${B.fecha(next.extra?.convocatoria||next.inicio)}</p><p class="portal-next-place">${E(next.lugar)}</p><p class="muted">${next.tipo==='ensayo'?'Ensayo sin confirmación previa. Ficha con el QR cuando llegues.':response(next.id)?(response(next.id).respuesta==='voy'?'Has confirmado que vas.':'Has indicado que no vas.'):'Todavía no has respondido a esta convocatoria.'}</p><button type="button" data-open-event="${next.id}">Ver convocatoria →</button>`:empty('Sin próximas convocatorias','Cuando administración programe una actividad que requiera confirmación aparecerá aquí.');
+  const next=upcoming().slice().sort((a,b)=>Date.parse(a.extra?.convocatoria||a.inicio)-Date.parse(b.extra?.convocatoria||b.inicio))[0],p=pending();
+  $('portal-next-event').innerHTML=next?`<h2>${E(next.titulo)}</h2><p class="portal-next-time">${B.fecha(next.extra?.convocatoria||next.inicio)}</p><p class="portal-next-place">${E(next.lugar)}</p><p class="muted">${next.tipo==='ensayo'?'Ensayo sin confirmación previa. Ficha con el QR cuando llegues.':response(next.id)?(response(next.id).respuesta==='voy'?'Has confirmado que vas.':'Has indicado que no vas.'):'Todavía no has respondido a esta convocatoria.'}</p><button type="button" data-open-event="${next.id}">Ver convocatoria →</button>`:empty('Sin próximas convocatorias','Cuando se programe una actividad, aparecerá aquí.');
   $('portal-stat-pending').textContent=p.length;$('portal-stat-upcoming').textContent=upcoming().filter(e=>e.tipo!=='ensayo').length;
   $('portal-stat-present').textContent=attendance.filter(a=>a.estado==='presente').length;
   $('portal-stat-incidents').textContent=attendance.filter(a=>a.estado==='incidencia').length;
@@ -68,11 +68,11 @@
   $('banda-rehearsals').innerHTML=list.map(e=>`<article class="panel"><div class="row"><div><strong>${B.fecha(e.inicio)}</strong><p class="muted">${E(e.titulo)} · ${E(e.lugar)} · Fin: ${new Intl.DateTimeFormat('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}).format(new Date(e.fin))}</p></div>${e.estado==='cancelado'?'<span class="badge warn">Cancelado</span>':e.fichaje_abierto&&Date.parse(e.abierto_hasta)>Date.now()?'<button type="button" data-view="escanear">Escanear QR y fichar</button>':''}</div></article>`).join('')||empty('Sin próximos ensayos','Consulta aquí las fechas y ficha con el QR al llegar.');
  }
  function paintHistory() {
-  const list=events.filter(e=>e.finalizado||Date.parse(e.inicio)<=Date.now()||attended(e.id)).slice().reverse();
+  const all=events.filter(e=>e.finalizado||Date.parse(e.inicio)<=Date.now()||attended(e.id)).slice().reverse();const list=historyExpanded?all:all.slice(0,8);
   $('banda-history').innerHTML=list.map(e=>{
    const a=attended(e.id),status=e.estado==='cancelado'?'Cancelado':B.asistencia(a);
    return `<article class="portal-history-item"><div><h3>${E(e.titulo)}</h3><p class="muted">${B.fecha(e.inicio)} · ${E(e.lugar)}</p>${a?`<p class="portal-history-meta">Registro: ${B.fecha(a.registrado_en)} · ${a.metodo==='qr'?'QR':'Registro manual'}</p>`:''}${a?.motivo?`<p class="portal-history-note">${E(a.motivo)}</p>`:''}${e.justificacion?`<p class="muted">Justificación: ${E(e.justificacion.estado)}</p>`:''}</div><span class="badge ${a?.estado==='presente'?'good':a?.estado==='incidencia'?'warn':''}">${E(status)}</span></article>`;
-  }).join('')||empty('Tu historial está por estrenar','Aquí aparecerán las asistencias de tus ensayos y actuaciones.');
+  }).join('')||empty('Tu historial está por estrenar','Aquí aparecerán los registros de tus actividades.');if(all.length>8)$('banda-history').insertAdjacentHTML('beforeend',`<button type="button" class="portal-history-more" id="portal-history-toggle">${historyExpanded?'Mostrar solo las 8 más recientes':`Ver historial completo (${all.length})`}</button>`);
  }
  function paint(){paintSummary();paintCalendar();paintConfirmations();paintRehearsals();paintHistory();paintCheckin();}
  function paintCheckin() {
@@ -106,6 +106,7 @@
   if(p.get('token')){acceptQR(location.href);return;}
   view(location.hash.slice(1)||'resumen',false);
  }
+ document.addEventListener('click',event=>{if(event.target.closest('#portal-history-toggle')){historyExpanded=!historyExpanded;paintHistory();}});
  document.addEventListener('DOMContentLoaded',()=>run(async()=>{
   if(checkin.token)sessionStorage.setItem('jc_banda_return',`/templates/musicos.html#evento=${encodeURIComponent(checkin.evento_id)}&token=${encodeURIComponent(checkin.token)}`);
   auth=await B.access();if(!auth)return;sessionStorage.removeItem('jc_banda_return');
