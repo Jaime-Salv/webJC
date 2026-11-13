@@ -1720,7 +1720,7 @@ function nuevoConciertoAdmin() {
     });
 
     const estado = document.getElementById('concierto-estado');
-    if (estado) estado.value = 'Borrador';
+    if (estado) estado.value = 'Publicado';
 
     const selector = document.getElementById('select-concierto-admin');
     if (selector) selector.value = '';
@@ -1728,7 +1728,7 @@ function nuevoConciertoAdmin() {
     const estadoTexto = document.getElementById('estado-concierto-admin');
     if (estadoTexto) {
         estadoTexto.style.color = '#aaa';
-        estadoTexto.textContent = 'Nuevo concierto. Rellena los datos y guarda.';
+        estadoTexto.textContent = 'Nuevo concierto: guarda fecha, horario y lugar para anunciarlo. Podrás añadir el programa más adelante.';
     }
 
     limpiarFormularioObraConciertoAdmin();
@@ -1792,7 +1792,7 @@ async function guardarConciertoAdmin() {
     const localidad = document.getElementById('concierto-localidad')?.value.trim() || null;
     let cartelUrl = document.getElementById('concierto-cartel-url')?.value.trim() || null;
     const archivoCartel = document.getElementById('concierto-cartel-archivo')?.files?.[0] || null;
-    const estado = document.getElementById('concierto-estado')?.value || 'Borrador';
+    const estado = document.getElementById('concierto-estado')?.value || 'Publicado';
     const descripcion = document.getElementById('concierto-descripcion')?.value.trim() || null;
 
     const estadoTexto = document.getElementById('estado-concierto-admin');
@@ -1804,6 +1804,11 @@ async function guardarConciertoAdmin() {
 
     if (!['Borrador', 'Publicado', 'Oculto'].includes(estado)) {
         alert('Estado no válido.');
+        return;
+    }
+
+    if (estado === 'Publicado' && (!fecha || !hora || !document.getElementById('concierto-fin-hora')?.value || !lugar)) {
+        alert('Para anunciar el concierto completa fecha, hora de inicio, hora de fin y lugar. El programa puede añadirse después.');
         return;
     }
 
@@ -1866,7 +1871,7 @@ async function guardarConciertoAdmin() {
 
         if (estadoTexto) {
             estadoTexto.style.color = '#27ae60';
-            estadoTexto.textContent = estado === 'Publicado' ? 'Concierto publicado. Si es próximo y tiene horario completo, su convocatoria ya está en el portal músico.' : 'Borrador guardado. Publica con fecha, inicio, fin y lugar para convocar músicos.';
+            estadoTexto.textContent = estado === 'Publicado' ? 'Concierto anunciado en próximas actuaciones y convocado a los músicos. El programa solo será visible cuando añadas obras.' : 'Concierto guardado sin anunciar. Selecciona Publicado para mostrarlo en próximas actuaciones.';
         }
 
         await cargarConciertosAdmin();
