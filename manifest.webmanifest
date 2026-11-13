@@ -2,7 +2,7 @@
   "name": "Banda de Música Julián Cerdán",
   "short_name": "Julián Cerdán",
   "id": "/",
-  "description": "Directos, repertorios, catálogo y comunidad de la Banda de Música Julián Cerdán.",
+  "description": "Directos, repertorios, catálogo, simulador y portal del músico de la Banda de Música Julián Cerdán.",
   "lang": "es",
   "start_url": "/index.html",
   "scope": "/",
@@ -35,19 +35,34 @@
       "name": "Ver directo",
       "short_name": "Directo",
       "url": "/index.html#zona-directo",
-      "icons": [{ "src": "/img/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/img/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Catálogo musical",
       "short_name": "Catálogo",
       "url": "/templates/catalogo.html",
-      "icons": [{ "src": "/img/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/img/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
-      "name": "Comunidad",
-      "short_name": "Comunidad",
-      "url": "/templates/comunidad.html",
-      "icons": [{ "src": "/img/icon-192.png", "sizes": "192x192" }]
+      "name": "Simulador",
+      "short_name": "Simulador",
+      "url": "/templates/simulacion.html",
+      "icons": [
+        {
+          "src": "/img/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
