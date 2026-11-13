@@ -1699,6 +1699,12 @@ async function cargarConciertosAdmin() {
     }
 }
 
+function abrirNuevoConciertoDesdeBanda() {
+    document.querySelector('[data-admin-target="conciertos"]')?.click();
+    nuevoConciertoAdmin();
+    document.getElementById('concierto-titulo')?.focus();
+}
+
 function nuevoConciertoAdmin() {
     setValorAdmin('concierto-fin-hora', '');
     conciertoAdminActual = null;
