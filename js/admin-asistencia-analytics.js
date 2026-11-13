@@ -55,13 +55,31 @@
  function summaryCard(label,value){return '<div class="jc-admin-stat"><strong>'+esc(value)+'</strong><span>'+esc(label)+'</span></div>';}
  function history(records){
   const target=$('jc-att-history');
-  if(!records.length){target.innerHTML='<p class="muted">No hay eventos finalizados en este período y categoría.</p>';return;}
-  target.innerHTML='<div class="jc-admin-quick-stats">'+summaryCard('Eventos',records.length)+summaryCard('Presencias',records.reduce((n,r)=>n+r.yes,0))+summaryCard('Asistencia media',fmt(avg(records)))+'</div>'+
-   records.slice().reverse().map(r=>{
-    const groups=new Map();r.rows.forEach(p=>{if(!groups.has(p.instrumento))groups.set(p.instrumento,[]);groups.get(p.instrumento).push(p);});
-    const breakdown=[...groups].map(([inst,rows])=>{const yes=rows.filter(p=>p.valor===1).length,missing=rows.filter(p=>p.estado==='sin_fichaje').length;return '<tr><td>'+esc(inst)+'</td><td>'+yes+' / '+rows.length+'</td><td>'+fmt(pct(yes,rows.length))+'</td><td>'+missing+'</td></tr>';}).join('');
-    return '<details class="panel"><summary><strong>'+esc(r.event.titulo)+'</strong> · '+esc(B.fecha(r.event.inicio))+' · '+esc(kindLabel(r.event.tipo))+' · '+fmt(r.coverage)+'</summary><div class="jc-admin-quick-stats">'+summaryCard('Convocados',r.total)+summaryCard('Presentes',r.yes)+summaryCard('Sin fichaje',r.miss)+(r.event.tipo==='ensayo'?'':summaryCard('Previsión: Voy',r.forecast))+'</div><div class="table-scroll"><table><thead><tr><th>Instrumento</th><th>Presentes</th><th>Asistencia</th><th>Sin fichaje</th></tr></thead><tbody>'+breakdown+'</tbody></table></div><button type="button" data-att-open="'+esc(r.event.id)+'">Ver ficha y revisar registros</button></details>';
-   }).join('');
+  if(!records.length){target.innerHTML='<p class="muted">No hay eventos finalizados en este período y categoría. Puedes cambiar las fechas en Estadísticas.</p>';return;}
+  const cards=records.slice().reverse().map(r=>{
+   const groups=new Map();
+   r.rows.forEach(p=>{const key=p.instrumento.trim()||'Sin instrumento';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(p);});
+   const instruments=[...groups].sort((a,b)=>compare(a[0],b[0]));
+   const distribution=instruments.map(([inst,people])=>bar(inst,people.filter(p=>p.valor===1).length,people.length)).join('');
+   const totalConfirmed=r.rows.filter(p=>p.respuesta==='voy').length,declined=r.rows.filter(p=>p.respuesta==='no_voy').length;
+   const pending=r.total-totalConfirmed-declined;
+   const forecast=r.event.tipo==='ensayo'?'':('<section class="jc-att-section"><div class="jc-att-section-title"><h3>Previsión antes del evento</h3><small>Confirmaciones registradas</small></div><div class="jc-att-forecast-cards">'+
+    '<div><strong>'+totalConfirmed+'</strong><small>Confirmaron que iban</small></div>'+
+    '<div><strong>'+declined+'</strong><small>Indicaron que no iban</small></div>'+
+    '<div><strong>'+pending+'</strong><small>Sin respuesta</small></div></div><p class="jc-att-small-note">La previsión corresponde al estado de las respuestas guardadas, no necesariamente al que existía antes del evento.</p></section>');
+   const roster=instruments.map(([inst,people])=>'<details class="jc-att-roster-group"><summary><strong>'+esc(inst)+'</strong><span>'+people.filter(p=>p.valor===1).length+' / '+people.length+' presentes</span></summary><div class="jc-att-roster-list">'+people.map(p=>'<div class="jc-att-roster-person"><span>'+esc(p.nombre)+'</span><span class="'+(p.valor===1?'jc-att-present':'jc-att-no-presence')+'">'+(p.valor===1?'Presente':p.estado==='justificada'?'Justificada':p.estado==='ausente'?'Ausente':p.estado==='incidencia'?'Incidencia':'Sin presencia registrada')+'</span></div>').join('')+'</div></details>').join('');
+   return '<details class="jc-att-history-event" id="jc-history-'+esc(r.event.id)+'"><summary><div class="jc-att-event-title"><strong>'+esc(r.event.titulo)+'</strong><small>'+esc(B.fecha(r.event.inicio))+' · '+esc(kindLabel(r.event.tipo))+'</small></div><div class="jc-att-history-result"><b>'+fmt(r.coverage)+'</b><small>'+r.yes+' de '+r.total+' presentes</small></div><span class="jc-att-history-chevron" aria-hidden="true">▾</span></summary>'+
+    '<div class="jc-att-event-detail"><div class="jc-att-event-kpis">'+
+    '<div class="jc-att-kpi"><span class="jc-att-kpi-title">Índice de asistencia</span><strong>'+fmt(r.coverage)+'</strong><div class="jc-att-progress"><span style="width:'+(r.coverage??0)+'%"></span></div></div>'+
+    '<div class="jc-att-kpi"><span class="jc-att-kpi-title">Músicos presentes</span><strong>'+r.yes+' / '+r.total+'</strong><small>Presencias registradas entre los convocados</small></div></div>'+
+    '<div class="jc-att-split"><section class="jc-att-section"><div class="jc-att-section-title"><h3>Asistencia por instrumento</h3><small>'+instruments.length+' instrumentos</small></div><div class="jc-att-instruments">'+(distribution||'<p class="muted">Sin músicos convocados.</p>')+'</div></section>'+
+    '<section class="jc-att-section"><div class="jc-att-section-title"><h3>Músicos convocados</h3><small>Ordenados por instrumento</small></div><div class="jc-att-roster-scroll">'+(roster||'<p class="muted">No hay músicos.</p>')+'</div></section></div>'+forecast+
+    '<div class="jc-att-detail-footer"><button type="button" data-att-open="'+esc(r.event.id)+'">Abrir gestión y corregir asistencias</button></div></div></details>';
+  }).join('');
+  target.innerHTML='<div class="jc-att-dashboard"><section class="jc-att-hero"><div class="jc-att-hero-head"><div><h3>Historial de eventos</h3><p>Selecciona un evento para consultar sus indicadores y el detalle por instrumento.</p></div><div class="jc-att-pill">'+records.length+' eventos</div></div><div class="jc-att-kpi-grid">'+
+   '<div class="jc-att-kpi"><span class="jc-att-kpi-title">Asistencia media por evento</span><strong>'+fmt(avg(records))+'</strong><small>Media de porcentajes, cada evento tiene el mismo peso</small></div>'+
+   '<div class="jc-att-kpi"><span class="jc-att-kpi-title">Presencias registradas</span><strong>'+records.reduce((n,r)=>n+r.yes,0)+'</strong><small>En '+records.length+' actividades finalizadas</small></div></div></section>'+
+   '<div class="jc-att-history-list">'+cards+'</div></div>';
  }
  function matrix(records){
   const persons=new Map();records.forEach(r=>r.rows.forEach(p=>persons.set(p.id,p)));
@@ -128,7 +146,7 @@
   const instr=[...groups].sort((a,b)=>compare(a[0],b[0]));
   const eventCards=records.slice().reverse().map(r=>{
    const value=r.coverage;
-   return '<article class="jc-att-event-card"><div class="jc-att-event-main"><div class="jc-att-event-title"><strong>'+esc(r.event.titulo)+'</strong><small>'+esc(B.fecha(r.event.inicio))+' · '+esc(kindLabel(r.event.tipo))+'</small></div><div class="jc-att-event-percent">'+fmt(value)+'</div></div><div class="jc-att-progress"><span style="width:'+(value??0)+'%"></span></div><div class="jc-att-event-foot"><span>'+r.yes+' / '+r.total+' asistentes</span><button type="button" data-att-open="'+esc(r.event.id)+'">Ver evento</button></div></article>';
+   return '<article class="jc-att-event-card"><div class="jc-att-event-main"><div class="jc-att-event-title"><strong>'+esc(r.event.titulo)+'</strong><small>'+esc(B.fecha(r.event.inicio))+' · '+esc(kindLabel(r.event.tipo))+'</small></div><div class="jc-att-event-percent">'+fmt(value)+'</div></div><div class="jc-att-progress"><span style="width:'+(value??0)+'%"></span></div><div class="jc-att-event-foot"><span>'+r.yes+' / '+r.total+' asistentes</span><button type="button" data-att-inspect="'+esc(r.event.id)+'">Analizar evento</button></div></article>';
   }).join('');
   const byType=Object.keys(tipos).map(kind=>{
    const list=records.filter(r=>r.event.tipo===kind);
@@ -166,7 +184,7 @@
   $('jc-att-month').onclick=()=>{$('jc-att-from').value=now.slice(0,7)+'-01';$('jc-att-to').value=now;update();};
   $('jc-att-season').onclick=()=>{$('jc-att-from').value=String(+now.slice(0,4)-(Number(now.slice(5,7))<9?1:0))+'-09-01';$('jc-att-to').value=now;update();};
   $('jc-att-kind').onchange=update;
-  stats.addEventListener('click',e=>{const btn=e.target.closest('[data-att-open]');if(btn){window.JCBandaNavigate?.open('control');document.dispatchEvent(new CustomEvent('banda:select',{detail:btn.dataset.attOpen}));}});
+  stats.addEventListener('click',e=>{const inspect=e.target.closest('[data-att-inspect]');if(inspect){window.JCBandaNavigate?.open('historial');const detail=document.getElementById('jc-history-'+inspect.dataset.attInspect);if(detail){detail.open=true;detail.scrollIntoView({behavior:'smooth',block:'start'});}return;}const btn=e.target.closest('[data-att-open]');if(btn){window.JCBandaNavigate?.open('control');document.dispatchEvent(new CustomEvent('banda:select',{detail:btn.dataset.attOpen}));}});
   hist.addEventListener('click',e=>{const button=e.target.closest('[data-att-open]');if(button){window.JCBandaNavigate?.open('control');document.dispatchEvent(new CustomEvent('banda:select',{detail:button.dataset.attOpen}));}});
   const nav=base.querySelector('.jc-operations-tabs');
   nav?.addEventListener('click',e=>{if(e.target.closest('[data-section="historial"],[data-section="estadisticas"]'))update();});
