@@ -39,10 +39,11 @@
   const file=form.elements.foto_archivo.files[0];if(!file||file===uploadedFile)return;
   if(!file.type.startsWith('image/'))throw Error('Selecciona un archivo de imagen.');
   if(file.size>10*1024*1024)throw Error('La imagen debe ocupar como máximo 10 MB.');
-  const extension=file.name.split('.').pop().toLowerCase();
+  const archivoSubida=typeof optimizarImagenPublicaAdmin==='function' ? await optimizarImagenPublicaAdmin(file) : file;
+  const extension=archivoSubida.name.split('.').pop().toLowerCase();
   const path=`procesion_${Date.now()}_${crypto.randomUUID()}.${/^[a-z0-9]{1,8}$/.test(extension)?extension:'jpg'}`;
   const bucket=clienteSupabase.storage.from('portadas');
-  const {error}=await bucket.upload(path,file,{contentType:file.type,upsert:false});
+  const {error}=await bucket.upload(path,archivoSubida,{contentType:archivoSubida.type,upsert:false,cacheControl:'31536000'});
   if(error)throw Error('No se ha podido subir la portada: '+error.message);
   const {data}=bucket.getPublicUrl(path);if(!data?.publicUrl)throw Error('No se ha podido obtener la portada subida.');
   form.elements.url_foto.value=data.publicUrl;uploadedFile=file;
