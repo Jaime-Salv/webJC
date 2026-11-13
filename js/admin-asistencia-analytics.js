@@ -67,15 +67,43 @@
   const persons=new Map();records.forEach(r=>r.rows.forEach(p=>persons.set(p.id,p)));
   const members=[...persons.values()].sort((a,b)=>compare(a.instrumento,b.instrumento)||compare(a.nombre,b.nombre));
   const cells=new Map(records.map(r=>[String(r.event.id),new Map(r.rows.map(p=>[p.id,p]))]));
-  const headers=records.map((r,i)=>'<th title="'+esc(r.event.titulo)+' · '+esc(B.fecha(r.event.inicio))+'">'+(i+1)+'<small> '+esc(day(r.event.inicio).slice(5))+'</small></th>').join('');
+  const headers=records.map(r=>'<th style="min-width:145px;max-width:220px;white-space:normal" title="'+esc(r.event.titulo)+' · '+esc(B.fecha(r.event.inicio))+'"><strong>'+esc(r.event.titulo)+'</strong><small style="display:block">'+esc(day(r.event.inicio))+'</small></th>').join('');
   const rows=members.map(p=>{
    const values=records.map(r=>{const x=cells.get(String(r.event.id)).get(p.id);return x?'<td title="'+esc(x.estado==='sin_fichaje'?'Sin fichaje: pendiente de revisión':B.asistencia({estado:x.estado}))+'">'+x.valor+'</td>':'<td title="No convocado">—</td>';}).join('');
    const active=records.reduce((n,r)=>n+Number(cells.get(String(r.event.id)).has(p.id)),0),present=records.reduce((n,r)=>n+Number(cells.get(String(r.event.id)).get(p.id)?.valor===1),0);
    return '<tr><th>'+esc(p.instrumento)+'</th><th>'+esc(p.nombre)+'</th>'+values+'<td><strong>'+present+'/'+active+'</strong></td><td>'+fmt(pct(present,active))+'</td></tr>';
   }).join('');
   const target=$('jc-att-matrix');
-  target.innerHTML=records.length?'<div class="row"><button id="jc-att-export" type="button">Exportar matriz CSV (Excel)</button></div><p class="muted">Cada columna numerada es un evento. 1 = presencia registrada; 0 = sin presencia registrada; — = músico no convocado. Pasa el cursor por el 0 para saber si consta ausencia o si falta revisar el fichaje.</p><div class="table-scroll" style="max-height:65vh"><table class="bp-report-table"><thead><tr><th>Instrumento</th><th>Músico</th>'+headers+'<th>Presentes / convocados</th><th>%</th></tr></thead><tbody>'+rows+'</tbody></table></div><details><summary>Identificación de los eventos</summary><ol>'+records.map(r=>'<li>'+esc(B.fecha(r.event.inicio))+' · '+esc(r.event.titulo)+' ('+esc(kindLabel(r.event.tipo))+')</li>').join('')+'</ol></details>':'<p class="muted">No hay eventos para crear la matriz.</p>';
-  const btn=$('jc-att-export');if(btn)btn.onclick=()=>B.csv([['Instrumento','Músico',...records.map(r=>day(r.event.inicio)+' '+r.event.titulo), 'Presencias','Convocatorias','Porcentaje'],...members.map(p=>{let present=0,active=0;const values=records.map(r=>{const x=cells.get(String(r.event.id)).get(p.id);if(!x)return '';active++;present+=x.valor;return x.valor;});return [p.instrumento,p.nombre,...values,present,active,pct(present,active)??''];})],'jc-matriz-asistencia-'+scope().desde+'-'+scope().hasta+'.csv');
+  target.innerHTML=records.length?'<div class="row"><button id="jc-att-excel" type="button">Exportar Excel (.xlsx)</button><button id="jc-att-pdf" type="button">Exportar PDF</button></div><p class="muted">Los encabezados muestran el nombre y fecha de cada evento. 1 = presencia registrada; 0 = sin presencia registrada; — = no convocado. Un 0 sin fichaje no equivale a ausencia confirmada.</p><div class="table-scroll" style="max-height:65vh"><table class="bp-report-table"><thead><tr><th>Instrumento</th><th>Músico</th>'+headers+'<th>Presentes / convocados</th><th>%</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p class="muted">No hay eventos para crear la matriz.</p>';
+  const data=()=>[ ['Instrumento','Músico',...records.map(r=>day(r.event.inicio)+' · '+r.event.titulo),'Presencias','Convocatorias','Porcentaje (%)'], ...members.map(p=>{let present=0,active=0;const values=records.map(r=>{const x=cells.get(String(r.event.id)).get(p.id);if(!x)return '';active++;present+=x.valor;return x.valor;});return [p.instrumento,p.nombre,...values,present,active,pct(present,active)??''];}) ];
+  const file='jc-matriz-asistencia-'+scope().desde+'-'+scope().hasta;
+  const excel=$('jc-att-excel');if(excel)excel.onclick=()=>{
+   if(!window.XLSX){B.notice('No se ha cargado el módulo Excel. Recarga la página.',true);return;}
+   const book=XLSX.utils.book_new(), sheet=XLSX.utils.aoa_to_sheet(data());
+   sheet['!cols']=[{wch:23},{wch:32},...records.map(()=>({wch:32})),{wch:12},{wch:16},{wch:17}];
+   sheet['!freeze']={xSplit:2,ySplit:1};
+   XLSX.utils.book_append_sheet(book,sheet,'Asistencia');
+   const list=XLSX.utils.aoa_to_sheet([['Fecha','Evento','Tipo','Convocados','Presentes','Pendientes sin fichaje','Confirmaron asistencia'],...records.map(r=>[day(r.event.inicio),r.event.titulo,kindLabel(r.event.tipo),r.total,r.yes,r.miss,r.forecast])]);
+   list['!cols']=[{wch:15},{wch:45},{wch:20},{wch:15},{wch:15},{wch:24},{wch:24}];
+   XLSX.utils.book_append_sheet(book,list,'Eventos');
+   XLSX.writeFile(book,file+'.xlsx');
+  };
+  const pdf=$('jc-att-pdf');if(pdf)pdf.onclick=()=>{
+   const JsPDF=window.jspdf?.jsPDF;
+   if(!JsPDF){B.notice('No se ha cargado el módulo PDF. Recarga la página.',true);return;}
+   const doc=new JsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+   if(typeof doc.autoTable!=='function'){B.notice('No se ha cargado el generador de tablas PDF.',true);return;}
+   const all=data(), base=all.slice(1), width=8;
+   for(let offset=0;offset<records.length;offset+=width){
+    if(offset)doc.addPage();
+    const part=records.slice(offset,offset+width),head=['Instrumento','Músico',...part.map(r=>day(r.event.inicio)+'\n'+r.event.titulo),'Pres.','Conv.','%'];
+    const body=base.map(r=>[r[0],r[1],...r.slice(2+offset,2+offset+part.length),...r.slice(-3)]);
+    doc.setFontSize(12);doc.text('Julián Cerdán · Matriz de asistencia',12,12);
+    doc.setFontSize(8);doc.text(scope().desde+' a '+scope().hasta+' · Eventos '+(offset+1)+'–'+(offset+part.length)+' de '+records.length,12,18);
+    doc.autoTable({head:[head],body,startY:23,margin:{left:9,right:9},styles:{fontSize:6,cellPadding:1.6,overflow:'linebreak'},headStyles:{fontSize:6},columnStyles:{0:{cellWidth:24},1:{cellWidth:34}},theme:'grid'});
+   }
+   doc.save(file+'.pdf');
+  };
  }
  function statistics(records){
   const total=records.reduce((n,r)=>n+r.total,0),present=records.reduce((n,r)=>n+r.yes,0),missing=records.reduce((n,r)=>n+r.miss,0);
