@@ -1,11 +1,37 @@
 (() => {
  const B=JCBanda,E=B.escape,$=id=>document.getElementById(id);
  const views=['resumen','ensayos','calendario','confirmaciones','asistencias','escanear'];
- let auth,events=[],responses=[],attendance=[],profile=null,selectedDay=null,currentView='resumen',focusedEvent=null,loading=false,historyExpanded=false;
+ let auth,events=[],responses=[],attendance=[],profile=null,selectedDay=null,currentView='resumen',focusedEvent=null,loading=false,historyExpanded=false,checkinBusy=false;
  const today=B.dia(new Date());let year=Number(today.slice(0,4)),month=Number(today.slice(5,7))-1;
  const incoming=new URLSearchParams(location.hash.slice(1));
  const checkin={evento_id:incoming.get('evento'),token:incoming.get('token')};
  if(checkin.token)history.replaceState(null,'',location.pathname);
+ const checkinMessage=(title,message,success=false)=>{
+  const dialog=$('portal-checkin-dialog');$('portal-checkin-dialog-title').textContent=title;
+  $('portal-checkin-dialog-text').textContent=message;
+  dialog.dataset.success=String(success);
+  if(!dialog.open)dialog.showModal();
+ };
+ const autoCheckin=async()=>{
+  if(checkinBusy||!checkin.token||!auth?.musico)return;
+  checkinBusy=true;
+  try{
+   if(!navigator.onLine)throw Error('Necesitas conexión para registrar la asistencia.');
+   const ev=events.find(x=>x.id===checkin.evento_id);
+   if(!ev)throw Error('El evento del QR no es accesible para tu usuario.');
+   const old=attended(ev.id);
+   if(old){checkinMessage('Asistencia ya registrada',ev.titulo+' · '+B.asistencia(old),old.estado==='presente');return;}
+   $('portal-checkin-state').textContent='Registrando asistencia automáticamente…';
+   const result=await B.rpc('fichar',{...checkin});
+   await load();
+   const present=result?.estado==='presente';
+   checkinMessage(present?'¡Has fichado correctamente!':'Fichaje pendiente de revisión',present?'Tu asistencia a «'+ev.titulo+'» se ha registrado correctamente.':'La lectura del QR se ha guardado, pero la asistencia tiene una incidencia que debe revisar administración.',present);
+   cameraStatus(present?'Asistencia registrada correctamente.':'Incidencia registrada. Contacta con administración.',!present);
+  }catch(error){
+   cameraStatus(error.message,true);
+   checkinMessage('No se ha podido fichar',error.message,false);
+  }finally{checkinBusy=false;paintCheckin();}
+ };
  const empty=(title,detail)=>`<div class="portal-empty"><strong>${E(title)}</strong><p>${E(detail)}</p></div>`;
  const response=id=>responses.find(x=>x.evento_id===id);
  const attended=id=>attendance.find(x=>x.evento_id===id);
@@ -82,8 +108,8 @@
   if(!ev){$('banda-checkin').hidden=true;cameraStatus('Este QR no corresponde a una convocatoria accesible para tu cuenta.',true);return;}
   $('banda-checkin-event').textContent=`${ev.titulo} · ${B.fecha(ev.inicio)}`;
   const a=attended(ev.id);$('banda-fichar').disabled=!!a||!auth.musico||!navigator.onLine;
-  $('banda-fichar').textContent=a?'Asistencia ya registrada':'Confirmar mi asistencia';
-  $('portal-checkin-state').textContent=a?`Tu registro: ${B.asistencia(a)}.${a.estado==='incidencia'?' Consulta a administración para revisarlo.':''}`:'QR leído. Confirma tu llegada para guardar el registro de asistencia.';
+  $('banda-fichar').hidden=true;
+  $('portal-checkin-state').textContent=a?`Tu registro: ${B.asistencia(a)}.${a.estado==='incidencia'?' Consulta a administración para revisarlo.':''}`:'QR leído. El fichaje se registra automáticamente.';
  }
  async function load() {
   if(loading)return;loading=true;$('banda-refresh').disabled=true;
@@ -97,8 +123,8 @@
  function acceptQR(text) {
   try {
    const parsed=JCQRScanner.parse(text);Object.assign(checkin,parsed);reader.stop();view('escanear');
-   cameraStatus('QR leído. Comprueba la convocatoria y confirma tu asistencia.');
-   run(async()=>{await load();paintCheckin();$('banda-checkin').scrollIntoView({behavior:'smooth',block:'nearest'});});return true;
+   cameraStatus('QR leído. Registrando asistencia…');
+   run(async()=>{await load();await autoCheckin();});return true;
   }catch(error){checkin.token=null;checkin.evento_id=null;if(auth)paintCheckin();cameraStatus(error.message,true);return false;}
  }
  function route() {
@@ -114,7 +140,7 @@
   $('banda-identidad').textContent=auth.musico?`Hola, ${auth.profile.username||'músico'}. Este es tu espacio en la banda.`:'Acceso de administración. Activa también el permiso Músico para confirmar y fichar personalmente.';
   $('portal-camera-start').disabled=!auth.musico;
   await load();$('banda-content').hidden=false;
-  if(checkin.token){view('escanear');cameraStatus('QR leído. Confirma tu llegada.');}else route();
+  if(checkin.token){view('escanear');cameraStatus('QR leído. Registrando asistencia…');await autoCheckin();}else route();
   onlineState();
  }));
  document.addEventListener('click',event=>{
@@ -128,11 +154,8 @@
   const b=event.target.closest('[data-response]');if(!b)return;if(!navigator.onLine)throw Error('Necesitas conexión para guardar tu respuesta.');b.disabled=true;
   try{await B.rpc('respuesta',{evento_id:b.dataset.event,respuesta:b.dataset.response});await load();B.notice('Tu respuesta ha quedado guardada.');}finally{if(b.isConnected)b.disabled=false;}
  }));
- $('banda-fichar').addEventListener('click',event=>run(async()=>{
-  const b=event.currentTarget;if(!navigator.onLine)throw Error('Necesitas conexión para registrar la asistencia.');b.disabled=true;b.textContent='Registrando asistencia…';B.notice('Registrando tu llegada…');
-  try{const r=await B.rpc('fichar',{...checkin});await load();B.notice(r.estado==='presente'?'Asistencia registrada correctamente.':'Incidencia registrada. Administración debe revisar el registro; todavía no cuenta como presencia.');paintCheckin();}
-  catch(error){b.disabled=false;b.textContent='Volver a intentar el fichaje';$('portal-checkin-state').textContent=error.message;if(/caducado|fichaje est[aá] cerrado/i.test(error.message)){checkin.token=null;paintCheckin();cameraStatus(error.message,true);}throw error;}
- }));
+
+ $('portal-checkin-dialog-close').onclick=()=>$('portal-checkin-dialog').close();
  $('portal-camera-start').onclick=()=>{if(auth?.musico){checkin.token=null;paintCheckin();reader.start();}};
  $('portal-camera-stop').onclick=()=>{reader.stop();cameraStatus('Cámara cerrada. Puedes abrirla de nuevo cuando quieras.');};
  $('portal-qr-image').addEventListener('change',event=>run(async()=>{const file=event.target.files[0];try{await reader.image(file);}catch(error){cameraStatus(error.message,true);}finally{event.target.value='';}}));
