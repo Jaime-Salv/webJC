@@ -545,9 +545,7 @@ function renderizarTimeline(repertorio, pagina = 1) {
 
         const acciones = document.createElement('div');
         acciones.className = 'acciones-marcha-analisis';
-
-        acciones.appendChild(botonPlay);
-        acciones.appendChild(botonSpotify);
+        if (urlSpotify) acciones.appendChild(botonSpotify);
         acciones.appendChild(botonPatrimonio);
 
         item.appendChild(info);
