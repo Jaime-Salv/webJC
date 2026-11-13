@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'jc-pwa-v31';
+const CACHE_VERSION = 'jc-pwa-v32';
 const APP_SHELL = [
     '/',
     '/index.html',
@@ -15,7 +15,6 @@ const APP_SHELL = [
     '/img/icon-192.png',
     '/img/icon-512.png',
     '/templates/catalogo.html',
-    '/templates/comunidad.html',
     '/templates/simulacion.html'
 ];
 
