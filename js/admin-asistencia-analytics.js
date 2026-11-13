@@ -100,7 +100,7 @@
   if(!hist||!stats)return;
   hist.insertAdjacentHTML('beforeend','<p>Consulta el resultado de cada evento, sus instrumentos y la previsión inicial.</p><div id="jc-att-history"></div>');
   stats.insertAdjacentHTML('beforeend','<p>Analiza asistencia global, por actividad, por instrumento y por músico.</p><div id="jc-att-stats"></div>');
-  stats.prepend(document.createElement('div'));stats.firstElementChild.outerHTML=controls();
+  stats.querySelector('.jc-operation-heading')?.insertAdjacentHTML('afterend',controls());
   const form=$('jc-att-query'),now=today();$('jc-att-from').value=now.slice(0,4)+'-01-01';$('jc-att-to').value=now;
   form.onsubmit=e=>{e.preventDefault();update();};
   $('jc-att-month').onclick=()=>{$('jc-att-from').value=now.slice(0,7)+'-01';$('jc-att-to').value=now;update();};
