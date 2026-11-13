@@ -1019,7 +1019,8 @@
         #btn-modal-favorita.activa { background:#d4af37; color:#050505; }
         #btn-modal-simulador { border:0; background:#d4af37; color:#050505; }
         @media(max-width:650px){ .modal-acciones-marcha{grid-template-columns:1fr;} .acciones-catalogo-fila{min-width:112px;} }
-    </style>
+     .btn-spotify-tabla{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 9px;border:1px solid #1db954;border-radius:7px;color:#1ed760;background:#102119;text-decoration:none;font-size:.67rem;font-weight:800}
+</style>
 </head>
 
 <body>
@@ -1047,7 +1048,7 @@
         </section>
 
         <p class="intro-catalogo">
-            Consulta el archivo musical de la banda. Puedes reproducir una marcha directamente desde la tabla
+            Consulta el archivo musical de la banda. Escucha las marchas en Spotify cuando exista un enlace disponible
             o pulsar sobre ella para abrir su ficha completa.
         </p>
 
@@ -1124,24 +1125,13 @@
             </table>
 
             <p class="ayuda-tabla">
-                Pulsa ▶ para escuchar directamente o pulsa sobre una fila para abrir la ficha completa.
+                Pulsa sobre una fila para abrir la ficha completa o accede a Spotify cuando esté disponible.
             </p>
         </div>
 
     </main>
 
-    <div id="mini-player" class="mini-player" aria-hidden="true">
-        <div class="mini-player-superior">
-            <div class="mini-player-info">
-                <strong id="mini-player-titulo">Marcha</strong>
-                <span id="mini-player-autor">Autor</span>
-            </div>
-
-            <button id="mini-player-cerrar" class="mini-player-cerrar" type="button">×</button>
-        </div>
-
-        <audio id="mini-player-audio" controls preload="none"></audio>
-    </div>
+    
 
     <div id="modal-marcha" class="modal-marcha" aria-hidden="true">
         <div class="modal-contenido">
@@ -1197,9 +1187,9 @@
                 <div class="modal-columna-secundaria">
                     <section class="bloque-ficha">
                         <h3>Escucha</h3>
-                        <div id="modal-audio-web"></div>
+                        
                         <div id="modal-youtube"></div>
-                        <p id="modal-sin-escucha" class="sin-dato" hidden>No hay grabaciones enlazadas todavía.</p>
+                        <p id="modal-sin-escucha" class="sin-dato" hidden>Esta marcha no tiene enlace de Spotify disponible.</p>
                     </section>
 
                     <section class="bloque-ficha bloque-textos">
@@ -1217,6 +1207,6 @@
 <script src="../js/analytics.js"></script>
 <script src="../js/pwa.js?v=4"></script>
 <script src="../js/config.js"></script>
-<script src="../js/catalogo.js?v=4"></script>
+<script src="../js/catalogo.js?v=5"></script>
 </body>
 </html>
