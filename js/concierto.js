@@ -48,6 +48,13 @@ async function cargarConcierto() {
             throw errorObras;
         }
 
+        // El anuncio puede ser público antes de que exista un programa.
+        // No abrir la página del programa a visitantes mientras no tenga obras.
+        if (concierto.estado !== 'Publicado' || !(obras || []).length) {
+            renderizarError('El programa de este concierto todavía no está disponible.');
+            return;
+        }
+
         renderizarConcierto(concierto, obras || []);
         const {data:directo,error:directoError}=await clienteSupabase.from('maestro_procesiones').select('id_procesion,estado').eq('concierto_id',idConcierto).maybeSingle();
         if(!directoError&&directo&&['Activa','Finalizada'].includes(directo.estado)){
