@@ -402,7 +402,7 @@ async function cargarConciertosHome() {
         }
 
         const hoy = new Intl.DateTimeFormat('sv-SE', {timeZone:'Europe/Madrid'}).format(new Date());
-        const {data: directos,error: errorDirectos} = await clienteSupabase.from('maestro_procesiones').select('concierto_id,estado').eq('tipo','Concierto');
+        const {data: directos,error: errorDirectos} = await clienteSupabase.from('maestro_procesiones').select('id_procesion,concierto_id,estado').eq('tipo','Concierto');
         if(errorDirectos) throw errorDirectos;
         const anteriores = (conciertos || []).filter(c => (directos||[]).some(d=>String(d.concierto_id)===String(c.id_concierto)&&['Activa','Finalizada'].includes(d.estado)) || ((!c.fecha || c.fecha < hoy)&&!(directos||[]).some(d=>String(d.concierto_id)===String(c.id_concierto)&&d.estado==='Activa')));
         if (anteriores.length === 0) {
@@ -411,7 +411,10 @@ async function cargarConciertosHome() {
         }
 
         const aniosAbiertos = await obtenerAniosActividadAbiertos();
-        const conciertosActuales = anteriores.filter(c => aniosAbiertos.has(Number(c.fecha?.slice(0,4))));
+        const conciertosActuales = anteriores.filter(c => aniosAbiertos.has(Number(c.fecha?.slice(0,4)))).map(c => {
+            const directo = (directos || []).find(d => String(d.concierto_id) === String(c.id_concierto) && ['Activa','Finalizada'].includes(d.estado));
+            return {...c, directo_id: directo?.id_procesion, directo_estado: directo?.estado};
+        });
         if (!conciertosActuales.length) {
             gridConciertos.innerHTML = '<div class="empty-state">Conciertos anteriores disponibles en «Recuerda».</div>';
             return;
@@ -451,6 +454,10 @@ function activarImagenesDiferidas(contenedor) {
 }
 
 function crearTarjetaConcierto(concierto) {
+    const urlTarjeta = concierto.directo_estado === 'Activa' && concierto.directo_id
+        ? `templates/live.html?id=${encodeURIComponent(concierto.directo_id)}`
+        : `templates/concierto.html?id=${encodeURIComponent(concierto.id_concierto)}`;
+    const etiquetaTarjeta = concierto.directo_estado === 'Activa' ? 'Seguir en directo' : 'Ver programa';
     const foto = concierto.cartel_url || 'img/foto-dashboard.jpg';
     const fecha = formatearFecha(concierto.fecha);
 
@@ -461,14 +468,14 @@ function crearTarjetaConcierto(concierto) {
 
     return `
         <article class="tarjeta-compartible">
-            <a href="templates/concierto.html?id=${concierto.id_concierto}" class="tarjeta-procesion-home tarjeta-concierto-home" data-bg="${escaparAtributo(foto)}">
+            <a href="${urlTarjeta}" class="tarjeta-procesion-home tarjeta-concierto-home" data-bg="${escaparAtributo(foto)}">
                 <div class="card-date">${escaparHTML(fecha)}</div>
                 <div class="card-gradient"></div>
 
                 <div class="card-content">
                     <h3>${escaparHTML(concierto.titulo || 'Concierto')}</h3>
                     <p>${escaparHTML(lugar || 'Programa de concierto')}</p>
-                    <span class="tag-concierto">Ver programa</span>
+                    <span class="tag-concierto">${etiquetaTarjeta}</span>
                 </div>
             </a>
             <button type="button" class="btn-compartir-card" title="Compartir repertorio" aria-label="Compartir repertorio"
