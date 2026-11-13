@@ -567,16 +567,9 @@ function convertirSpotifyUriAUrl(spotifyUri) {
 
     const texto = String(spotifyUri).trim();
 
-    if (!texto.startsWith('spotify:track:')) {
-        return null;
-    }
-
-    const trackId = texto.replace('spotify:track:', '').trim();
-
-    if (!trackId) {
-        return null;
-    }
-
+    if (/^https:\/\/open\.spotify\.com\/track\/[A-Za-z0-9]+(?:\?.*)?$/.test(texto)) return texto;
+    if (!/^spotify:track:[A-Za-z0-9]+$/.test(texto)) return null;
+    const trackId = texto.slice('spotify:track:'.length);
     return `https://open.spotify.com/track/${trackId}`;
 }
 
