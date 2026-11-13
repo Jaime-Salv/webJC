@@ -64,6 +64,30 @@ async function cargarDatosPerfil() {
     }
 }
 
+// Optimiza únicamente nuevas fotos de perfil. No modifica imágenes anteriores.
+async function optimizarAvatarParaSubida(archivo) {
+    if (!archivo || !/^image\/(jpeg|png|webp)$/i.test(archivo.type)) return archivo;
+    try {
+        const imagen = await createImageBitmap(archivo);
+        const escala = Math.min(1, 960 / Math.max(imagen.width, imagen.height));
+        if (escala === 1 && archivo.size <= 250 * 1024) {
+            imagen.close?.();
+            return archivo;
+        }
+        const lienzo = document.createElement('canvas');
+        lienzo.width = Math.max(1, Math.round(imagen.width * escala));
+        lienzo.height = Math.max(1, Math.round(imagen.height * escala));
+        lienzo.getContext('2d').drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+        imagen.close?.();
+        const blob = await new Promise(resolve => lienzo.toBlob(resolve, 'image/webp', 0.82));
+        if (!blob || blob.type !== 'image/webp' || blob.size >= archivo.size) return archivo;
+        return new File([blob], archivo.name.replace(/\.[^.]+$/, '') + '.webp', { type: 'image/webp' });
+    } catch (error) {
+        console.warn('Se conserva la imagen original al no poder optimizarla.', error);
+        return archivo;
+    }
+}
+
 async function guardarPerfil() {
     const { data: { session } } = await clienteSupabase.auth.getSession();
     if (!session) return;
@@ -83,13 +107,14 @@ async function guardarPerfil() {
 
         // 1. GESTIÓN DE SUBIDA DE IMAGEN (Si hay archivo nuevo)
         if (inputArchivo) {
-            const fileExt = inputArchivo.name.split('.').pop();
+            const archivoSubida = await optimizarAvatarParaSubida(inputArchivo);
+            const fileExt = archivoSubida.name.split('.').pop();
             const fileName = `${user.id}_${Math.random()}.${fileExt}`;
             const filePath = `${fileName}`;
 
             const { error: uploadError } = await clienteSupabase.storage
                 .from('avatars')
-                .upload(filePath, inputArchivo);
+                .upload(filePath, archivoSubida, { contentType: archivoSubida.type, cacheControl: '31536000' });
 
             if (uploadError) throw uploadError;
 
@@ -127,7 +152,7 @@ async function guardarPerfil() {
             });
         }
         alert("✅ Perfil actualizado correctamente.");
-        window.location.href = perfilTieneBanda ? "musicos.html" : "comunidad.html";
+        window.location.href = perfilTieneBanda ? "musicos.html" : "../index.html";
 
     } catch (e) {
         alert("❌ Error al guardar: " + e.message);

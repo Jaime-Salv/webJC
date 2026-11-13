@@ -440,6 +440,30 @@ function desactivarModoInyeccion() {
    MÓDULO 3: CREACIÓN DE PROCESIÓN
 ------------------------------------------------------------ */
 
+// Optimiza nuevas fotos públicas, nunca altera los archivos ya almacenados.
+async function optimizarImagenPublicaAdmin(archivo) {
+    if (!archivo || !/^image\/(jpeg|png|webp)$/i.test(archivo.type)) return archivo;
+    try {
+        const imagen = await createImageBitmap(archivo);
+        const escala = Math.min(1, 1920 / Math.max(imagen.width, imagen.height));
+        if (escala === 1 && archivo.size <= 350 * 1024) {
+            imagen.close?.();
+            return archivo;
+        }
+        const lienzo = document.createElement('canvas');
+        lienzo.width = Math.max(1, Math.round(imagen.width * escala));
+        lienzo.height = Math.max(1, Math.round(imagen.height * escala));
+        lienzo.getContext('2d').drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+        imagen.close?.();
+        const blob = await new Promise(resolve => lienzo.toBlob(resolve, 'image/webp', 0.88));
+        if (!blob || blob.type !== 'image/webp' || blob.size >= archivo.size) return archivo;
+        return new File([blob], archivo.name.replace(/\.[^.]+$/, '') + '.webp', { type: 'image/webp' });
+    } catch (error) {
+        console.warn('No se pudo optimizar la imagen; se conserva el archivo original.', error);
+        return archivo;
+    }
+}
+
 async function iniciarNuevaProcesion() {
     const hermandad = document.getElementById('adm-hermandad')?.value.trim();
     const localidad = document.getElementById('adm-localidad')?.value.trim();
@@ -463,13 +487,14 @@ async function iniciarNuevaProcesion() {
         }
 
         if (inputArchivo) {
-            const extension = inputArchivo.name.split('.').pop();
+            const archivoSubida = await optimizarImagenPublicaAdmin(inputArchivo);
+            const extension = archivoSubida.name.split('.').pop();
             const nombreUnico = `procesion_${Date.now()}.${extension}`;
 
             const { error: uploadError } = await clienteSupabase
                 .storage
                 .from('portadas')
-                .upload(nombreUnico, inputArchivo);
+                .upload(nombreUnico, archivoSubida, { contentType: archivoSubida.type, cacheControl: '31536000' });
 
             if (uploadError) {
                 throw new Error('Error al subir foto: ' + uploadError.message);
@@ -2154,17 +2179,18 @@ function limpiarQRConciertoAdmin() {
 }
 
 async function subirCartelConciertoAdmin(archivoCartel, tituloConcierto) {
-    const extension = obtenerExtensionArchivo(archivoCartel.name) || 'jpg';
+    const archivoSubida = await optimizarImagenPublicaAdmin(archivoCartel);
+    const extension = obtenerExtensionArchivo(archivoSubida.name) || 'jpg';
     const nombreBase = normalizarNombreArchivo(`concierto-${tituloConcierto || 'cartel'}-${Date.now()}`);
     const rutaArchivo = `conciertos/${nombreBase}.${extension}`;
 
     const { error: errorUpload } = await clienteSupabase
         .storage
         .from('carteles')
-        .upload(rutaArchivo, archivoCartel, {
-            cacheControl: '3600',
-            upsert: true,
-            contentType: archivoCartel.type || 'image/jpeg'
+        .upload(rutaArchivo, archivoSubida, {
+            cacheControl: '31536000',
+            upsert: false,
+            contentType: archivoSubida.type || 'image/jpeg'
         });
 
     if (errorUpload) {
