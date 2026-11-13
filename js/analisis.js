@@ -449,66 +449,6 @@ function renderizarGraficos(repertorio) {
    MÓDULO 5: MINI REPRODUCTOR Y CRONOLOGÍA PAGINADA
 ------------------------------------------------------------ */
 
-function reproducirEnMiniPlayerAnalisis(marcha) {
-    const miniPlayer = document.getElementById('mini-player-analisis');
-    const audio = document.getElementById('mini-player-analisis-audio');
-    const titulo = document.getElementById('mini-player-analisis-titulo');
-    const autor = document.getElementById('mini-player-analisis-autor');
-
-    if (!miniPlayer || !audio) {
-        return;
-    }
-
-    if (!marcha.url_audio || String(marcha.url_audio).trim() === '') {
-        alert('Esta marcha no tiene audio interno disponible.');
-        return;
-    }
-
-    if (titulo) {
-        titulo.textContent = marcha.titulo || 'Marcha sin título';
-    }
-
-    if (autor) {
-        const partes = [
-            marcha.autor || 'Autor desconocido',
-            marcha.fase || '',
-            marcha.orden ? `Nº ${marcha.orden}` : ''
-        ].filter(Boolean);
-
-        autor.textContent = partes.join(' · ');
-    }
-
-    const urlActual = audio.getAttribute('src');
-
-    if (urlActual !== marcha.url_audio) {
-        audio.src = marcha.url_audio;
-    }
-
-    miniPlayer.classList.add('activo');
-    miniPlayer.setAttribute('aria-hidden', 'false');
-
-    audio.play().catch((error) => {
-        console.warn('El navegador ha bloqueado la reproducción automática:', error);
-    });
-}
-
-function cerrarMiniPlayerAnalisis() {
-    const miniPlayer = document.getElementById('mini-player-analisis');
-    const audio = document.getElementById('mini-player-analisis-audio');
-
-    if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.removeAttribute('src');
-        audio.load();
-    }
-
-    if (miniPlayer) {
-        miniPlayer.classList.remove('activo');
-        miniPlayer.setAttribute('aria-hidden', 'true');
-    }
-}
-
 function renderizarTimeline(repertorio, pagina = 1) {
     const contenedor = document.getElementById('timeline-contenedor');
     const paginacion = document.getElementById('timeline-paginacion');
@@ -545,7 +485,6 @@ function renderizarTimeline(repertorio, pagina = 1) {
     }
 
     marchasPagina.forEach((marcha) => {
-        const tieneAudio = marcha.url_audio && String(marcha.url_audio).trim() !== '';
 
         const item = document.createElement('div');
         item.className = 'timeline-item';
@@ -585,27 +524,6 @@ function renderizarTimeline(repertorio, pagina = 1) {
             info.appendChild(dedicatoria);
         }
 
-        const botonPlay = document.createElement('button');
-        botonPlay.type = 'button';
-        botonPlay.className = 'btn-play-analisis';
-        botonPlay.textContent = '▶';
-        botonPlay.title = tieneAudio ? 'Reproducir marcha' : 'Audio no disponible';
-        botonPlay.setAttribute('aria-label', tieneAudio ? 'Reproducir marcha' : 'Audio no disponible');
-
-        if (!tieneAudio) {
-            botonPlay.disabled = true;
-        }
-
-        botonPlay.addEventListener('click', (evento) => {
-            evento.stopPropagation();
-
-            if (!tieneAudio) {
-                return;
-            }
-
-            reproducirEnMiniPlayerAnalisis(marcha);
-        });
-
         const botonSpotify = document.createElement('a');
         botonSpotify.className = 'btn-spotify-analisis';
         botonSpotify.textContent = 'Spotify';
@@ -614,15 +532,7 @@ function renderizarTimeline(repertorio, pagina = 1) {
 
         const urlSpotify = convertirSpotifyUriAUrlAnalisis(marcha.spotify_uri);
 
-        if (urlSpotify) {
-            botonSpotify.href = urlSpotify;
-        } else {
-            botonSpotify.href = '#';
-            botonSpotify.classList.add('desactivado');
-            botonSpotify.addEventListener('click', (evento) => {
-                evento.preventDefault();
-            });
-        }
+        if (urlSpotify) botonSpotify.href = urlSpotify;
 
         const botonPatrimonio = document.createElement('a');
         botonPatrimonio.className = 'btn-patrimonio-analisis';
@@ -1204,11 +1114,5 @@ window.onload = () => {
 
     if (btnLikeAnalisis) {
         btnLikeAnalisis.addEventListener('click', gestionarLike);
-    }
-
-    const btnCerrarMiniPlayer = document.getElementById('mini-player-analisis-cerrar');
-
-    if (btnCerrarMiniPlayer) {
-        btnCerrarMiniPlayer.addEventListener('click', cerrarMiniPlayerAnalisis);
     }
 };
