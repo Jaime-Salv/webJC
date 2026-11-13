@@ -152,7 +152,7 @@ async function guardarPerfil() {
             });
         }
         alert("✅ Perfil actualizado correctamente.");
-        window.location.href = perfilTieneBanda ? "musicos.html" : "comunidad.html";
+        window.location.href = perfilTieneBanda ? "musicos.html" : "../index.html";
 
     } catch (e) {
         alert("❌ Error al guardar: " + e.message);
