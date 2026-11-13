@@ -7,6 +7,8 @@
    {id:'agenda',label:'Agenda',icon:'▦',title:'Agenda y convocatorias',desc:'Consulta lo proximo y prepara cada actividad.'},
    {id:'control',label:'Asistencia',icon:'✓',title:'Control de asistencia',desc:'Revisa fichajes, respuestas e incidencias.'},
    {id:'miembros',label:'Músicos',icon:'♙',title:'Músicos de la banda',desc:'Consulta y edita las fichas desde Usuarios.'},
+   {id:'historial',label:'Historial',icon:'◷',title:'Historial de eventos',desc:'Asistencia y distribución instrumental por actividad.'},
+   {id:'estadisticas',label:'Estadísticas',icon:'%',title:'Estadísticas de asistencia',desc:'Porcentajes, comparativas y matriz 1/0 por período.'},
    {id:'informes',label:'Informes',icon:'▤',title:'Informes y exportaciones',desc:'Consulta por periodo y tipo de actividad.'}
   ];
   const header=root.querySelector('.admin-view-header');
