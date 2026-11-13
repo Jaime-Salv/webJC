@@ -56,7 +56,7 @@
  function history(records){
   const target=$('jc-att-history');
   if(!records.length){target.innerHTML='<p class="muted">No hay eventos finalizados en este período y categoría.</p>';return;}
-  target.innerHTML='<div class="jc-admin-quick-stats">'+summaryCard('Eventos',records.length)+summaryCard('Presencias',records.reduce((n,r)=>n+r.yes,0))+summaryCard('Sin fichaje por revisar',records.reduce((n,r)=>n+r.miss,0))+'</div>'+
+  target.innerHTML='<div class="jc-admin-quick-stats">'+summaryCard('Eventos',records.length)+summaryCard('Presencias',records.reduce((n,r)=>n+r.yes,0))+summaryCard('Asistencia media',fmt(avg(records)))+'</div>'+
    records.slice().reverse().map(r=>{
     const groups=new Map();r.rows.forEach(p=>{if(!groups.has(p.instrumento))groups.set(p.instrumento,[]);groups.get(p.instrumento).push(p);});
     const breakdown=[...groups].map(([inst,rows])=>{const yes=rows.filter(p=>p.valor===1).length,missing=rows.filter(p=>p.estado==='sin_fichaje').length;return '<tr><td>'+esc(inst)+'</td><td>'+yes+' / '+rows.length+'</td><td>'+fmt(pct(yes,rows.length))+'</td><td>'+missing+'</td></tr>';}).join('');
@@ -105,11 +105,43 @@
    doc.save(file+'.pdf');
   };
  }
- function statistics(records){
-  const total=records.reduce((n,r)=>n+r.total,0),present=records.reduce((n,r)=>n+r.yes,0),missing=records.reduce((n,r)=>n+r.miss,0);
-  const byType=Object.keys(tipos).map(kind=>{const subset=records.filter(r=>r.event.tipo===kind);return {kind,n:subset.length,total:subset.reduce((n,r)=>n+r.total,0),yes:subset.reduce((n,r)=>n+r.yes,0),miss:subset.reduce((n,r)=>n+r.miss,0)};});
-  const groups=new Map();records.forEach(r=>r.rows.forEach(p=>{const prev=groups.get(p.instrumento)||{total:0,yes:0,miss:0};prev.total++;prev.yes+=p.valor;prev.miss+=Number(p.estado==='sin_fichaje');groups.set(p.instrumento,prev);}));
-  $('jc-att-stats').innerHTML='<div class="jc-admin-quick-stats">'+summaryCard('Eventos',records.length)+summaryCard('Asistencia registrada',fmt(pct(present,total)))+summaryCard('Presencias',present+' / '+total)+summaryCard('Sin fichaje por revisar',missing)+'</div><h3>Por actividad</h3><div class="table-scroll"><table><thead><tr><th>Tipo</th><th>Eventos</th><th>Presencias / convocatorias</th><th>%</th><th>Sin fichaje</th></tr></thead><tbody>'+byType.map(x=>'<tr><td>'+esc(kindLabel(x.kind))+'</td><td>'+x.n+'</td><td>'+x.yes+' / '+x.total+'</td><td>'+fmt(pct(x.yes,x.total))+'</td><td>'+x.miss+'</td></tr>').join('')+'</tbody></table></div><h3>Por instrumento</h3><div class="table-scroll"><table><thead><tr><th>Instrumento</th><th>Presencias / convocatorias</th><th>%</th><th>Sin fichaje</th></tr></thead><tbody>'+[...groups].sort((a,b)=>compare(a[0],b[0])).map(([k,x])=>'<tr><td>'+esc(k)+'</td><td>'+x.yes+' / '+x.total+'</td><td>'+fmt(pct(x.yes,x.total))+'</td><td>'+x.miss+'</td></tr>').join('')+'</tbody></table></div><h3>Matriz nominal de asistencia</h3><div id="jc-att-matrix"></div>';
+ function bar(label,numerator,denominator,subtitle=''){
+  const value=pct(numerator,denominator);
+  return '<div class="jc-att-bar-row"><div class="jc-att-bar-head"><strong>'+esc(label)+'</strong><span>'+fmt(value)+'</span></div><div class="jc-att-progress" role="progressbar" aria-label="'+esc(label)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+(value??0)+'"><span style="width:'+(value??0)+'%"></span></div><small>'+esc(subtitle||numerator+' presencias de '+denominator+' convocatorias')+'</small></div>';
+ }
+ const avg=items=>{
+  const valid=items.filter(r=>r.total>0);
+  return valid.length?Math.round(valid.reduce((sum,r)=>sum+100*r.yes/r.total,0)*10/valid.length)/10:null;
+ };
+ function statistics(records,allRecords=records){
+  const total=records.reduce((n,r)=>n+r.total,0),present=records.reduce((n,r)=>n+r.yes,0);
+  const kinds=['ensayo','actuacion'];
+  const indicators=kinds.map(kind=>{
+   const list=allRecords.filter(r=>r.event.tipo===kind),average=avg(list);
+   return '<div class="jc-att-kpi"><span class="jc-att-kpi-icon">'+(kind==='ensayo'?'♫':'★')+'</span><span class="jc-att-kpi-title">Asistencia media a '+(kind==='ensayo'?'ensayos':'actuaciones')+'</span><strong>'+fmt(average)+'</strong><div class="jc-att-progress"><span style="width:'+(average??0)+'%"></span></div><small>'+list.length+' evento'+(list.length===1?'':'s')+' finalizado'+(list.length===1?'':'s')+'</small></div>';
+  }).join('');
+  const groups=new Map();
+  records.forEach(r=>r.rows.forEach(p=>{
+   const key=p.instrumento.trim()||'Sin instrumento',old=groups.get(key)||{total:0,yes:0};
+   old.total++;old.yes+=p.valor;groups.set(key,old);
+  }));
+  const instr=[...groups].sort((a,b)=>compare(a[0],b[0]));
+  const eventCards=records.slice().reverse().map(r=>{
+   const value=r.coverage;
+   return '<article class="jc-att-event-card"><div class="jc-att-event-main"><div class="jc-att-event-title"><strong>'+esc(r.event.titulo)+'</strong><small>'+esc(B.fecha(r.event.inicio))+' · '+esc(kindLabel(r.event.tipo))+'</small></div><div class="jc-att-event-percent">'+fmt(value)+'</div></div><div class="jc-att-progress"><span style="width:'+(value??0)+'%"></span></div><div class="jc-att-event-foot"><span>'+r.yes+' / '+r.total+' asistentes</span><button type="button" data-att-open="'+esc(r.event.id)+'">Ver evento</button></div></article>';
+  }).join('');
+  const byType=Object.keys(tipos).map(kind=>{
+   const list=records.filter(r=>r.event.tipo===kind);
+   return list.length?bar(kindLabel(kind),list.reduce((sum,r)=>sum+r.yes,0),list.reduce((sum,r)=>sum+r.total,0),list.length+' eventos · '+list.reduce((sum,r)=>sum+r.yes,0)+' presencias'):'';
+  }).join('');
+  $('jc-att-stats').innerHTML=
+   '<div class="jc-att-dashboard">'+
+   '<section class="jc-att-hero"><div class="jc-att-hero-head"><div><h3>Resumen de asistencia</h3><p>Promedio de los porcentajes de cada evento finalizado dentro del período seleccionado.</p></div><div class="jc-att-pill">'+allRecords.length+' eventos</div></div><div class="jc-att-kpi-grid">'+indicators+'</div></section>'+
+   '<div class="jc-att-split"><section class="jc-att-section"><div class="jc-att-section-title"><h3>Asistencia por actividad</h3><small>Registros del filtro seleccionado</small></div>'+(byType||'<p class="muted">No hay actividades en este período.</p>')+'</section>'+
+   '<section class="jc-att-section"><div class="jc-att-section-title"><h3>Distribución por instrumento</h3><small>'+instr.length+' instrumentos</small></div><div class="jc-att-instruments">'+(instr.map(([k,v])=>bar(k,v.yes,v.total)).join('')||'<p class="muted">No hay músicos convocados.</p>')+'</div></section></div>'+
+   '<section class="jc-att-section"><div class="jc-att-section-title"><h3>Resultado de cada evento</h3><small>'+records.length+' eventos · '+present+' presencias de '+total+' convocatorias</small></div><div class="jc-att-event-grid">'+(eventCards||'<p class="muted">No hay eventos en el filtro seleccionado.</p>')+'</div></section>'+
+   '<details class="jc-att-matrix-details"><summary><span><strong>Matriz individual de asistencia</strong><small>Relación músico × evento, con exportación a Excel y PDF</small></span><span aria-hidden="true">▾</span></summary><div class="jc-att-matrix-body"><div id="jc-att-matrix"></div></div></details>'+
+   '</div>';
   matrix(records);
  }
  async function update(){
@@ -118,7 +150,7 @@
   busy=true;$('jc-att-history').textContent='Cargando…';$('jc-att-stats').textContent='Cargando…';
   try{
    const key=desde+'|'+hasta;if(!loaded||lastKey!==key){loaded=await snapshot(desde,hasta);lastKey=key;}
-   const rows=filter(loaded,tipo);history(rows);statistics(rows);
+   const rows=filter(loaded,tipo);history(rows);statistics(rows,loaded.records);
   }catch(e){$('jc-att-history').textContent='No se ha podido cargar el historial: '+e.message;$('jc-att-stats').textContent='No se han podido cargar las estadísticas: '+e.message;}
   finally{busy=false;}
  }
@@ -134,6 +166,7 @@
   $('jc-att-month').onclick=()=>{$('jc-att-from').value=now.slice(0,7)+'-01';$('jc-att-to').value=now;update();};
   $('jc-att-season').onclick=()=>{$('jc-att-from').value=String(+now.slice(0,4)-(Number(now.slice(5,7))<9?1:0))+'-09-01';$('jc-att-to').value=now;update();};
   $('jc-att-kind').onchange=update;
+  stats.addEventListener('click',e=>{const btn=e.target.closest('[data-att-open]');if(btn){window.JCBandaNavigate?.open('control');document.dispatchEvent(new CustomEvent('banda:select',{detail:btn.dataset.attOpen}));}});
   hist.addEventListener('click',e=>{const button=e.target.closest('[data-att-open]');if(button){window.JCBandaNavigate?.open('control');document.dispatchEvent(new CustomEvent('banda:select',{detail:button.dataset.attOpen}));}});
   const nav=base.querySelector('.jc-operations-tabs');
   nav?.addEventListener('click',e=>{if(e.target.closest('[data-section="historial"],[data-section="estadisticas"]'))update();});
