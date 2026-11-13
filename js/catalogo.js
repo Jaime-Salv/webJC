@@ -32,7 +32,6 @@ function prepararEventosCatalogo() {
 
     const btnCerrar = document.getElementById('btn-cerrar-modal');
     const modal = document.getElementById('modal-marcha');
-    const btnCerrarMiniPlayer = document.getElementById('mini-player-cerrar');
 
     if (btnCerrar) {
         btnCerrar.addEventListener('click', cerrarFichaMarcha);
@@ -44,10 +43,6 @@ function prepararEventosCatalogo() {
                 cerrarFichaMarcha();
             }
         });
-    }
-
-    if (btnCerrarMiniPlayer) {
-        btnCerrarMiniPlayer.addEventListener('click', cerrarMiniPlayer);
     }
 
     document.addEventListener('keydown', (evento) => {
@@ -236,7 +231,6 @@ function renderizarTabla(datosFiltrados) {
             : '<span style="color:#666;">Sin Cornetas</span>';
 
         const tiempoEst = formatearDuracion(marcha.duracion_seg);
-        const tieneAudio = marcha.url_audio && String(marcha.url_audio).trim() !== '';
 
         const tr = document.createElement('tr');
         tr.setAttribute('data-id-marcha', marcha.id_marcha);
@@ -254,15 +248,7 @@ function renderizarTabla(datosFiltrados) {
                 <button type="button" class="btn-favorita-tabla ${favoritasCatalogo.has(Number(marcha.id_marcha)) ? 'activa' : ''}"
                     title="${favoritasCatalogo.has(Number(marcha.id_marcha)) ? 'Quitar de favoritas' : 'Guardar en favoritas'}"
                     aria-label="${favoritasCatalogo.has(Number(marcha.id_marcha)) ? 'Quitar de favoritas' : 'Guardar en favoritas'}">★</button>
-                <button
-                    type="button"
-                    class="btn-play-tabla"
-                    ${tieneAudio ? '' : 'disabled'}
-                    title="${tieneAudio ? 'Reproducir marcha' : 'Audio no disponible'}"
-                    aria-label="${tieneAudio ? 'Reproducir marcha' : 'Audio no disponible'}"
-                >
-                    ▶
-                </button>
+                ${convertirSpotifyUriAUrl(marcha.spotify_uri) ? `<a class="btn-spotify-tabla" href="${escaparHTML(convertirSpotifyUriAUrl(marcha.spotify_uri))}" target="_blank" rel="noopener noreferrer">Spotify</a>` : ''}
                 <button type="button" class="btn-simulador-tabla" title="Añadir al simulador" aria-label="Añadir al simulador">＋</button>
                 </div>
             </td>
@@ -272,19 +258,7 @@ function renderizarTabla(datosFiltrados) {
             abrirFichaMarcha(marcha.id_marcha);
         });
 
-        const btnPlay = tr.querySelector('.btn-play-tabla');
-
-        if (btnPlay) {
-            btnPlay.addEventListener('click', (evento) => {
-                evento.stopPropagation();
-
-                if (!tieneAudio) {
-                    return;
-                }
-
-                reproducirEnMiniPlayer(marcha);
-            });
-        }
+        tr.querySelector('.btn-spotify-tabla')?.addEventListener('click', evento => evento.stopPropagation());
 
         tr.querySelector('.btn-favorita-tabla')?.addEventListener('click', (evento) => {
             evento.stopPropagation();
@@ -393,12 +367,9 @@ function rellenarFichaMarcha(marcha) {
         pintarBotonFavorita(btnFavorita, marcha.id_marcha);
     }
     if (btnSimulador) btnSimulador.dataset.idMarcha = marcha.id_marcha;
-
-    pintarAudioWeb(marcha);
-    pintarYoutube(marcha.url_youtube);
     pintarSpotify(marcha.spotify_uri);
     const sinEscucha = document.getElementById('modal-sin-escucha');
-    if (sinEscucha) sinEscucha.hidden = Boolean(marcha.url_audio || marcha.url_youtube || marcha.spotify_uri);
+    if (sinEscucha) sinEscucha.hidden = Boolean(convertirSpotifyUriAUrl(marcha.spotify_uri));
     pintarPatrimonioMusical(marcha);
 }
 
@@ -483,56 +454,6 @@ function mostrarAvisoCatalogo(mensaje, tipo = 'ok', incluirAcceso = false) {
     mostrarAvisoCatalogo.temporizador = setTimeout(() => aviso.classList.remove('visible'), 4500);
 }
 
-function pintarAudioWeb(marcha) {
-    const contenedor = document.getElementById('modal-audio-web');
-
-    if (!contenedor) {
-        return;
-    }
-
-    contenedor.innerHTML = '';
-
-    if (!marcha.url_audio || String(marcha.url_audio).trim() === '') {
-        return;
-    }
-
-    const boton = document.createElement('button');
-    boton.type = 'button';
-    boton.className = 'btn-send';
-    boton.style.width = 'auto';
-    boton.style.padding = '12px 16px';
-    boton.textContent = '▶ Reproducir en segundo plano';
-
-    boton.addEventListener('click', () => {
-        reproducirEnMiniPlayer(marcha);
-    });
-
-    contenedor.appendChild(boton);
-}
-
-function pintarYoutube(urlYoutube) {
-    const contenedor = document.getElementById('modal-youtube');
-
-    if (!contenedor) {
-        return;
-    }
-
-    contenedor.innerHTML = '';
-
-    if (!urlYoutube || String(urlYoutube).trim() === '') {
-        return;
-    }
-
-    const enlace = document.createElement('a');
-    enlace.className = 'btn-youtube';
-    enlace.href = urlYoutube;
-    enlace.target = '_blank';
-    enlace.rel = 'noopener noreferrer';
-    enlace.textContent = 'Ver en YouTube';
-
-    contenedor.appendChild(enlace);
-}
-
 function pintarSpotify(spotifyUri) {
     const contenedor = document.getElementById('modal-youtube');
 
@@ -592,64 +513,6 @@ function pintarPatrimonioMusical(marcha) {
 
     contenedor.appendChild(enlace);
     contenedor.appendChild(aviso);
-}
-
-/* ============================================================
-   MINI REPRODUCTOR
-   ============================================================ */
-
-function reproducirEnMiniPlayer(marcha) {
-    const miniPlayer = document.getElementById('mini-player');
-    const audio = document.getElementById('mini-player-audio');
-    const titulo = document.getElementById('mini-player-titulo');
-    const autor = document.getElementById('mini-player-autor');
-
-    if (!miniPlayer || !audio) {
-        return;
-    }
-
-    if (!marcha.url_audio || String(marcha.url_audio).trim() === '') {
-        alert('Esta marcha no tiene audio interno disponible.');
-        return;
-    }
-
-    if (titulo) {
-        titulo.textContent = marcha.titulo || 'Marcha sin título';
-    }
-
-    if (autor) {
-        autor.textContent = marcha.autor || 'Autor desconocido';
-    }
-
-    const urlActual = audio.getAttribute('src');
-
-    if (urlActual !== marcha.url_audio) {
-        audio.src = marcha.url_audio;
-    }
-
-    miniPlayer.classList.add('activo');
-    miniPlayer.setAttribute('aria-hidden', 'false');
-
-    audio.play().catch((error) => {
-        console.warn('El navegador ha bloqueado la reproducción automática:', error);
-    });
-}
-
-function cerrarMiniPlayer() {
-    const miniPlayer = document.getElementById('mini-player');
-    const audio = document.getElementById('mini-player-audio');
-
-    if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.removeAttribute('src');
-        audio.load();
-    }
-
-    if (miniPlayer) {
-        miniPlayer.classList.remove('activo');
-        miniPlayer.setAttribute('aria-hidden', 'true');
-    }
 }
 
 /* ============================================================
