@@ -234,7 +234,6 @@
         { clave: 'actuaciones', icono: '♪', texto: 'Actuaciones', href: '/#actuaciones' },
         { clave: 'catalogo', icono: '▤', texto: 'Catálogo', href: '/templates/catalogo' },
         { clave: 'crear', icono: '+', texto: 'Crear', href: '/templates/simulacion' },
-        { clave: 'comunidad', icono: '♙', texto: 'Comunidad', href: '/templates/comunidad' },
         { clave: 'musicos', icono: '♫', texto: 'Portal músico', href: '/templates/musicos.html' }
     ];
 
@@ -242,7 +241,6 @@
         if (ruta.includes('musicos')) return 'musicos';
         if (ruta.includes('catalogo')) return 'catalogo';
         if (ruta.includes('simulacion')) return 'crear';
-        if (ruta.includes('comunidad')) return 'comunidad';
         if (window.location.hash === '#actuaciones') return 'actuaciones';
         return 'inicio';
     }
