@@ -50,10 +50,18 @@
  function openProcession(p){const f=$('agenda-procession');resetPhoto();f.reset();for(const k of ['estado','id_procesion','hermandad','tipo','fecha','hora','fin_hora','localidad','lugar','descripcion','url_foto'])f.elements[k].value=p?.[k]??(k==='estado'?'Programada':k==='tipo'?'Semana Santa':k==='fecha'?$('agenda-rehearsal').elements.fecha.value:'');photoPreview(p?.url_foto);$('agenda-procession-title').textContent=p?'Editar procesión programada':'Nueva procesión programada';f.querySelector('[type=submit]').textContent=p?'Guardar y sincronizar':'Publicar y convocar músicos';f.hidden=false;f.scrollIntoView({behavior:'smooth'});}
  document.addEventListener('admin:ready',()=>run(async()=>{
   $('agenda-rehearsal').elements.fecha.value=today;
+  const formularioEnsayo=$('agenda-rehearsal');
+  const actualizarHorarioEnsayo=()=>{
+   const tarde=formularioEnsayo.elements.plantilla.value==='tarde';
+   formularioEnsayo.elements.hora_inicio.value=tarde?'20:30':'12:00';
+   formularioEnsayo.elements.hora_fin.value=tarde?'22:00':'14:00';
+  };
+  formularioEnsayo.elements.plantilla.addEventListener('change',actualizarHorarioEnsayo);
+  actualizarHorarioEnsayo();
   $('agenda-days').onclick=e=>{const b=e.target.closest('[data-agenda-day]');if(b){$('agenda-rehearsal').elements.fecha.value=b.dataset.agendaDay;paint();}};
   $('agenda-prev').onclick=()=>{month--;if(month<0){month=11;year--;}paint();};$('agenda-next').onclick=()=>{month++;if(month>11){month=0;year++;}paint();};
   $('agenda-rehearsal').elements.fecha.onchange=e=>{if(!e.target.value)return;year=+e.target.value.slice(0,4);month=+e.target.value.slice(5,7)-1;paint();};
-  for(const [id,action] of [['agenda-rehearsal','ensayo']])$(id).onsubmit=e=>{e.preventDefault();run(async()=>{const b=e.submitter;b.disabled=true;try{await B.rpc(action,Object.fromEntries(new FormData(e.target)));document.dispatchEvent(new Event('agenda:refresh'));B.notice('Ensayo colocado. No se pedirá confirmación previa.');}finally{b.disabled=false;}});};
+  formularioEnsayo.onsubmit=e=>{e.preventDefault();run(async()=>{const b=e.submitter;b.disabled=true;try{const datos=Object.fromEntries(new FormData(e.target));if(!datos.hora_inicio||!datos.hora_fin||datos.hora_inicio===datos.hora_fin)throw Error('Indica dos horas diferentes para el ensayo.');await B.rpc('ensayo',datos);document.dispatchEvent(new Event('agenda:refresh'));B.notice('Ensayo colocado con el horario indicado. No se pedirá confirmación previa.');}finally{b.disabled=false;}});};
   $('agenda-procession').elements.foto_archivo.onchange=e=>{resetPhoto();const file=e.target.files[0];if(file){previewURL=URL.createObjectURL(file);photoPreview(previewURL);}else photoPreview($('agenda-procession').elements.url_foto.value);};
   $('agenda-new-procession').onclick=()=>openProcession();$('agenda-procession-close').onclick=()=>$('agenda-procession').hidden=true;
   $('agenda-processions').onclick=e=>{const b=e.target.closest('[data-procession],[data-procession-qr],[data-start-procession]');if(!b)return;if(b.dataset.startProcession){run(()=>startLive(events.find(ev=>String(ev.procesion_id)===b.dataset.startProcession)?.id,b));return;}if(b.dataset.processionQr)document.dispatchEvent(new CustomEvent('banda:qr-publicacion',{detail:{procesion_id:b.dataset.processionQr}}));else openProcession(processions.find(p=>String(p.id_procesion)===b.dataset.procession));};
