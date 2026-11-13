@@ -1513,7 +1513,7 @@
         <section class="admin-view banda" data-admin-view="banda">
 <div class="admin-view-header"><div><span>Gestión interna</span><h1>Músicos y convocatorias</h1></div><p>Confirmaciones y presencia real, registradas por separado.</p></div>
 <p id="banda-status" class="notice" role="status" aria-live="polite" hidden></p>
-<div class="row between"><a class="button" href="musicos.html">Abrir portal músico</a><button id="ba-refresh" type="button">Actualizar</button></div>
+<div class="row between"><a class="button" href="musicos.html">Abrir portal músico</a><button type="button" class="primary" onclick="abrirNuevoConciertoDesdeBanda()">Crear concierto</button><button id="ba-refresh" type="button">Actualizar</button></div>
 <section class="panel"><div class="row between"><h2>Hoy · Junta</h2><button type="button" id="bp-today-refresh">Actualizar fichajes</button></div><p class="muted">La convocatoria interna marca el día de la cita. «Sin fichaje» no equivale a ausencia.</p><div id="bp-today"></div></section>
 <section class="panel" id="bp-editor" hidden><h2>Ficha práctica y plantilla necesaria</h2><form id="bp-detail-form"><input type="hidden" name="evento_id"><p id="bp-public-time" class="notice"></p><label>Convocatoria de músicos<input name="convocatoria" type="datetime-local" required></label><div class="grid"><label>Uniformidad<textarea name="uniformidad" maxlength="1000"></textarea></label><label>Transporte<textarea name="transporte" maxlength="2000"></textarea></label><label>Punto de encuentro<input name="encuentro" maxlength="1000"></label><label>Persona de contacto<input name="contacto" maxlength="1000"></label></div><label>Partituras y material<textarea name="partituras" maxlength="2000"></textarea></label><label>Músicos necesarios por instrumento<textarea name="objetivos" placeholder="Clarinete: 6&#10;Trompeta: 4"></textarea></label><p class="muted">Una línea por instrumento. Se comparará el objetivo con quienes han respondido «Voy».</p><div class="row"><button type="submit" class="primary">Guardar ficha práctica</button><button type="button" id="bp-detail-close">Cerrar</button></div></form></section>
 <section class="panel"><h2>Informes de asistencia</h2><p class="muted">Exportaciones separadas: ensayos, actuaciones y eventos extraordinarios. Nunca se mezclan en un mismo informe.</p><form id="bp-report-form"><label>Tipo de actividad<select id="bp-report-kind"><option value="ensayo">Ensayos</option><option value="actuacion">Actuaciones</option><option value="extraordinario">Extraordinarios</option></select></label><div class="grid"><label>Desde<input type="date" name="desde" required></label><label>Hasta<input type="date" name="hasta" required></label></div><div class="row"><button type="button" id="bp-report-month">Este mes</button><button type="button" id="bp-report-season">Temporada sep.–ago.</button><button type="submit">Ver informe</button><button type="button" id="bp-report-csv">Exportar CSV</button><button type="button" id="bp-report-pdf">Exportar PDF</button></div></form><p class="muted">Solo citas finalizadas. El porcentaje indica presencias registradas sobre convocatorias. Los casos sin fichaje se muestran aparte y requieren revisión.</p><div id="bp-report"></div></section>
@@ -1692,15 +1692,14 @@
                     <span>Programas y publicaciones</span>
                     <h1>Conciertos</h1>
                 </div>
-                <p>Crea el concierto, compone su programa y controla su publicación desde un único espacio.</p>
+                <p>Primero anuncia el concierto y convoca a los músicos. Después añade el programa: será visible al público cuando tenga obras. Al comenzar, inicia el directo y pasa al archivo.</p>
             </div>
 
             <div class="card-admin panel-conciertos-admin" id="panel-conciertos-admin">
             <h3>Datos y programa del concierto</h3>
 
             <p style="color:#aaa; font-size:0.9rem; margin-top:0;">
-                Publica una próxima actuación con fecha, inicio, fin y lugar para crear también su convocatoria musical. Cada concierto tendrá su propio programa de obras,
-                enlace público y QR para insertar en carteles.
+                Al guardar un concierto publicado con fecha, horario y lugar, aparecerá inmediatamente en Próximas actuaciones y se convocará a los músicos. El programa no será accesible hasta que añadas obras. Podrás iniciar su directo desde aquí.
             </p>
 
             <div class="admin-grid-doble">
@@ -1713,7 +1712,7 @@
                         <option value="">Cargando conciertos...</option>
                     </select>
 
-                    <button type="button" class="btn-secundario" onclick="limpiarFormularioConciertoAdmin()">
+                    <button type="button" class="btn-secundario" onclick="nuevoConciertoAdmin()">
                         Nuevo concierto
                     </button>
 
@@ -1770,8 +1769,8 @@
                         Estado
                     </label>
                     <select id="concierto-estado" class="input-admin">
-                        <option value="Borrador">Borrador</option>
-                        <option value="Publicado">Publicado</option>
+                        <option value="Publicado" selected>Publicado · Anunciar próximo concierto</option>
+                        <option value="Borrador">Borrador · No anunciar</option>
                         <option value="Oculto">Oculto</option>
                     </select>
 
@@ -1898,7 +1897,7 @@
 <script src="../js/admin-banda.js?v=12"></script>
 <script src="../js/admin-agenda.js?v=6"></script>
 <script src="../js/admin-fechas.js?v=2"></script>
-<script src="../js/admin.js?v=11"></script>
+<script src="../js/admin.js?v=12"></script>
 <script src="../js/admin-banda-layout.js?v=1"></script>
     <script src="../js/pwa.js?v=4"></script>
 
