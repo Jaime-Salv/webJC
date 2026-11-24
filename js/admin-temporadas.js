@@ -30,7 +30,7 @@
           `<button type="button" class="btn-secundario" data-cerrar-anio="${t.anio}">Cerrar temporada ${t.anio}</button>` :
           `<a class="btn-secundario" style="display:inline-block;text-decoration:none;" href="recuerda.html?anio=${t.anio}">Ver Recuerda ${t.anio}</a>`}
       </div>`).join('') || '<p style="color:#aaa;">Todavía no hay temporadas de actividad.</p>';
-    const siguiente=Math.max(2027,...temporadas.map(t=>t.anio+1));
+    const siguiente=Math.max(new Date().getFullYear(),...temporadas.map(t=>t.anio+1));
     const input=document.getElementById('temporadas-nuevo-anio');
     if(input && !input.value) input.value=String(siguiente);
     lista.querySelectorAll('[data-cerrar-anio]').forEach(b=>b.addEventListener('click',()=>cerrar(Number(b.dataset.cerrarAnio))));
@@ -73,9 +73,9 @@
       <div class="admin-module-grid">
         <div class="card-admin"><h3>Temporadas de actividad</h3><div id="temporadas-lista"></div></div>
         <div class="card-admin"><h3>Abrir otro año</h3>
-          <p style="color:#aaa;font-size:.8rem;line-height:1.6;">Puedes abrir 2027 aunque el repertorio de 2026 siga activo. El repertorio musical de 2027 permanecerá en borrador hasta que lo publiques en Administración → Repertorio.</p>
+          <p style="color:#aaa;font-size:.8rem;line-height:1.6;">Puedes abrir otro año aunque el repertorio anterior siga activo. El nuevo repertorio permanecerá en borrador hasta que lo publiques en Administración → Repertorio.</p>
           <label for="temporadas-nuevo-anio">Año</label>
-          <input class="input-admin" type="number" min="2000" max="2100" id="temporadas-nuevo-anio" placeholder="2027">
+          <input class="input-admin" type="number" min="2000" max="2100" id="temporadas-nuevo-anio" placeholder="Año">
           <button class="btn-send" type="button" id="temporadas-abrir">Abrir temporada de actividad</button>
           <p id="temporadas-mensaje" role="status" style="font-size:.8rem;margin-top:16px;color:#aaa;"></p>
           <hr style="border:0;border-top:1px solid #333;margin:20px 0;">
