@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'jc-pwa-v33';
+const CACHE_VERSION = 'jc-pwa-v34';
 const APP_SHELL = [
     '/',
     '/index.html',
@@ -34,7 +34,7 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys()
             .then((keys) => Promise.all(
-                keys.filter((key) => key !== CACHE_VERSION).map((key) => caches.delete(key))
+                keys.filter((key) => key.startsWith('jc-pwa-') && key !== CACHE_VERSION).map((key) => caches.delete(key))
             ))
             .then(() => self.clients.claim())
     );
@@ -62,8 +62,8 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             fetch(request)
                 .then((response) => {
-                    const copy = response.clone();
-                    caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
+                    if(response.ok){const copy = response.clone();
+                    event.waitUntil(caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy)));}
                     return response;
                 })
                 .catch(async () => (await caches.match(request)) || caches.match('/offline.html'))
@@ -77,7 +77,7 @@ self.addEventListener('fetch', (event) => {
                 .then((response) => {
                     if (response.ok) {
                         const copy = response.clone();
-                        caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
+                        event.waitUntil(caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy)));
                     }
                     return response;
                 })
