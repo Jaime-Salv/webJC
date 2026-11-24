@@ -27,9 +27,9 @@
   const events=root.querySelector('#ba-events')?.closest('.grid');if(events)panels.control.appendChild(events);
   move('#bp-editor','control');
   const reports=root.querySelector('#bp-report-form')?.closest('section.panel');if(reports)panels.informes.appendChild(reports);
-  panels.miembros.innerHTML+='<div class="jc-member-shortcut"><p>¿El músico ya tiene una cuenta? Puedes editar su ficha musical y sus permisos desde Usuarios.</p><button type="button" id="jc-go-users">Gestionar usuarios registrados</button></div>';
-  panels.miembros.querySelector('button').addEventListener('click',()=>document.querySelector('[data-admin-target="usuarios"]')?.click());
-  const switchTo=(id)=>{if(!panels[id])return;for(const [k,v] of Object.entries(panels))v.hidden=k!==id;nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.section===id)));};
+  panels.miembros.insertAdjacentHTML('beforeend','<div class="jc-member-shortcut"><p>¿El músico ya tiene una cuenta? Puedes editar su ficha musical y sus permisos desde Usuarios.</p><button type="button" id="jc-go-users">Gestionar usuarios registrados</button></div>');
+  panels.miembros.querySelector('#jc-go-users').addEventListener('click',()=>document.querySelector('[data-admin-target="usuarios"]')?.click());
+  const switchTo=(id)=>{if(!panels[id])return;for(const [k,v] of Object.entries(panels))v.hidden=k!==id;nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.section===id)));nav.querySelector('[aria-pressed="true"]')?.scrollIntoView({block:'nearest',inline:'nearest'});};
   nav.addEventListener('click',e=>{const b=e.target.closest('[data-section]');if(b)switchTo(b.dataset.section);});
   document.addEventListener('banda:select',()=>switchTo('control'));
   document.addEventListener('banda:qr-evento',()=>switchTo('control'));
