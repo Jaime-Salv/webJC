@@ -1242,6 +1242,32 @@
 <link rel="stylesheet" href="../css/musicos.css?v=5">
 <link rel="stylesheet" href="../css/admin-fechas.css?v=2">
 <link rel="stylesheet" href="../css/admin-banda-layout.css?v=1">
+<style id="jc-member-modal-styles">
+.jc-member-dialogs .jc-member-modal {position:fixed;inset:0;margin:auto;width:min(540px,calc(100vw - 28px));max-width:540px;max-height:min(90dvh,780px);padding:0;overflow:auto;border:1px solid #47413a;border-radius:18px;background:#15181e;color:#f5f5f5;box-shadow:0 24px 85px rgba(0,0,0,.7);font-family:'Montserrat',sans-serif}
+.jc-member-dialogs .jc-member-modal::backdrop {background:rgba(0,0,0,.76);backdrop-filter:blur(5px)}
+.jc-member-modal .jc-modal-heading {display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 28px 20px;border-bottom:1px solid #30343b}
+.jc-member-modal .jc-modal-eyebrow {display:block;margin-bottom:8px;color:#d4af37;letter-spacing:1.5px;font-size:10px;font-weight:800}
+.jc-member-modal .jc-modal-heading h2 {font-size:22px;line-height:1.2;color:#fff;margin:0 0 10px}
+.jc-member-modal .jc-modal-heading p {margin:0;color:#adb3be;font-size:12px;line-height:1.6}
+.jc-member-dialogs .jc-member-modal button.jc-modal-close {flex:0 0 auto;min-height:36px;width:36px;height:36px;padding:0;background:#252a32;border:1px solid #3c424c;border-radius:9px;color:#ccc;font-size:15px}
+.jc-member-modal form {padding:22px 28px 26px}
+.jc-member-modal .jc-modal-fields {display:grid;gap:4px}
+.jc-member-modal .jc-modal-fields label {color:#e0e1e5;font-size:12px;font-weight:700}
+.jc-member-modal .jc-required {color:#d4af37}
+.jc-member-modal .jc-optional {font-size:11px;color:#8e95a0;font-weight:400}
+.jc-member-modal .jc-modal-fields input,.jc-member-modal .jc-modal-fields select,.jc-member-modal .jc-modal-fields textarea {display:block;width:100%;margin:7px 0 17px;min-height:47px;padding:12px 13px;border:1px solid #414751;border-radius:9px;background:#0d1015;color:#fff;font-size:14px}
+.jc-member-modal .jc-modal-fields input:focus,.jc-member-modal .jc-modal-fields textarea:focus {border-color:#d4af37;outline:2px solid #d4af3733;outline-offset:1px}
+.jc-member-modal .jc-modal-fields input::placeholder,.jc-member-modal textarea::placeholder {color:#737985}
+.jc-member-modal .jc-modal-fields textarea {min-height:95px}
+.jc-member-modal .jc-modal-switch {display:flex;align-items:center;gap:13px;padding:14px;border:1px solid #3b403e;background:#1c2522;border-radius:11px;margin:3px 0 17px;color:#fff}
+.jc-member-modal .jc-modal-switch input {width:19px;height:19px;min-height:19px;min-width:19px;margin:0;accent-color:#d4af37}
+.jc-member-modal .jc-modal-switch strong,.jc-member-modal .jc-modal-switch small {display:block}
+.jc-member-modal .jc-modal-switch small {font-size:11px;font-weight:400;color:#a9b1b9;margin-top:3px}
+.jc-member-modal .jc-modal-info {border-left:3px solid #d4af37;padding:11px 13px;background:#25251c;border-radius:4px;color:#c8c7bd;font-size:12px;line-height:1.55;margin:0 0 23px}
+.jc-member-modal .jc-modal-actions {display:flex;justify-content:flex-end;gap:10px;padding-top:5px}
+.jc-member-dialogs .jc-member-modal .jc-modal-actions button {min-height:43px;padding:10px 18px}
+@media(max-width:560px){.jc-member-dialogs .jc-member-modal{width:calc(100vw - 20px);max-height:calc(100dvh - 24px)}.jc-member-modal .jc-modal-heading{padding:21px 18px 17px}.jc-member-modal form{padding:19px 18px 22px}.jc-member-modal .jc-modal-heading h2{font-size:19px}.jc-member-modal .jc-modal-actions{display:grid;grid-template-columns:1fr 1fr}.jc-member-dialogs .jc-member-modal .jc-modal-actions button{padding:9px 8px}}
+</style>
 </head>
 
 <body>
@@ -1883,8 +1909,30 @@
         </div>
     </main>
 
-<dialog id="ba-mm-dialog"><h2 id="ba-mm-title">Músico sin cuenta</h2><form id="ba-mm-form"><input type="hidden" name="id"><label>Nombre y apellidos<input name="nombre" maxlength="160" required></label><label>Instrumento<input name="instrumento" maxlength="80" list="ba-instruments" required></label><label>Año de incorporación<input name="incorporacion" type="number" min="1852" max="2100"></label><label><input name="activo" type="checkbox" checked> Músico activo</label><p class="muted">Al crear la ficha podrás asignar un PIN individual de seis cifras.</p><div class="row"><button type="submit" class="primary">Guardar ficha</button><button type="button" onclick="document.getElementById('ba-mm-dialog').close()">Cancelar</button></div></form></dialog>
-<dialog id="ba-mm-review-dialog"><h2>Revisar fichaje · PIN</h2><p id="ba-mm-review-name"></p><form id="ba-mm-review-form"><input type="hidden" name="id"><label>Estado<select name="estado"><option value="presente">Presente</option><option value="ausente">Ausente</option><option value="justificada">Justificada</option><option value="incidencia">Incidencia</option></select></label><label>Motivo de la corrección<textarea name="motivo" required minlength="5" maxlength="1000"></textarea></label><div class="row"><button type="submit" class="primary">Guardar revisión</button><button type="button" onclick="document.getElementById('ba-mm-review-dialog').close()">Cancelar</button></div></form></dialog><div class="banda"><dialog id="ba-member-dialog"><h2>Ficha del músico</h2><form id="ba-member-form"><input type="hidden" name="usuario_id"><label>Nombre completo<input name="nombre" maxlength="160"></label><label>Instrumento<input name="instrumento" maxlength="80" list="ba-instruments"></label><datalist id="ba-instruments"><option>Flauta</option><option>Oboe</option><option>Fagot</option><option>Clarinete</option><option>Saxofón alto</option><option>Saxofón tenor</option><option>Saxofón barítono</option><option>Trompeta</option><option>Trompa</option><option>Trombón</option><option>Bombardino</option><option>Tuba</option><option>Percusión</option></datalist><label>Año de incorporación<input name="incorporacion" type="number" min="1852" max="2100"></label><p class="notice error" id="ba-member-error" hidden></p><div class="row"><button class="primary" type="submit">Guardar ficha</button><button type="button" data-close="ba-member-dialog">Cancelar</button></div></form></dialog></div>
+<div class="banda jc-member-dialogs">
+<dialog id="ba-mm-dialog" class="jc-member-modal" aria-labelledby="ba-mm-title">
+ <div class="jc-modal-heading"><div><span class="jc-modal-eyebrow">GESTIÓN DE MÚSICOS</span><h2 id="ba-mm-title">Crear músico sin cuenta</h2><p>Da de alta a un músico sin registrarlo. Después podrás asignarle su PIN para fichar con el QR.</p></div><button class="jc-modal-close" type="button" data-close="ba-mm-dialog" aria-label="Cerrar ventana">✕</button></div>
+ <form id="ba-mm-form"><input type="hidden" name="id">
+  <div class="jc-modal-fields"><label>Nombre y apellidos <span class="jc-required">*</span><input name="nombre" maxlength="160" required placeholder="Nombre completo" autocomplete="off"></label>
+  <label>Instrumento <span class="jc-required">*</span><input name="instrumento" maxlength="80" list="ba-instruments" required placeholder="Selecciona o escribe instrumento"></label>
+  <label>Año de incorporación <span class="jc-optional">(opcional)</span><input name="incorporacion" type="number" min="1852" max="2100" placeholder="Ej. 2010"></label></div>
+  <label class="jc-modal-switch"><input name="activo" type="checkbox" checked><span><strong>Músico activo</strong><small>Incluido en el censo y en las listas de asistencia</small></span></label>
+  <p class="jc-modal-info">El PIN personal se asigna después de guardar la ficha. No necesitas correo electrónico ni contraseña.</p>
+  <div class="jc-modal-actions"><button type="button" data-close="ba-mm-dialog">Cancelar</button><button type="submit" class="primary">Guardar ficha</button></div>
+ </form>
+</dialog>
+<dialog id="ba-mm-review-dialog" class="jc-member-modal" aria-labelledby="ba-mm-review-title">
+ <div class="jc-modal-heading"><div><span class="jc-modal-eyebrow">CONTROL DE ASISTENCIAS</span><h2 id="ba-mm-review-title">Revisar fichaje</h2><p id="ba-mm-review-name"></p></div><button type="button" class="jc-modal-close" data-close="ba-mm-review-dialog" aria-label="Cerrar ventana">✕</button></div>
+ <form id="ba-mm-review-form"><input type="hidden" name="id"><div class="jc-modal-fields"><label>Estado<select name="estado"><option value="presente">Presente</option><option value="ausente">Ausente</option><option value="justificada">Justificada</option><option value="incidencia">Incidencia</option></select></label><label>Motivo de la corrección<textarea name="motivo" required minlength="5" maxlength="1000" placeholder="Explica brevemente el motivo de la revisión"></textarea></label></div>
+ <div class="jc-modal-actions"><button type="button" data-close="ba-mm-review-dialog">Cancelar</button><button type="submit" class="primary">Guardar revisión</button></div></form>
+</dialog>
+<dialog id="ba-mm-pin-dialog" class="jc-member-modal" aria-labelledby="ba-mm-pin-title">
+ <div class="jc-modal-heading"><div><span class="jc-modal-eyebrow">ACCESO POR QR</span><h2 id="ba-mm-pin-title">Asignar PIN personal</h2><p id="ba-mm-pin-name"></p></div><button type="button" class="jc-modal-close" data-close="ba-mm-pin-dialog" aria-label="Cerrar ventana">✕</button></div>
+ <form id="ba-mm-pin-form"><input type="hidden" name="id"><div class="jc-modal-fields"><label>PIN de 6 cifras <span class="jc-required">*</span><input name="pin" type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="000000" autocomplete="off"></label></div>
+ <p class="jc-modal-info">Elige un PIN exclusivo para este músico. Se guardará de forma protegida y no podrá consultarse después. Comunícaselo en privado.</p>
+ <div class="jc-modal-actions"><button type="button" data-close="ba-mm-pin-dialog">Cancelar</button><button type="submit" class="primary">Guardar PIN</button></div></form>
+</dialog>
+<dialog id="ba-member-dialog"><h2>Ficha del músico</h2><form id="ba-member-form"><input type="hidden" name="usuario_id"><label>Nombre completo<input name="nombre" maxlength="160"></label><label>Instrumento<input name="instrumento" maxlength="80" list="ba-instruments"></label><datalist id="ba-instruments"><option>Flauta</option><option>Oboe</option><option>Fagot</option><option>Clarinete</option><option>Saxofón alto</option><option>Saxofón tenor</option><option>Saxofón barítono</option><option>Trompeta</option><option>Trompa</option><option>Trombón</option><option>Bombardino</option><option>Tuba</option><option>Percusión</option></datalist><label>Año de incorporación<input name="incorporacion" type="number" min="1852" max="2100"></label><p class="notice error" id="ba-member-error" hidden></p><div class="row"><button class="primary" type="submit">Guardar ficha</button><button type="button" data-close="ba-member-dialog">Cancelar</button></div></form></dialog></div>
 <script src="../js/vendor/jspdf.umd.min.js?v=4.2.1"></script>
 <script src="../js/vendor/jspdf.plugin.autotable.min.js?v=5.0.8"></script>
 <script src="../js/repertorio-export.js?v=2"></script>
