@@ -5,7 +5,7 @@ window.JCQRScanner = (() => {
   const value=String(text||'').trim();
   if(!value || value.length>2048)throw Error('El QR no contiene un enlace de fichaje válido.');
   let url;try{url=new URL(value,origin);}catch{throw Error('No se reconoce el enlace del QR.');}
-  if(url.origin!==origin || !['/templates/musicos.html','/templates/musicos'].includes(url.pathname))throw Error('Este QR no es un código de asistencia de esta web.');
+  if(url.origin!==origin || !['/templates/musicos.html','/templates/musicos','/templates/fichaje.html','/templates/fichaje'].includes(url.pathname))throw Error('Este QR no es un código de asistencia de esta web.');
   const p=new URLSearchParams(url.hash.slice(1));
   if(!uuid.test(p.get('evento')||'')||!uuid.test(p.get('token')||''))throw Error('El QR está incompleto. Escanea el código de asistencia que muestra administración.');
   return {evento_id:p.get('evento'),token:p.get('token')};
