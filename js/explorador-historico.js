@@ -41,7 +41,7 @@ async function init(){
   $('filter-year').innerHTML='<option value="all">Todos los años registrados</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
   $('explorer-status').textContent='Archivo consultado · '+events.length+' actuaciones finalizadas · '+tracks.length+' interpretaciones documentadas · '+(years.length?years.at(-1)+'–'+years[0]:'sin años disponibles');
   renderOverview();
-  const params=new URLSearchParams(location.search);if(years.includes(Number(params.get('year'))))$('filter-year').value=params.get('year');if(params.get('tipo')==='Semana Santa'){$('filter-type').add(new Option('Semana Santa','Semana Santa'));$('filter-type').value='Semana Santa';}renderOverview();
+  const params=new URLSearchParams(location.search);if(years.includes(Number(params.get('year'))))$('filter-year').value=params.get('year');if(params.get('tipo')==='Semana Santa')$('filter-type').value='Semana Santa';renderOverview();
   $('ask-box').disabled=false;$('ask-send').disabled=false;$('filter-year').disabled=false;$('filter-type').disabled=false;
  }catch(error){$('explorer-status').textContent=error.message;$('answer').innerHTML='<p class="notice">No se ha podido cargar el archivo público. Recarga la página e inténtalo de nuevo.</p>';}
 }
@@ -79,8 +79,8 @@ function eventDetail(ev){
  const lines=t.map((x,i)=>'<div class="ex-track"><span>'+String(i+1).padStart(2,'0')+'</span><div><strong>'+esc(x.titulo)+'</strong><small>'+esc(x.autor)+'</small></div></div>').join('');
  setAnswer(eventName(ev)+' · '+eventYear(ev),'<p class="ex-subtitle">'+esc(date(ev.fecha))+' · '+esc(ev.tipo||'Actuación')+' · '+t.length+' marchas registradas</p><div class="ex-tracks">'+(lines||'<p>No hay marchas documentadas para este evento.</p>')+'</div><a class="ex-primary-link" href="'+esc(origin(ev))+'">Abrir análisis original de la actuación</a>');
 }
-function findEvent(query,year){
- const n=norm(query),selected=events.filter(e=>year==null||eventYear(e)===year);
+function findEvent(query,year,kind='all'){
+ const n=norm(query),selected=events.filter(e=>(year==null||eventYear(e)===year)&&(kind==='all'||(kind==='Procesion'?e.tipo!=='Concierto':e.tipo===kind)));
  const sorted=selected.map(e=>{const name=norm(eventName(e)),tokens=name.split(' ').filter(x=>x.length>3),score=n.includes(name)&&name.length>3?500+name.length:tokens.filter(x=>n.includes(x)).reduce((sum,x)=>sum+x.length,0);return {e,score};}).filter(x=>x.score>=4).sort((a,b)=>b.score-a.score||String(b.e.fecha).localeCompare(String(a.e.fecha)));
  if(!sorted.length)return null;
  const name=norm(eventName(sorted[0].e));
@@ -107,7 +107,7 @@ function answerQuestion(value){
   return;
  }
  if(isEvent){
-  const ev=findEvent(n,specific);
+  const ev=findEvent(n,specific,kind);
   if(ev && (isMarch||/que se toc|se tocaron|repertorio|que son[oó]/.test(n))){eventDetail(ev);return;}
   if(ev&&!isRanking){eventDetail(ev);return;}
  }
