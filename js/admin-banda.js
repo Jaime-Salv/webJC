@@ -2,6 +2,15 @@
  const B=JCBanda,E=B.escape;
  let manualMembers=[],manualAttendance=[];let events=[],members=[],profiles=[],extras=[],responses=[],attendance=[],roster=[],selected=null,manualUser=null,qrEvent=null,qrTimer=null,qrDeadline=0,qrBusy=false;
  const $=id=>document.getElementById(id);
+ const INSTRUMENTOS=Object.freeze(["Flauta","Oboe","Fagot","Clarinete","Requinto","Saxofón","Saxofón alto","Saxofón tenor","Saxofón barítono","Trompeta","Trompeta/Fliscorno","Trompa","Trombón","Bombardino","Tuba","Percusión","Tambor"]);
+ function setInstrument(select,value){
+  const actual=String(value||'').trim();
+  const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  const canonical=INSTRUMENTOS.find(s=>norm(s)===norm(actual));
+  select.replaceChildren(new Option('Selecciona un instrumento',''),...INSTRUMENTOS.map(s=>new Option(s,s)));
+  if(actual&&!canonical)select.add(new Option(actual+' (registro anterior)',actual));
+  select.value=canonical||actual;
+ }
  const member=id=>members.find(x=>x.usuario_id===id);
  const name=id=>member(id)?.nombre||profiles.find(x=>x.id===id)?.nombre_completo||profiles.find(x=>x.id===id)?.username||'Sin nombre';
  const instrument=id=>member(id)?.instrumento||'Sin instrumento';
@@ -88,7 +97,7 @@
  }
  function openManualForm(id=null){
   const m=manualMembers.find(x=>x.id===id),f=$('ba-mm-form');f.reset();f.elements.id.value=m?.id||'';
-  f.elements.nombre.value=m?.nombre||'';f.elements.instrumento.value=m?.instrumento||'';f.elements.incorporacion.value=m?.incorporacion||'';
+  f.elements.nombre.value=m?.nombre||'';setInstrument(f.elements.instrumento,m?.instrumento);f.elements.incorporacion.value=m?.incorporacion||'';
   f.elements.activo.checked=m?.activo!==false;
   $('ba-mm-title').textContent=m?'Editar ficha sin cuenta':'Crear músico sin cuenta';$('ba-mm-dialog').showModal();
  }
@@ -104,7 +113,7 @@
   const m=manualMembers.find(x=>x.id===id),a=manualAttendance.find(x=>x.musico_id===id);
   if(!m)return;const f=$('ba-mm-review-form');f.reset();f.elements.id.value=id;f.elements.estado.value=a?.estado||'presente';$('ba-mm-review-name').textContent=m.nombre;$('ba-mm-review-dialog').showModal();
  }
- async function memberEdit(id){members=await B.query('banda_fichas');const f=$('ba-member-form'),m=member(id);f.reset();f.elements.usuario_id.value=id;f.elements.nombre.value=m?.nombre||profiles.find(p=>p.id===id)?.nombre_completo||'';f.elements.instrumento.value=m?.instrumento||'';f.elements.incorporacion.value=m?.incorporacion||'';$('ba-member-error').hidden=true;$('ba-member-dialog').showModal();}
+ async function memberEdit(id){members=await B.query('banda_fichas');const f=$('ba-member-form'),m=member(id);f.reset();f.elements.usuario_id.value=id;f.elements.nombre.value=m?.nombre||profiles.find(p=>p.id===id)?.nombre_completo||'';setInstrument(f.elements.instrumento,m?.instrumento);f.elements.incorporacion.value=m?.incorporacion||'';$('ba-member-error').hidden=true;$('ba-member-dialog').showModal();}
  document.addEventListener('admin:ready',()=>run(async()=>{
   $('ba-mm-create').onclick=()=>openManualForm();
   $('ba-manual-members').addEventListener('click',e=>run(async()=>{
