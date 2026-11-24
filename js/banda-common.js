@@ -26,8 +26,16 @@ window.JCBanda = (() => {
   if(error) throw Error(error.message); return result;
  }
  async function query(table,configure=q=>q) {
-  const {data,error}=await configure(clienteSupabase.from(table).select('*'));
-  if(error) throw Error(error.message); return data||[];
+  const keys={banda_asistencias:['evento_id','usuario_id'],banda_convocados:['evento_id','usuario_id'],banda_respuestas:['evento_id','usuario_id'],banda_justificaciones:['evento_id','usuario_id'],banda_detalles:['evento_id'],banda_fichas:['usuario_id'],banda_eventos:['id'],banda_avisos:['id'],banda_ajustes:['id'],banda_auditoria:['id'],banda_musicos_manuales:['id'],banda_asistencias_manuales:['evento_id','musico_id'],banda_push:['endpoint'],perfiles:['id']};
+  if(!keys[table]) {const {data,error}=await configure(clienteSupabase.from(table).select('*'));if(error)throw Error(error.message);return data||[];}
+  const rows=[],size=500;
+  for(let offset=0;;offset+=size){
+   let q=configure(clienteSupabase.from(table).select('*'));
+   for(const key of keys[table]) q=q.order(key,{ascending:true});
+   const {data,error}=await q.range(offset,offset+size-1);
+   if(error)throw Error(error.message);
+   rows.push(...(data||[]));if((data||[]).length<size)return rows;
+  }
  }
  async function access() {
   const {data:{session},error}=await clienteSupabase.auth.getSession();
