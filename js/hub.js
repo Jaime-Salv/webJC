@@ -150,7 +150,8 @@ async function inicializarHub() {
         cargarResumenCatalogo(),
         cargarActuacionesRecientes(),
         cargarConciertosHome(),
-        cargarProximasActuaciones()
+        cargarProximasActuaciones(),
+        obtenerAniosActividadAbiertos().then(years=>{const link=document.getElementById('link-analisis-temporada');if(link&&years.size){const url=new URL(link.href);url.searchParams.set('year',Math.max(...years));link.href=url.href;}}).catch(console.error)
     ]);
 }
 
@@ -572,11 +573,11 @@ async function cargarProximasActuaciones() {
    clienteSupabase.from('maestro_procesiones').select('id_procesion,hermandad,fecha,hora,fin_hora,lugar,localidad,descripcion,url_foto').eq('estado','Programada').gte('fecha',hoy).order('fecha'),
    clienteSupabase.from('maestro_procesiones').select('concierto_id,estado').eq('tipo','Concierto')
   ]);
-  if(c.error||p.error||live.error)throw c.error||p.error||live.error;
+  if(c.error&&p.error)throw c.error; if(c.error||p.error||live.error)console.warn('Carga parcial de próximas actuaciones',c.error,p.error,live.error);
   const conciertos=(c.data||[]).filter(e=>!(live.data||[]).some(l=>String(l.concierto_id)===String(e.id_concierto)&&['Activa','Finalizada'].includes(l.estado)));
   const ids=conciertos.map(e=>e.id_concierto);
   const programas=ids.length?await clienteSupabase.from('concierto_obras').select('id_concierto').in('id_concierto',ids):{data:[],error:null};
-  if(programas.error)throw programas.error;
+  if(programas.error)console.warn('Programas no disponibles',programas.error);
   const conPrograma=new Set((programas.data||[]).map(o=>String(o.id_concierto)));
   const list=[...conciertos.map(e=>({...e,titulo:e.titulo,tipo:'Concierto'})),...(p.data||[]).map(e=>({...e,titulo:e.hermandad,tipo:'Procesión'}))].sort((a,b)=>(a.fecha+(a.hora||'')).localeCompare(b.fecha+(b.hora||'')));
   grid.innerHTML=list.map(e=>`<article class="proxima-card">${e.url_foto||e.cartel_url?`<img class="proxima-cover" src="${escaparAtributo(e.url_foto||e.cartel_url)}" alt="" loading="lazy">`: ''}<span class="proxima-type">${escaparHTML(e.tipo)}</span><h3>${escaparHTML(e.titulo)}</h3><p class="proxima-date">${escaparHTML(formatearFecha(e.fecha))}${e.hora?' · '+escaparHTML(e.hora.slice(0,5)):''}</p><p>${escaparHTML([e.lugar,e.localidad].filter(Boolean).join(' · '))}</p>${e.descripcion?`<p>${escaparHTML(e.descripcion)}</p>`:''}${e.id_concierto?(conPrograma.has(String(e.id_concierto))?`<a href="templates/concierto.html?id=${encodeURIComponent(e.id_concierto)}">Ver programa →</a>`:'<span class="proxima-info">Programa pendiente de publicación</span>'):'<span class="proxima-info">Información de la próxima procesión</span>'}</article>`).join('')||'<div class="empty-state">Próximamente anunciaremos nuevas actuaciones.</div>';
