@@ -94,10 +94,11 @@
  }
  async function editPin(id){
   const m=manualMembers.find(x=>x.id===id);if(!m)throw Error('Músico no encontrado.');
-  const pin=prompt('Nuevo PIN de 6 dígitos para '+m.nombre+'. No se mostrará de nuevo:');
-  if(pin===null)return;
-  if(!/^[0-9]{6}$/.test(pin))throw Error('Introduce exactamente 6 cifras.');
-  await pinRpc('pin',{id,pin});await load();B.notice('PIN actualizado para '+m.nombre+'. Comunícaselo en privado.');
+  const f=$('ba-mm-pin-form');f.reset();f.elements.id.value=m.id;
+  $('ba-mm-pin-title').textContent=m.tiene_pin?'Cambiar PIN personal':'Asignar PIN personal';
+  $('ba-mm-pin-name').textContent=m.nombre+' · '+m.instrumento;
+  $('ba-mm-pin-dialog').showModal();
+  f.elements.pin.focus();
  }
  async function reviewManual(id){
   const m=manualMembers.find(x=>x.id===id),a=manualAttendance.find(x=>x.musico_id===id);
@@ -117,6 +118,13 @@
       const saved=await pinRpc('guardar',v);$('ba-mm-dialog').close();await load();
       B.notice(v.id?'Ficha actualizada.':'Ficha creada. Ahora asigna su PIN.');
       if(!v.id)await editPin(saved.id);
+    }finally{b.disabled=false;}
+  });};
+  $('ba-mm-pin-form').onsubmit=e=>{e.preventDefault();run(async()=>{
+    const f=e.target,b=f.querySelector('[type="submit"]');b.disabled=true;
+    try{const v=Object.fromEntries(new FormData(f));
+      await pinRpc('pin',v);$('ba-mm-pin-dialog').close();await load();
+      B.notice('PIN actualizado. Comunícaselo al músico de forma privada.');
     }finally{b.disabled=false;}
   });};
   $('ba-mm-review-form').onsubmit=e=>{e.preventDefault();run(async()=>{
