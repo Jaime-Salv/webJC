@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'jc-pwa-v32';
+const CACHE_VERSION = 'jc-pwa-v33';
 const APP_SHELL = [
     '/',
     '/index.html',
