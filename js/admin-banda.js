@@ -1,6 +1,6 @@
 (() => {
  const B=JCBanda,E=B.escape;
- let events=[],members=[],profiles=[],extras=[],responses=[],attendance=[],roster=[],selected=null,manualUser=null,qrEvent=null,qrTimer=null,qrDeadline=0,qrBusy=false;
+ let manualMembers=[],manualAttendance=[];let events=[],members=[],profiles=[],extras=[],responses=[],attendance=[],roster=[],selected=null,manualUser=null,qrEvent=null,qrTimer=null,qrDeadline=0,qrBusy=false;
  const $=id=>document.getElementById(id);
  const member=id=>members.find(x=>x.usuario_id===id);
  const name=id=>member(id)?.nombre||profiles.find(x=>x.id===id)?.nombre_completo||profiles.find(x=>x.id===id)?.username||'Sin nombre';
@@ -10,7 +10,7 @@
   [events,members,profiles,extras]=await Promise.all([B.query('banda_eventos',q=>q.order('inicio')),B.query('banda_fichas'),B.query('perfiles',q=>q.order('username')),B.query('banda_detalles')]);
   const finales=await B.query('maestro_procesiones',q=>q.eq('estado','Finalizada').order('fecha',{ascending:false}));
   events.forEach(e=>{e.finalizado=finales.some(p=>(e.procesion_id&&String(p.id_procesion)===String(e.procesion_id))||(e.concierto_id&&String(p.concierto_id)===String(e.concierto_id)));e.extra=extras.find(d=>d.evento_id===e.id)||{};e.convocatoria=e.extra.convocatoria||e.inicio;});
-  paintEvents();const stats=document.getElementById('jc-admin-quick-stats');if(stats){const upcoming=events.filter(e=>e.estado!=='cancelado'&&Date.parse(e.fin)>Date.now());stats.innerHTML=[['Próximas actividades',upcoming.length],['Ensayos',upcoming.filter(e=>e.tipo==='ensayo').length],['Otras convocatorias',upcoming.filter(e=>e.tipo!=='ensayo').length]].map(([label,n])=>`<div class="jc-admin-stat"><strong>${n}</strong><span>${label}</span></div>`).join('');}if(selected)await details(selected);
+  try{manualMembers=await pinRpc('listar');renderManualMembers();}catch(err){console.warn('Fichas manuales:',err);}paintEvents();const stats=document.getElementById('jc-admin-quick-stats');if(stats){const upcoming=events.filter(e=>e.estado!=='cancelado'&&Date.parse(e.fin)>Date.now());stats.innerHTML=[['Próximas actividades',upcoming.length],['Ensayos',upcoming.filter(e=>e.tipo==='ensayo').length],['Otras convocatorias',upcoming.filter(e=>e.tipo!=='ensayo').length]].map(([label,n])=>`<div class="jc-admin-stat"><strong>${n}</strong><span>${label}</span></div>`).join('');}if(selected)await details(selected);
  }
  function paintEvents() {
   const list=events.filter(e=>$('ba-kind').value==='all'||e.tipo===$('ba-kind').value).filter(e=>$('ba-filter').value==='all'||Date.parse(e.fin)>=Date.now()&&!e.finalizado);
@@ -19,7 +19,7 @@
  async function details(id) {
   selected=id;const ev=events.find(e=>e.id===id);if(!ev)return;
   const detailData=await Promise.all([B.query('banda_convocados',q=>q.eq('evento_id',id)),B.query('banda_respuestas',q=>q.eq('evento_id',id)),B.query('banda_asistencias',q=>q.eq('evento_id',id))]);
-  if(selected!==id)return;[roster,responses,attendance]=detailData;
+  if(selected!==id)return;[roster,responses,attendance]=detailData;manualAttendance=await pinRpc('asistencias',{evento_id:id});
   const grouped=new Map();
   roster.forEach(c=>{const label=instrument(c.usuario_id).trim().replace(/\s+/g,' ')||'Sin instrumento',key=label.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es');
    if(!grouped.has(key))grouped.set(key,{label,total:0,voy:[],no:[],pending:[]});
@@ -28,11 +28,16 @@
   for(const [label,needed] of Object.entries(ev.extra?.objetivos||{})){const key=JCPortal.normal(label);if(!grouped.has(key))grouped.set(key,{label,total:0,voy:[],no:[],pending:[]});grouped.get(key).objetivo=Number(needed);}
   const forecast=[...grouped.values()].sort((a,b)=>a.label.localeCompare(b.label,'es',{sensitivity:'base'})).map(g=>`<section class="ba-instrument"><h4>${E(g.label)} <span class="muted">${g.total} músico${g.total===1?'':'s'}</span></h4>${g.objetivo!=null?`<p class="bp-coverage ${g.voy.length<g.objetivo?'short':''}">Objetivo: ${g.objetivo} · Confirmados: ${g.voy.length} · Faltan: ${Math.max(0,g.objetivo-g.voy.length)}</p>`:''}<div class="ba-instrument-columns">${[['voy','Voy'],['no','No voy'],['pending','Sin responder']].map(([key,label])=>`<div class="ba-instrument-status" data-forecast-status="${key}"><h5>${label} <span class="badge">${g[key].length}</span></h5>${g[key].length?`<ul>${g[key].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'})).map(n=>`<li>${E(n)}</li>`).join('')}</ul>`:'<p class="muted">Nadie</p>'}</div>`).join('')}</div></section>`).join('')||'<p class="muted">Todavía no hay músicos convocados.</p>';
   const rehearsal=ev.tipo==='ensayo';
-  const voy=responses.filter(r=>r.respuesta==='voy').length,no=responses.filter(r=>r.respuesta==='no_voy').length,pres=attendance.filter(a=>a.estado==='presente').length;
-  $('ba-detail').innerHTML=`<h2>${E(ev.titulo)}</h2><p class="muted">${B.fecha(ev.inicio)} · ${E(ev.lugar)}</p><div class="jc-detail-summary">${rehearsal?'<p class="muted">Ensayo sin confirmación previa. Solo se registra la asistencia.</p>':`<div class="stat"><b>${voy}</b>Voy</div><div class="stat"><b>${no}</b>No voy</div><div class="stat"><b>${roster.length-responses.length}</b>Sin responder</div>`}<div class="stat"><b>${pres}</b>Presentes</div></div><p class="muted">Fichaje: ${ev.fichaje_abierto&&Date.parse(ev.abierto_hasta)>Date.now()?'abierto hasta '+B.fecha(ev.abierto_hasta):'cerrado'}.</p><p class="muted">El QR de asistencia está disponible desde ${B.fecha(Date.parse(ev.convocatoria||ev.inicio)-2*60*60*1000)} hasta ${B.fecha(ev.fin)}. El músico solo necesita iniciar sesión y escanear el QR vigente. Cada evento tiene un QR único que permanece igual y puede imprimirse.</p><div class="jc-detail-tools"><details><summary>Herramientas y ajustes del evento</summary><div class="row"><button data-action="edit">Ajustes de convocatoria</button>${ev.concierto_id||ev.procesion_id?`${ev.finalizado?'':'<button data-action="start-live" class="primary">Empezar directo</button>'}<button data-action="source">Editar publicación</button>`:''}<button data-action="convocar">Añadir nuevos músicos</button><button data-action="open" class="primary" ${ev.estado==='cancelado'?'disabled':''}>Ver QR / abrir fichaje</button><button data-action="close">Cerrar fichaje</button><button data-action="export">Exportar CSV</button><button data-action="cancel" ${ev.estado==='cancelado'?'disabled':''}>Cancelar evento</button></div></details></div><section id="bp-event-extra"></section>${rehearsal?'':`<details class="jc-detail-people"><summary>Previsión por instrumento · Ver desglose</summary><div id="ba-instrument-forecast">${forecast}</div></details>`}<details class="jc-detail-people"><summary>Listado de músicos (${roster.length}) · Abrir fichajes y revisiones</summary><p class="muted">«Sin fichaje» no es una ausencia confirmada. Revisa los casos pendientes. La lista se actualiza automáticamente.</p><div class="table-scroll"><table><thead><tr><th>Músico</th><th>Confirmación</th><th>Asistencia</th><th>Revisión</th></tr></thead><tbody>${roster.slice().sort((a,b)=>(instrument(a.usuario_id)+name(a.usuario_id)).localeCompare(instrument(b.usuario_id)+name(b.usuario_id),'es')).map(c=>{
+  const voy=responses.filter(r=>r.respuesta==='voy').length,no=responses.filter(r=>r.respuesta==='no_voy').length,pres=attendance.filter(a=>a.estado==='presente').length+manualAttendance.filter(a=>a.estado==='presente').length;
+  $('ba-detail').innerHTML=`<h2>${E(ev.titulo)}</h2><p class="muted">${B.fecha(ev.inicio)} · ${E(ev.lugar)}</p><div class="jc-detail-summary">${rehearsal?'<p class="muted">Ensayo sin confirmación previa. Solo se registra la asistencia.</p>':`<div class="stat"><b>${voy}</b>Voy</div><div class="stat"><b>${no}</b>No voy</div><div class="stat"><b>${roster.length-responses.length}</b>Sin responder</div>`}<div class="stat"><b>${pres}</b>Presentes</div></div><p class="muted">Fichaje: ${ev.fichaje_abierto&&Date.parse(ev.abierto_hasta)>Date.now()?'abierto hasta '+B.fecha(ev.abierto_hasta):'cerrado'}.</p><p class="muted">El QR de asistencia está disponible desde ${B.fecha(Date.parse(ev.convocatoria||ev.inicio)-2*60*60*1000)} hasta ${B.fecha(ev.fin)}. Con cuenta se ficha automáticamente; sin cuenta se introduce el PIN personal tras escanear. Cada evento tiene un QR único que permanece igual y puede imprimirse.</p><div class="jc-detail-tools"><details><summary>Herramientas y ajustes del evento</summary><div class="row"><button data-action="edit">Ajustes de convocatoria</button>${ev.concierto_id||ev.procesion_id?`${ev.finalizado?'':'<button data-action="start-live" class="primary">Empezar directo</button>'}<button data-action="source">Editar publicación</button>`:''}<button data-action="convocar">Añadir nuevos músicos</button><button data-action="open" class="primary" ${ev.estado==='cancelado'?'disabled':''}>Ver QR / abrir fichaje</button><button data-action="close">Cerrar fichaje</button><button data-action="export">Exportar CSV</button><button data-action="cancel" ${ev.estado==='cancelado'?'disabled':''}>Cancelar evento</button></div></details></div><section id="bp-event-extra"></section>${rehearsal?'':`<details class="jc-detail-people"><summary>Previsión por instrumento · Ver desglose</summary><div id="ba-instrument-forecast">${forecast}</div></details>`}<details class="jc-detail-people"><summary>Listado de músicos (${roster.length}) · Abrir fichajes y revisiones</summary><p class="muted">«Sin fichaje» no es una ausencia confirmada. Revisa los casos pendientes. La lista se actualiza automáticamente.</p><div class="table-scroll"><table><thead><tr><th>Músico</th><th>Confirmación</th><th>Asistencia</th><th>Revisión</th></tr></thead><tbody>${roster.slice().sort((a,b)=>(instrument(a.usuario_id)+name(a.usuario_id)).localeCompare(instrument(b.usuario_id)+name(b.usuario_id),'es')).map(c=>{
    const r=responses.find(x=>x.usuario_id===c.usuario_id),a=attendance.find(x=>x.usuario_id===c.usuario_id);
    return `<tr><td>${E(name(c.usuario_id))}<br><small>${E(instrument(c.usuario_id))}</small></td><td>${rehearsal?'No requerida':r?(r.respuesta==='voy'?'Voy':'No voy'):'Sin responder'}${r?`<br><small>${B.fecha(r.actualizado_en)}</small>`:''}</td><td><span class="badge ${a?.estado==='presente'?'good':a?.estado==='incidencia'?'warn':''}">${E(B.asistencia(a))}</span>${a?`<br><small>${B.fecha(a.registrado_en)} · ${E(a.metodo)}</small>${a.motivo?`<p class="muted">${E(a.motivo)}</p>`:''}`:''}</td><td><button data-manual="${c.usuario_id}">Revisar</button></td></tr>`;
   }).join('')}</tbody></table></div></details><details><summary>Historial de cambios del evento</summary><div id="ba-audit">Cargando…</div></details>`;
+  const manualRows=manualMembers.filter(m=>m.activo).sort((a,b)=>(a.instrumento+a.nombre).localeCompare(b.instrumento+b.nombre,'es')).map(m=>{
+    const a=manualAttendance.find(x=>x.musico_id===m.id);
+    return `<tr><td>${E(m.nombre)}<br><small>${E(m.instrumento)} · Sin cuenta</small></td><td><span class="badge ${a?.estado==='presente'?'good':''}">${E(a?B.asistencia(a):'Sin fichaje')}</span>${a?'<br><small>'+B.fecha(a.registrado_en)+' · '+E(a.metodo)+'</small>':''}</td><td><button type="button" data-pin-review="${m.id}">Revisar</button></td></tr>`;
+   }).join('');
+  $('ba-detail').insertAdjacentHTML('beforeend',`<details class="jc-detail-people"><summary>Músicos sin cuenta (${manualMembers.filter(m=>m.activo).length}) · Fichajes PIN</summary><p class="muted">El fichaje normal se realiza mediante QR y PIN. Las correcciones son revisiones administrativas.</p><div class="table-scroll"><table><thead><tr><th>Músico</th><th>Asistencia</th><th>Revisión</th></tr></thead><tbody>${manualRows}</tbody></table></div></details>`);
   paintEvents();
   ev.memberNames=Object.fromEntries(roster.map(c=>[c.usuario_id,name(c.usuario_id)]));document.dispatchEvent(new CustomEvent('banda:detalle',{detail:ev}));
   const audit=await B.query('banda_auditoria',q=>q.eq('evento_id',id).order('creado_en',{ascending:false}).limit(100));
@@ -55,7 +60,7 @@
    const data=await B.rpc('qr',{evento_id:qrEvent});
    if(!$('ba-qr-dialog').open)return;
    if(typeof qrcode!=='function')throw Error('No se ha podido cargar el generador QR. Recarga la página.');
-   const url=new URL('/templates/musicos.html',location.origin);url.hash=new URLSearchParams({evento:qrEvent,token:data.token}).toString();
+   const url=new URL('/templates/fichaje.html',location.origin);url.hash=new URLSearchParams({evento:qrEvent,token:data.token}).toString();
    const qr=qrcode(0,'M');qr.addData(url.href);qr.make();$('ba-qr-image').innerHTML=qr.createSvgTag({cellSize:5,margin:4,scalable:true});
    const evento=events.find(e=>e.id===qrEvent);
     qrDeadline=data.fijo?0:performance.now()+(Date.parse(data.expira)-Date.parse(data.servidor));
@@ -74,9 +79,52 @@
   clearInterval(qrTimer);
 
   await load();}
- function exportCsv(){const ev=events.find(e=>e.id===selected);B.csv([['Evento','Inicio (Madrid)','Músico','Instrumento','Confirmación','Respuesta registrada','Asistencia','Método','Registro de llegada','Última revisión','Revisado por','Motivo'],...roster.map(c=>{const r=responses.find(x=>x.usuario_id===c.usuario_id),a=attendance.find(x=>x.usuario_id===c.usuario_id);return [ev.titulo,B.fecha(ev.inicio),name(c.usuario_id),instrument(c.usuario_id),ev.tipo==='ensayo'?'No requerida':r?.respuesta||'Sin responder',r?B.fecha(r.actualizado_en):'',B.asistencia(a),a?.metodo||'',a?B.fecha(a.registrado_en):'',a?B.fecha(a.actualizado_en):'',a?.revisado_por?name(a.revisado_por):'',a?.motivo||''];})],`asistencia-${ev.tipo}-${B.dia(ev.inicio)}.csv`);}
+ function exportCsv(){const ev=events.find(e=>e.id===selected);B.csv([['Evento','Inicio (Madrid)','Músico','Instrumento','Confirmación','Respuesta registrada','Asistencia','Método','Registro de llegada','Última revisión','Revisado por','Motivo'],...roster.map(c=>{const r=responses.find(x=>x.usuario_id===c.usuario_id),a=attendance.find(x=>x.usuario_id===c.usuario_id);return [ev.titulo,B.fecha(ev.inicio),name(c.usuario_id),instrument(c.usuario_id),ev.tipo==='ensayo'?'No requerida':r?.respuesta||'Sin responder',r?B.fecha(r.actualizado_en):'',B.asistencia(a),a?.metodo||'',a?B.fecha(a.registrado_en):'',a?B.fecha(a.actualizado_en):'',a?.revisado_por?name(a.revisado_por):'',a?.motivo||''];}),...manualMembers.filter(m=>m.activo).map(m=>{const a=manualAttendance.find(x=>x.musico_id===m.id);return [ev.titulo,B.fecha(ev.inicio),m.nombre,m.instrumento,ev.tipo==='ensayo'?'No requerida':'Sin respuesta (sin cuenta)','',a?B.asistencia(a):'Sin fichaje',a?.metodo||'',a?B.fecha(a.registrado_en):'',a?B.fecha(a.actualizado_en):'',a?.revisado_por?name(a.revisado_por):'',a?.motivo||''];})],`asistencia-${ev.tipo}-${B.dia(ev.inicio)}.csv`);}
+
+ const pinRpc=async(action,data={})=>{const {data:result,error}=await clienteSupabase.rpc('banda_pin_admin',{p_accion:action,p_datos:data});if(error)throw error;return result;};
+ function renderManualMembers(){
+  const target=$('ba-manual-members');if(!target)return;
+  target.innerHTML=manualMembers.map(m=>`<tr><td>${E(m.nombre)}<br><small>${E(m.instrumento)}</small></td><td>${m.activo?'Activo':'Inactivo'}</td><td>${m.tiene_pin?'Configurado':'Pendiente'}</td><td><button type="button" data-mm-edit="${m.id}">Editar ficha</button> <button type="button" data-mm-pin="${m.id}">Cambiar PIN</button></td></tr>`).join('')||'<tr><td colspan="4">Todavía no hay músicos sin cuenta.</td></tr>';
+ }
+ function openManualForm(id=null){
+  const m=manualMembers.find(x=>x.id===id),f=$('ba-mm-form');f.reset();f.elements.id.value=m?.id||'';
+  f.elements.nombre.value=m?.nombre||'';f.elements.instrumento.value=m?.instrumento||'';f.elements.incorporacion.value=m?.incorporacion||'';
+  f.elements.activo.checked=m?.activo!==false;
+  $('ba-mm-title').textContent=m?'Editar ficha sin cuenta':'Crear músico sin cuenta';$('ba-mm-dialog').showModal();
+ }
+ async function editPin(id){
+  const m=manualMembers.find(x=>x.id===id);if(!m)throw Error('Músico no encontrado.');
+  const pin=prompt('Nuevo PIN de 6 dígitos para '+m.nombre+'. No se mostrará de nuevo:');
+  if(pin===null)return;
+  if(!/^[0-9]{6}$/.test(pin))throw Error('Introduce exactamente 6 cifras.');
+  await pinRpc('pin',{id,pin});await load();B.notice('PIN actualizado para '+m.nombre+'. Comunícaselo en privado.');
+ }
+ async function reviewManual(id){
+  const m=manualMembers.find(x=>x.id===id),a=manualAttendance.find(x=>x.musico_id===id);
+  if(!m)return;const f=$('ba-mm-review-form');f.reset();f.elements.id.value=id;f.elements.estado.value=a?.estado||'presente';$('ba-mm-review-name').textContent=m.nombre;$('ba-mm-review-dialog').showModal();
+ }
  async function memberEdit(id){members=await B.query('banda_fichas');const f=$('ba-member-form'),m=member(id);f.reset();f.elements.usuario_id.value=id;f.elements.nombre.value=m?.nombre||profiles.find(p=>p.id===id)?.nombre_completo||'';f.elements.instrumento.value=m?.instrumento||'';f.elements.incorporacion.value=m?.incorporacion||'';$('ba-member-error').hidden=true;$('ba-member-dialog').showModal();}
  document.addEventListener('admin:ready',()=>run(async()=>{
+  $('ba-mm-create').onclick=()=>openManualForm();
+  $('ba-manual-members').addEventListener('click',e=>run(async()=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.mmEdit)openManualForm(b.dataset.mmEdit);
+    if(b.dataset.mmPin)await editPin(b.dataset.mmPin);
+  }));
+  $('ba-mm-form').onsubmit=e=>{e.preventDefault();run(async()=>{
+    const f=e.target,b=f.querySelector('[type="submit"]');b.disabled=true;
+    try{const v=Object.fromEntries(new FormData(f));v.activo=f.elements.activo.checked;
+      const saved=await pinRpc('guardar',v);$('ba-mm-dialog').close();await load();
+      B.notice(v.id?'Ficha actualizada.':'Ficha creada. Ahora asigna su PIN.');
+      if(!v.id)await editPin(saved.id);
+    }finally{b.disabled=false;}
+  });};
+  $('ba-mm-review-form').onsubmit=e=>{e.preventDefault();run(async()=>{
+    const f=e.target,b=f.querySelector('[type="submit"]');b.disabled=true;
+    try{await pinRpc('revisar',{...Object.fromEntries(new FormData(f)),evento_id:selected});
+    $('ba-mm-review-dialog').close();await details(selected);B.notice('Revisión guardada.');
+    }finally{b.disabled=false;}
+  });};
   $('ba-editor-close').onclick=()=>$('ba-editor').hidden=true;
   $('ba-create-extra').onclick=()=>edit(null);
   $('ba-refresh').onclick=()=>run(load);$('ba-filter').onchange=paintEvents;$('ba-kind').onchange=paintEvents;
@@ -86,6 +134,7 @@
   document.addEventListener('banda:qr-publicacion',e=>run(async()=>{document.querySelector('[data-admin-target="banda"]').click();await load();const ev=events.find(x=>e.detail.concierto_id?String(x.concierto_id)===String(e.detail.concierto_id):String(x.procesion_id)===String(e.detail.procesion_id));if(!ev)throw Error('Publica primero la actuación con fecha, inicio, fin y lugar para generar su convocatoria y QR de asistencia.');await details(ev.id);await openQr(ev.id);}));
   $('ba-form').onsubmit=e=>{e.preventDefault();run(async()=>{const b=e.submitter;b.disabled=true;try{const data=Object.fromEntries(new FormData(e.target));data.tipo=events.find(ev=>ev.id===data.id)?.tipo||'extraordinario';for(const k of ['inicio','fin','limite_respuesta'])data[k]=B.madridISO(data[k]);const r=await B.rpc('evento',data);selected=r.id;$('ba-editor').hidden=true;if(data.tipo==='extraordinario'){$('ba-kind').value='extraordinario';$('ba-filter').value='upcoming';}await load();document.dispatchEvent(new Event('agenda:refresh'));B.notice('Convocatoria guardada.');}finally{b.disabled=false;}});};
   $('ba-detail').onclick=e=>run(async()=>{const b=e.target.closest('button');if(!b)return;
+   if(b.dataset.pinReview){await reviewManual(b.dataset.pinReview);return;}
    if(b.dataset.manual){manualUser=b.dataset.manual;const a=attendance.find(x=>x.usuario_id===manualUser);$('ba-manual-name').textContent=name(manualUser);$('ba-manual-form').reset();$('ba-manual-form').elements.estado.value=a?.estado||'presente';$('ba-manual-error').hidden=true;$('ba-manual-dialog').showModal();return;}
    const act=b.dataset.action;if(!act)return;b.disabled=true;
    try{if(act==='start-live'){document.dispatchEvent(new CustomEvent('agenda:start-live',{detail:{evento_id:selected,button:b}}));return;}else if(act==='source'){const ev=events.find(e=>e.id===selected);if(ev.concierto_id){document.querySelector('[data-admin-target="conciertos"]').click();await cargarConciertosAdmin();$('select-concierto-admin').value=ev.concierto_id;seleccionarConciertoAdmin();}else document.dispatchEvent(new CustomEvent('agenda:edit-procession',{detail:ev.procesion_id}));}else if(act==='edit')edit(events.find(e=>e.id===selected));else if(act==='export')exportCsv();else if(act==='open')await openQr();else{if(act==='cancel'&&!confirm('¿Cancelar esta convocatoria? Se conservarán las respuestas y el historial.'))return;await B.rpc({convocar:'convocar',close:'cerrar',cancel:'cancelar'}[act],{evento_id:selected});await load();document.dispatchEvent(new Event('agenda:refresh'));B.notice('Convocatoria actualizada.');}}finally{b.disabled=false;}
@@ -110,7 +159,7 @@
    <h1>BANDA DE MÚSICA JULIÁN CERDÁN</h1><h2>${title}</h2>
    <div class="info"><strong>${date}</strong><br>Fin: ${end}<br>${place}</div>
    ${svg.outerHTML}
-   <p class="notice">Escanea este código con el portal del músico e inicia sesión para registrar tu asistencia.
+   <p class="notice">Escanea este código. Con cuenta, el fichaje es automático. Sin cuenta, introduce tu PIN.
    Código exclusivo de este evento. El registro solo está disponible durante el horario habilitado.</p>
    </body></html>`);
    popup.document.close();popup.focus();
