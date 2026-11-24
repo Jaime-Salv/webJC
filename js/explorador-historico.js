@@ -5,14 +5,15 @@ const $=id=>document.getElementById(id), esc=x=>String(x??'').replace(/[&<>"']/g
 const norm=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9ñ]+/g,' ').trim();
 const date=x=>x?new Intl.DateTimeFormat('es-ES',{day:'2-digit',month:'short',year:'numeric'}).format(new Date(x+'T12:00:00')):'Fecha no disponible';
 const number=n=>Number(n||0).toLocaleString('es-ES');
-let events=[],tracks=[],raw=[],loaded=false;
+let events=[],tracks=[],raw=[],loaded=false,tracksByEvent=new Map();
 const origin=e=>'analisis.html?id='+encodeURIComponent(e.id_procesion);
-const eventName=e=>e.hermandad||e.titulo||e.nombre||'Actuación sin título';
+const eventName=e=>(e.tipo==='Concierto'&&e.titulo)||e.hermandad||e.titulo||e.nombre||'Actuación sin título';
 const eventYear=e=>Number(String(e.fecha||'').slice(0,4))||null;
 async function read(table,setup=q=>q){
  const keys={maestro_procesiones:'id_procesion',catalogo_marchas:'id_marcha',conciertos:'id_concierto',repertorio_transaccional:'id_registro'};
+ const columns={maestro_procesiones:'id_procesion,hermandad,fecha,tipo,concierto_id,estado',catalogo_marchas:'id_marcha,titulo,autor',conciertos:'id_concierto,titulo',repertorio_transaccional:'id_registro,id_procesion,id_marcha'};
  const result=[];for(let offset=0;;offset+=500){
-  const {data,error}=await setup(clienteSupabase.from(table).select('*')).order(keys[table],{ascending:true}).range(offset,offset+499);
+  const {data,error}=await setup(clienteSupabase.from(table).select(columns[table])).order(keys[table],{ascending:true}).range(offset,offset+499);
   if(error)throw new Error('No se pueden consultar los datos públicos de '+table+': '+error.message);
   result.push(...(data||[]));if((data||[]).length<500)break;
  }return result;
@@ -20,7 +21,7 @@ async function read(table,setup=q=>q){
 async function init(){
  $('explorer-status').textContent='Consultando el archivo musical público…';
  try{
-  const [procs,catalog]=await Promise.all([read('maestro_procesiones',q=>q.order('fecha',{ascending:false})),read('catalogo_marchas')]);
+  const [procs,catalog]=await Promise.all([read('maestro_procesiones',q=>q.eq('estado','Finalizada').order('fecha',{ascending:false})),read('catalogo_marchas')]);
   // Solo actuaciones con repertorio documentado. No se recuperan fichajes ni datos privados.
   events=procs.filter(e=>e.estado==='Finalizada'&&e.fecha).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
   const catalogById=new Map(catalog.map(c=>[String(c.id_marcha),c]));
@@ -36,11 +37,12 @@ async function init(){
    const event=byEvent.get(String(r.id_procesion)),m=catalogById.get(String(r.id_marcha))||{};
    return {...r,event,titulo:m.titulo||r.titulo||'Marcha sin identificar',autor:m.autor||r.autor||'Compositor sin identificar'};
   }).filter(t=>t.event);
-  loaded=true;
+  for(const t of tracks){const k=String(t.id_procesion);if(!tracksByEvent.has(k))tracksByEvent.set(k,[]);tracksByEvent.get(k).push(t);}
+  raw=[];loaded=true;
   const years=[...new Set(events.map(eventYear).filter(Boolean))].sort((a,b)=>b-a);
   $('filter-year').innerHTML='<option value="all">Todos los años registrados</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
   $('explorer-status').textContent='Archivo consultado · '+events.length+' actuaciones finalizadas · '+tracks.length+' interpretaciones documentadas · '+(years.length?years.at(-1)+'–'+years[0]:'sin años disponibles');
-  renderOverview();
+  const example=$('ex-compare-example');if(example){example.hidden=years.length<2;if(years.length>=2)example.dataset.example='Compara '+years[1]+' y '+years[0];}
   const params=new URLSearchParams(location.search);if(years.includes(Number(params.get('year'))))$('filter-year').value=params.get('year');if(params.get('tipo')==='Semana Santa')$('filter-type').value='Semana Santa';renderOverview();
   $('ask-box').disabled=false;$('ask-send').disabled=false;$('filter-year').disabled=false;$('filter-type').disabled=false;
  }catch(error){$('explorer-status').textContent=error.message;$('answer').innerHTML='<p class="notice">No se ha podido cargar el archivo público. Recarga la página e inténtalo de nuevo.</p>';}
@@ -53,10 +55,10 @@ const trace=selected=>{
  const ids=new Set(selected.map(e=>String(e.id_procesion)));
  return tracks.filter(t=>ids.has(String(t.id_procesion)));
 };
-const occurrences=(items,key)=>[...items.reduce((map,item)=>{const name=String(item[key]||'Sin identificar').trim();const id=key==='titulo'&&item.id_marcha!=null?String(item.id_marcha):norm(name),v=map.get(id)||{name,count:0};v.count++;map.set(id,v);return map;},new Map()).values()].sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'es'));
+const occurrences=(items,key)=>[...items.reduce((map,item)=>{const name=String(item[key]||'Sin identificar').trim();const id=key==='titulo'&&item.id_marcha!=null?String(item.id_marcha):norm(name),v=map.get(id)||{name,count:0,id,autor:key==='titulo'?item.autor:null};v.count++;map.set(id,v);return map;},new Map()).values()].sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'es'));
 const showRows=(rows,unit='interpretaciones',max=40)=>rows.length?'<div class="ex-list">'+rows.slice(0,max).map((r,i)=>'<div class="ex-list-row"><span class="ex-rank">'+(i+1)+'</span><strong>'+esc(r.name)+'</strong><b>'+number(r.count)+' <small>'+esc(unit)+'</small></b></div>').join('')+'</div>'+ (rows.length>max?'<p class="ex-note">Se muestran los primeros '+max+' de '+rows.length+' resultados.</p>':''):'<p class="ex-note">No hay interpretaciones documentadas para esta consulta.</p>';
 const cards=(list,max=24)=>list.length?'<div class="ex-event-grid">'+list.slice(0,max).map(e=>{
- const count=tracks.filter(t=>String(t.id_procesion)===String(e.id_procesion)).length;
+ const count=(tracksByEvent.get(String(e.id_procesion))||[]).length;
  return '<article class="ex-event"><span>'+esc(e.tipo||'Actuación')+' · '+esc(date(e.fecha))+'</span><h3>'+esc(eventName(e))+'</h3><p>'+count+' interpretaciones documentadas</p><a href="'+esc(origin(e))+'">Consultar actuación</a><button data-event="'+esc(e.id_procesion)+'" type="button">Ver marchas aquí</button></article>';
  }).join('')+'</div>':'<p class="ex-note">No hay eventos registrados para este filtro.</p>';
 const setAnswer=(title,body,foot='')=>{
@@ -68,14 +70,14 @@ function renderOverview(){
  if(!loaded)return;
  const selected=filtered(),t=trace(selected),years=[...new Set(selected.map(eventYear).filter(Boolean))];
  $('summary').innerHTML=[
- ['Actuaciones',selected.length],['Interpretaciones',t.length],['Marchas distintas',new Set(t.map(x=>norm(x.titulo))).size],['Años consultados',years.length]
+ ['Actuaciones',selected.length],['Interpretaciones',t.length],['Marchas distintas',new Set(t.map(x=>x.id_marcha??norm(x.titulo))).size],['Años consultados',years.length]
  ].map(([label,value])=>'<div class="ex-stat"><strong>'+number(value)+'</strong><span>'+esc(label)+'</span></div>').join('');
  $('top-marches').innerHTML=showRows(occurrences(t,'titulo').slice(0,8),'veces',8);
  $('top-authors').innerHTML=showRows(occurrences(t,'autor').slice(0,8),'veces',8);
  $('recent-events').innerHTML=cards(selected,8);
 }
 function eventDetail(ev){
- const t=tracks.filter(x=>String(x.id_procesion)===String(ev.id_procesion));
+ const t=tracksByEvent.get(String(ev.id_procesion))||[];
  const lines=t.map((x,i)=>'<div class="ex-track"><span>'+String(i+1).padStart(2,'0')+'</span><div><strong>'+esc(x.titulo)+'</strong><small>'+esc(x.autor)+'</small></div></div>').join('');
  setAnswer(eventName(ev)+' · '+eventYear(ev),'<p class="ex-subtitle">'+esc(date(ev.fecha))+' · '+esc(ev.tipo||'Actuación')+' · '+t.length+' marchas registradas</p><div class="ex-tracks">'+(lines||'<p>No hay marchas documentadas para este evento.</p>')+'</div><a class="ex-primary-link" href="'+esc(origin(ev))+'">Abrir análisis original de la actuación</a>');
 }
@@ -91,7 +93,8 @@ function answerQuestion(value){
  const text=String(value||'').trim(),n=norm(text);if(!n)return;
  $('ask-box').value=text;
  const years=[...text.matchAll(/\b(19\d{2}|20\d{2}|21\d{2})\b/g)].map(m=>Number(m[1]));
- const selectedYear=$('filter-year').value,kind=$('filter-type').value;
+ const selectedYear=$('filter-year').value,kind=n.includes('semana santa')?'Semana Santa':$('filter-type').value;
+ const matchesKind=e=>kind==='all'||(kind==='Procesion'?e.tipo!=='Concierto':e.tipo===kind);
  const specific=years[0]||(selectedYear==='all'?null:Number(selectedYear)), sel=events.filter(e=>(specific==null||eventYear(e)===specific)&&(kind==='all'||(kind==='Procesion'?e.tipo!=='Concierto':e.tipo===kind)));
  const t=trace(sel);
  const isCompare=/compar|diferenc|versus| vs /.test(n);
@@ -100,12 +103,21 @@ function answerQuestion(value){
  const isRanking=/mas tocad|mas interpretad|ranking|top |frecuent|cuantas veces|cuantos veces/.test(n);
  const isEvent=/procesion|hermandad|concierto|soledad|santo entierro|actuacion|gloria/.test(n);
  if(isCompare&&years.length>=2){
-  const [a,b]=years.slice(0,2),x=events.filter(e=>eventYear(e)===a),y=events.filter(e=>eventYear(e)===b);
+  const [a,b]=years.slice(0,2),x=events.filter(e=>eventYear(e)===a&&matchesKind(e)),y=events.filter(e=>eventYear(e)===b&&matchesKind(e));
   const tx=trace(x),ty=trace(y);
-  const rows=[['Actuaciones',x.length,y.length],['Interpretaciones documentadas',tx.length,ty.length],['Marchas distintas',new Set(tx.map(z=>norm(z.titulo))).size,new Set(ty.map(z=>norm(z.titulo))).size],['Compositores distintos',new Set(tx.map(z=>norm(z.autor))).size,new Set(ty.map(z=>norm(z.autor))).size]];
+  const rows=[['Actuaciones',x.length,y.length],['Interpretaciones documentadas',tx.length,ty.length],['Marchas distintas',new Set(tx.map(z=>z.id_marcha??norm(z.titulo))).size,new Set(ty.map(z=>z.id_marcha??norm(z.titulo))).size],['Compositores distintos',new Set(tx.map(z=>norm(z.autor))).size,new Set(ty.map(z=>norm(z.autor))).size]];
   setAnswer('Comparativa '+a+' / '+b,'<div class="ex-table-wrap"><table><thead><tr><th>Indicador</th><th>'+a+'</th><th>'+b+'</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r[0])+'</td><td>'+number(r[1])+'</td><td>'+number(r[2])+'</td></tr>').join('')+'</tbody></table></div>', 'Las comparaciones solo consideran actuaciones finalizadas e interpretaciones registradas.');
   return;
  }
+ if(years.length>=2&&/pero no|y no|no se tocaron/.test(n)){
+  const [a,b]=years,ta=trace(events.filter(e=>eventYear(e)===a&&matchesKind(e))),tb=trace(events.filter(e=>eventYear(e)===b&&matchesKind(e)));
+  const ids=new Set(tb.map(x=>String(x.id_marcha??norm(x.titulo))));
+  const result=occurrences(ta.filter(x=>!ids.has(String(x.id_marcha??norm(x.titulo)))),'titulo');
+  setAnswer('Marchas de '+a+' no registradas en '+b,showRows(result),'La ausencia de registros no demuestra que una marcha no se interpretara.');return;
+ }
+ const authors=occurrences(t,'autor');
+ const author=authors.filter(x=>norm(x.name).length>3&&n.includes(norm(x.name))).sort((a,b)=>b.name.length-a.name.length)[0];
+ if(author){const hits=t.filter(x=>norm(x.autor)===norm(author.name));setAnswer('Marchas de '+author.name,showRows(occurrences(hits,'titulo')),scopeText(sel));return;}
  if(isEvent){
   const ev=findEvent(n,specific,kind);
   if(ev && (isMarch||/que se toc|se tocaron|repertorio|que son[oó]/.test(n))){eventDetail(ev);return;}
@@ -126,12 +138,14 @@ function answerQuestion(value){
   const names=occurrences(t,'titulo');
   const match=names.filter(x=>norm(x.name).length>3&&n.includes(norm(x.name))).sort((a,b)=>b.name.length-a.name.length)[0];
   if(match){
-   const hits=t.filter(x=>norm(x.titulo)===norm(match.name));
+   const same=names.filter(x=>norm(x.name)===norm(match.name));
+   if(same.length>1){setAnswer('Varias obras tituladas '+match.name,showRows(same.map(x=>({...x,name:x.name+' · '+(x.autor||'Autor desconocido')}))), 'Especifica el compositor para distinguirlas.');return;}
+   const hits=t.filter(x=>String(x.id_marcha??norm(x.titulo))===match.id);
    setAnswer(match.name,'<div class="ex-highlight"><strong>'+hits.length+'</strong><span>interpretaciones documentadas</span></div>'+cards([...new Map(hits.map(x=>[String(x.id_procesion),x.event])).values()].sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha))),30),scopeText(sel));return;
   }
   setAnswer('Marchas más interpretadas'+(specific?' · '+specific:''),showRows(names,'interpretaciones'),scopeText(sel));return;
  }
- setAnswer('Explora el archivo musical','<p>Prueba con una pregunta como «¿Qué marchas se tocaron en la Soledad?», «Compositores más interpretados», «¿Cuántas veces se tocó Amarguras?» o «Compara 2026 y 2027».</p><p>También puedes utilizar los filtros de año y tipo de actividad, o seleccionar directamente una actuación en el listado.</p>');
+ setAnswer('Explora el archivo musical','<p>Prueba con una pregunta como «¿Qué marchas se tocaron en la Soledad?», «Compositores más interpretados», «¿Cuántas veces se tocó Amarguras?» o «Compara dos años del archivo».</p><p>También puedes utilizar los filtros de año y tipo de actividad, o seleccionar directamente una actuación en el listado.</p>');
 }
 document.addEventListener('DOMContentLoaded',()=>{
  const form=$('ask-form');form.onsubmit=e=>{e.preventDefault();answerQuestion($('ask-box').value);};
