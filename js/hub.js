@@ -197,6 +197,20 @@ async function verificarTelemetriaDirecto() {
     }
 }
 
+let promesaFinalizadas=null;
+function obtenerActuacionesFinalizadas(){
+ if(!promesaFinalizadas)promesaFinalizadas=(async()=>{
+  const data=[];const years=await obtenerAniosActividadAbiertos();
+  for(const year of years){
+   for(let offset=0;;offset+=500){
+    const r=await clienteSupabase.from('maestro_procesiones').select('*').eq('estado','Finalizada').gte('fecha',year+'-01-01').lt('fecha',(year+1)+'-01-01').order('fecha',{ascending:false}).order('id_procesion').range(offset,offset+499);
+    if(r.error)return {data:null,error:r.error};data.push(...(r.data||[]));if((r.data||[]).length<500)break;
+   }
+  }
+  return {data:data.sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha))),error:null};
+ })();
+ return promesaFinalizadas;
+}
 let promesaAniosAbiertos = null;
 function obtenerAniosActividadAbiertos() {
     if (!promesaAniosAbiertos) {
@@ -220,11 +234,7 @@ async function cargarUltimaActuacion() {
     }
 
     try {
-        const { data, error } = await clienteSupabase
-            .from('maestro_procesiones')
-            .select('*')
-            .eq('estado', 'Finalizada')
-            .order('fecha', { ascending: false });
+        const { data, error } = await obtenerActuacionesFinalizadas();
 
         if (error) {
             throw error;
@@ -240,23 +250,23 @@ async function cargarUltimaActuacion() {
         const [likesRes, comentariosRes, repertorioRes] = await Promise.all([
             clienteSupabase
                 .from('valoraciones')
-                .select('id_procesion')
+                .select('id_procesion',{count:'exact',head:true})
                 .eq('id_procesion', actuacion.id_procesion),
 
             clienteSupabase
                 .from('procesion_comentarios')
-                .select('id_procesion')
+                .select('id_procesion',{count:'exact',head:true})
                 .eq('id_procesion', actuacion.id_procesion),
 
             clienteSupabase
                 .from('repertorio_transaccional')
-                .select('id_registro')
+                .select('id_registro',{count:'exact',head:true})
                 .eq('id_procesion', actuacion.id_procesion)
         ]);
 
-        const likes = likesRes.data ? likesRes.data.length : 0;
-        const comentarios = comentariosRes.data ? comentariosRes.data.length : 0;
-        const marchas = repertorioRes.data ? repertorioRes.data.length : 0;
+        const likes = likesRes.error ? '—' : (likesRes.count ?? 0);
+        const comentarios = comentariosRes.error ? '—' : (comentariosRes.count ?? 0);
+        const marchas = repertorioRes.error ? '—' : (repertorioRes.count ?? 0);
 
         const foto = actuacion.url_foto || 'img/foto-dashboard.jpg';
         const fecha = formatearFecha(actuacion.fecha);
@@ -346,11 +356,7 @@ async function cargarActuacionesRecientes() {
     }
 
     try {
-        const { data: procesiones, error } = await clienteSupabase
-            .from('maestro_procesiones')
-            .select('*')
-            .eq('estado', 'Finalizada')
-            .order('fecha', { ascending: false });
+        const { data: procesiones, error } = await obtenerActuacionesFinalizadas();
 
         if (error) {
             throw error;
