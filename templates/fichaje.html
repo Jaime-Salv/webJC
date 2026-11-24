@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#050505"><title>Fichaje QR · Julián Cerdán</title>
+<style>*{box-sizing:border-box}body{background:#080808;color:#f8f8f8;font:16px system-ui,-apple-system,sans-serif;margin:0;min-height:100vh;display:grid;place-items:center;padding:16px}main{width:min(100%,430px);background:#171717;border:1px solid #4b4024;border-radius:18px;padding:28px}h1{font-size:23px;margin:5px 0}p{line-height:1.55;color:#bbb}label{display:block;margin:20px 0 10px;font-weight:700}input{display:block;width:100%;padding:16px;font-size:28px;letter-spacing:.35em;text-align:center;border-radius:10px;border:1px solid #888;background:#262626;color:#fff}button{width:100%;padding:15px;background:#d4af37;color:#111;border:0;border-radius:10px;font-weight:800;font-size:16px;margin-top:16px}button:disabled{opacity:.5}a{color:#e4c56c}.status{padding:14px;background:#252525;border-radius:10px;min-height:52px}.success{color:#99e9ae}.error{color:#ffaaaa}small{color:#aaa}</style></head>
+<body><main><small>BANDA DE MÚSICA JULIÁN CERDÁN</small><h1>Fichaje de asistencia</h1><p id="intro">Comprobando el QR…</p><div class="status" id="estado" role="status" aria-live="polite">Validando…</div>
+<form id="pin-form" hidden><label for="pin">Introduce tu PIN personal</label><input id="pin" type="password" inputmode="numeric" autocomplete="off" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="••••••"><button type="submit" id="enviar">Registrar asistencia</button><p><small>Si no tienes PIN, solicítalo a administración. No necesitas registrarte.</small></p></form>
+<p><a href="./musicos.html">Ir al Portal del Músico</a></p></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/config.js"></script>
+<script>
+(async()=>{
+ const params=new URLSearchParams(location.hash.slice(1)),evento=params.get('evento'),token=params.get('token'),estado=document.getElementById('estado'),form=document.getElementById('pin-form'),intro=document.getElementById('intro');
+ history.replaceState(null,'',location.pathname);
+ function msg(t,success=false){estado.textContent=t;estado.className='status '+(success?'success':'error');}
+ if(!/^[0-9a-f-]{36}$/i.test(evento||'')||!/^[0-9a-f-]{36}$/i.test(token||'')){msg('Este QR no es válido. Vuelve a escanearlo.');return;}
+ intro.textContent='QR reconocido. Se registrará tu llegada al evento.';
+ try{
+  const {data:{user}}=await clienteSupabase.auth.getUser();
+  if(user){
+   const {data:perfil,error}=await clienteSupabase.from('perfiles').select('es_musico').eq('id',user.id).maybeSingle();
+   if(error)throw error;
+   if(perfil?.es_musico){
+    const {data,error:err}=await clienteSupabase.rpc('banda_accion',{p_accion:'fichar',p_datos:{evento_id:evento,token}});
+    if(err)throw err;
+    msg('¡Asistencia registrada correctamente!',true);return;
+   }
+  }
+  estado.textContent='Introduce el PIN que te proporcionó administración.';estado.className='status';form.hidden=false;
+  form.onsubmit=async e=>{
+   e.preventDefault();const b=document.getElementById('enviar'),pin=document.getElementById('pin').value;b.disabled=true;
+   try{
+    const {data,error}=await clienteSupabase.rpc('banda_pin_fichar',{p_evento:evento,p_token:token,p_pin:pin});
+    if(error)throw error;if(!data?.ok)throw Error(data?.error||'No se ha podido registrar la asistencia.');
+    form.hidden=true;msg('¡Asistencia registrada correctamente! · '+data.nombre,true);
+   }catch(err){msg(err.message||'No se ha podido fichar.');document.getElementById('pin').value='';}finally{b.disabled=false;}
+  };
+ }catch(err){
+   // Si hay sesión de músico, nunca se recurre al PIN ante un error de fichaje.
+   msg(err.message||'No se ha podido registrar la asistencia. Contacta con administración.');
+ }
+})();
+</script></body></html>
