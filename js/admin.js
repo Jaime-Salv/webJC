@@ -26,11 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    await cargarCatalogoEnMemoria();
-    await comprobarEstadoSistema();
-    await cargarUsuariosAdmin();
-    await cargarConciertosAdmin();
     prepararNavegacionAdmin();
+    await Promise.all([cargarCatalogoEnMemoria(),cargarUsuariosAdmin(),cargarConciertosAdmin()]);
+    await comprobarEstadoSistema();
     await actualizarResumenAdmin();
 
     const inputIdMarcha = document.getElementById('inp-id-marcha');
@@ -131,7 +129,7 @@ function prepararNavegacionAdmin() {
     if (etiquetaNombre) etiquetaNombre.textContent = nombreAdmin;
 
     const vistaInicial = window.location.hash.replace('#', '');
-    const vistaValida = document.querySelector(`[data-admin-view="${vistaInicial}"]`);
+    const vistaValida = [...document.querySelectorAll('[data-admin-view]')].find(v=>v.dataset.adminView===vistaInicial);
 
     if (vistaInicial && vistaValida) {
         mostrarVistaAdmin(vistaInicial, false);
@@ -139,7 +137,7 @@ function prepararNavegacionAdmin() {
 }
 
 function mostrarVistaAdmin(nombreVista, actualizarHash = true) {
-    const vista = document.querySelector(`[data-admin-view="${nombreVista}"]`);
+    const vista = [...document.querySelectorAll('[data-admin-view]')].find(v=>v.dataset.adminView===nombreVista);
     if (!vista) return;
 
     document.querySelectorAll('[data-admin-view]').forEach((seccion) => {
@@ -147,7 +145,7 @@ function mostrarVistaAdmin(nombreVista, actualizarHash = true) {
     });
 
     document.querySelectorAll('[data-admin-target]').forEach((boton) => {
-        boton.classList.toggle('activo', boton.dataset.adminTarget === nombreVista);
+        const activo=boton.dataset.adminTarget===nombreVista;boton.classList.toggle('activo',activo);if(activo)boton.setAttribute('aria-current','page');else boton.removeAttribute('aria-current');
     });
 
     if (actualizarHash) {
