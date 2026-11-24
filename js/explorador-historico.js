@@ -10,10 +10,11 @@ const origin=e=>'analisis.html?id='+encodeURIComponent(e.id_procesion);
 const eventName=e=>e.hermandad||e.titulo||e.nombre||'Actuación sin título';
 const eventYear=e=>Number(String(e.fecha||'').slice(0,4))||null;
 async function read(table,setup=q=>q){
- const result=[];for(let offset=0;;offset+=700){
-  const {data,error}=await setup(clienteSupabase.from(table).select('*')).range(offset,offset+699);
+ const keys={maestro_procesiones:'id_procesion',catalogo_marchas:'id_marcha',conciertos:'id_concierto',repertorio_transaccional:'id_registro'};
+ const result=[];for(let offset=0;;offset+=500){
+  const {data,error}=await setup(clienteSupabase.from(table).select('*')).order(keys[table],{ascending:true}).range(offset,offset+499);
   if(error)throw new Error('No se pueden consultar los datos públicos de '+table+': '+error.message);
-  result.push(...(data||[]));if((data||[]).length<700)break;
+  result.push(...(data||[]));if((data||[]).length<500)break;
  }return result;
 }
 async function init(){
@@ -40,19 +41,19 @@ async function init(){
   $('filter-year').innerHTML='<option value="all">Todos los años registrados</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
   $('explorer-status').textContent='Archivo consultado · '+events.length+' actuaciones finalizadas · '+tracks.length+' interpretaciones documentadas · '+(years.length?years.at(-1)+'–'+years[0]:'sin años disponibles');
   renderOverview();
-  if(new URLSearchParams(location.search).has('year')){$('filter-year').value=new URLSearchParams(location.search).get('year');renderOverview();}
+  const params=new URLSearchParams(location.search);if(years.includes(Number(params.get('year'))))$('filter-year').value=params.get('year');if(params.get('tipo')==='Semana Santa'){$('filter-type').add(new Option('Semana Santa','Semana Santa'));$('filter-type').value='Semana Santa';}renderOverview();
   $('ask-box').disabled=false;$('ask-send').disabled=false;$('filter-year').disabled=false;$('filter-type').disabled=false;
  }catch(error){$('explorer-status').textContent=error.message;$('answer').innerHTML='<p class="notice">No se ha podido cargar el archivo público. Recarga la página e inténtalo de nuevo.</p>';}
 }
 const filtered=()=>{
  const y=$('filter-year').value,k=$('filter-type').value;
- return events.filter(e=>(y==='all'||eventYear(e)===Number(y))&&(k==='all'||(k==='Concierto'?e.tipo==='Concierto':k==='Procesion'?e.tipo!=='Concierto':true)));
+ return events.filter(e=>(y==='all'||eventYear(e)===Number(y))&&(k==='all'||(k==='Concierto'?e.tipo==='Concierto':k==='Procesion'?e.tipo!=='Concierto':e.tipo===k)));
 };
 const trace=selected=>{
  const ids=new Set(selected.map(e=>String(e.id_procesion)));
  return tracks.filter(t=>ids.has(String(t.id_procesion)));
 };
-const occurrences=(items,key)=>[...items.reduce((map,item)=>{const name=String(item[key]||'Sin identificar').trim();const id=norm(name),v=map.get(id)||{name,count:0};v.count++;map.set(id,v);return map;},new Map()).values()].sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'es'));
+const occurrences=(items,key)=>[...items.reduce((map,item)=>{const name=String(item[key]||'Sin identificar').trim();const id=key==='titulo'&&item.id_marcha!=null?String(item.id_marcha):norm(name),v=map.get(id)||{name,count:0};v.count++;map.set(id,v);return map;},new Map()).values()].sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'es'));
 const showRows=(rows,unit='interpretaciones',max=40)=>rows.length?'<div class="ex-list">'+rows.slice(0,max).map((r,i)=>'<div class="ex-list-row"><span class="ex-rank">'+(i+1)+'</span><strong>'+esc(r.name)+'</strong><b>'+number(r.count)+' <small>'+esc(unit)+'</small></b></div>').join('')+'</div>'+ (rows.length>max?'<p class="ex-note">Se muestran los primeros '+max+' de '+rows.length+' resultados.</p>':''):'<p class="ex-note">No hay interpretaciones documentadas para esta consulta.</p>';
 const cards=(list,max=24)=>list.length?'<div class="ex-event-grid">'+list.slice(0,max).map(e=>{
  const count=tracks.filter(t=>String(t.id_procesion)===String(e.id_procesion)).length;
@@ -90,7 +91,8 @@ function answerQuestion(value){
  const text=String(value||'').trim(),n=norm(text);if(!n)return;
  $('ask-box').value=text;
  const years=[...text.matchAll(/\b(19\d{2}|20\d{2}|21\d{2})\b/g)].map(m=>Number(m[1]));
- const specific=years[0]||null, sel=events.filter(e=>specific==null||eventYear(e)===specific);
+ const selectedYear=$('filter-year').value,kind=$('filter-type').value;
+ const specific=years[0]||(selectedYear==='all'?null:Number(selectedYear)), sel=events.filter(e=>(specific==null||eventYear(e)===specific)&&(kind==='all'||(kind==='Procesion'?e.tipo!=='Concierto':e.tipo===kind)));
  const t=trace(sel);
  const isCompare=/compar|diferenc|versus| vs /.test(n);
  const isAuthor=/compositor|autor|autores/.test(n);
