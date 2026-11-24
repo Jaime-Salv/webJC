@@ -1,0 +1,92 @@
+/* JC Administration · visual refresh 2026. Scoped to existing admin only.
+   Keeps established IDs, navigation, events and form behavior. */
+:root{--jc-bg:#090b0f;--jc-panel:#14171d;--jc-panel-2:#191d24;--jc-edge:#2b3039;--jc-text:#f2f2f1;--jc-muted:#a1a8b5;--jc-gold:#d3ad46;--jc-gold-soft:#f0d88e;--jc-radius:15px}
+html,body{background:var(--jc-bg);color:var(--jc-text)}
+body{padding-top:76px}
+.main-header{height:76px!important;padding:0 max(20px,calc((100vw - 1540px)/2))!important;background:rgba(12,14,18,.96)!important;border-bottom:1px solid #292c33!important;box-shadow:0 5px 28px #0004;z-index:1000}
+.logo-side img{height:49px!important}
+.header-center h2{font-size:12px!important;font-weight:800;letter-spacing:.1em!important}
+.header-center span{display:block;color:#9da3ad;font-size:10px;letter-spacing:.03em;margin-top:4px}
+.header-admin-actions{gap:10px}
+.admin-shell{width:min(100%,1540px);grid-template-columns:238px minmax(0,1fr);min-height:calc(100vh - 76px)}
+.admin-sidebar{top:76px;height:calc(100vh - 76px);padding:26px 15px;background:#0e1116;border-right:1px solid #292d36}
+.admin-profile{padding:17px;margin-bottom:25px;border:1px solid #303640;background:linear-gradient(135deg,#1b1f28,#12151b);border-radius:13px}
+.admin-profile span{font-size:10px;color:#9b9fa8;letter-spacing:.04em;text-transform:none}
+.admin-profile strong{font-size:13px;color:#f0e1b3;margin-top:7px}
+.admin-nav{gap:5px}
+.admin-nav-button{min-height:45px;padding:11px 13px;gap:13px;font-size:12px;font-weight:650;letter-spacing:.01em;border:1px solid transparent;border-radius:10px;background:transparent;color:#abb0b9}
+.admin-nav-button:hover{background:#20242c;color:#fff;border-color:#333843}
+.admin-nav-button.activo{background:#352d1d;color:#f3daa0;border-color:#6c5832;box-shadow:inset 3px 0 0 var(--jc-gold)}
+.admin-nav-icon{display:flex;align-items:center;justify-content:center;width:23px;height:23px;flex-shrink:0;border-radius:7px;background:#222731;color:#adb2bd;font-size:15px}
+.admin-nav-button.activo .admin-nav-icon{background:#524124;color:#f7d677}
+.admin-sidebar-link{margin-top:29px;padding:18px 6px;border-top:1px solid #31343b;font-size:11px;color:#acb2ba}
+.admin-content{padding:34px clamp(20px,3vw,46px) 80px;background:radial-gradient(ellipse at 80% 0%,#15171e 0%,transparent 38%)}
+.admin-view-header{align-items:center;gap:22px;padding:0 0 21px;margin-bottom:23px;border-bottom:1px solid #292e36}
+.admin-view-header span{color:var(--jc-gold-soft);font-size:10px;font-weight:750;letter-spacing:.13em}
+.admin-view-header h1{margin:7px 0 0;font-size:clamp(24px,2.5vw,34px);font-weight:750;letter-spacing:-.04em;line-height:1.2}
+.admin-view-header p{max-width:380px;color:#a5abb5;text-align:right;font-size:12px;line-height:1.65}
+.admin-view .card-admin,.admin-view .panel,.banda .panel,.banda .event{border-radius:var(--jc-radius);background:var(--jc-panel);border:1px solid var(--jc-edge);box-shadow:none}
+.admin-view .card-admin{padding:24px}
+.admin-view .card-admin h3{font-size:14px;letter-spacing:-.01em;text-transform:none;border-bottom:1px solid #2d323b;padding-bottom:14px;margin:0 0 19px;color:#f3f3f3}
+.dashboard-grid{gap:13px}
+.dashboard-kpi{min-height:121px;padding:20px;border:1px solid #31353d;background:#15191f;border-radius:14px;transition:border-color .15s}
+.dashboard-kpi:hover{border-color:#56513b}
+.dashboard-kpi span{font-size:10px;letter-spacing:.02em;color:#aeb4be;text-transform:none;font-weight:650}
+.dashboard-kpi strong{margin-top:13px;font-size:27px;line-height:1.2;color:#f0d68b}
+.dashboard-kpi small{color:#9da4ae;font-size:11px}
+.dashboard-actions{gap:13px}
+.dashboard-action{border-radius:14px!important;background:#151a21!important;border:1px solid #303640!important;padding:20px!important;text-align:left;transition:border-color .15s,transform .15s}
+.dashboard-action:hover{border-color:#857243!important;transform:translateY(-2px)}
+.dashboard-action strong{color:#f1f1f1!important}
+.dashboard-action span{color:#a2aab7!important;line-height:1.55}
+.banda .muted{color:#adb4c0}
+.banda .panel{padding:24px}
+.banda h2{font-size:19px;font-weight:750;letter-spacing:-.025em}
+.banda .event{padding:17px}
+.banda button,.banda .button{border-radius:9px;min-height:42px;transition:background .15s,border-color .15s}
+.banda button.primary,.banda .button.primary{background:var(--jc-gold);border-color:var(--jc-gold);color:#17130a}
+.banda button.primary:hover{background:#ead08b;border-color:#ead08b}
+.banda .badge{background:#262d37;color:#dce0e6;border:1px solid #343d49}
+.banda .badge.good{background:#153a2c;border-color:#306a4d;color:#9fe3b7}
+.banda .badge.warn{background:#48351d;border-color:#705536;color:#f7d39a}
+.banda input,.banda select,.banda textarea,.input-admin{border-radius:9px;background:#0e1117;border-color:#414650;color:#f5f5f5}
+.banda input:focus,.banda select:focus,.banda textarea:focus,.input-admin:focus{outline:2px solid #d4af3766;outline-offset:1px;border-color:#a48a52}
+.banda .notice{background:#29271d;border-color:#d4af37}
+.banda [data-operation-panel] .jc-operation-heading{margin-bottom:3px}
+.banda .jc-operations-tabs{display:flex!important;overflow-x:auto;scrollbar-width:thin;gap:5px;padding:6px;background:#12161b;border:1px solid #303640;border-radius:13px;margin:0 0 25px}
+.banda .jc-operations-tabs button{white-space:nowrap;flex:1 0 auto;border-radius:9px;font-size:12px;min-height:47px;padding:9px 13px;font-weight:650;color:#acb2bc}
+.banda .jc-operations-tabs button[aria-pressed="true"]{background:#38301f!important;color:#f4db9d!important;box-shadow:inset 0 -2px 0 #c9a33e}
+.banda .jc-operations-tabs button:hover:not([aria-pressed="true"]){background:#252a31}
+.banda .jc-operation-heading h2{font-size:23px;letter-spacing:-.04em}
+.banda .jc-operation-heading p{font-size:12px;line-height:1.5}
+.banda .jc-admin-quick-stats{gap:12px}
+.banda .jc-admin-stat{background:#181d24;border:1px solid #343b45;border-radius:13px;padding:17px}
+.banda .jc-admin-stat strong{font-size:27px;color:#edcf79}
+.banda .jc-admin-stat span{color:#b4b9c1;font-size:11px}
+.banda .jc-detail-summary{gap:9px}
+.banda .jc-detail-summary .stat{background:#1b222a;border:1px solid #2d3742;border-radius:12px}
+.banda .table-scroll,.tabla-usuarios-wrapper,.table-wrapper{border:1px solid #303740;border-radius:12px;overflow-x:auto}
+.banda table,.tabla-usuarios{border-collapse:collapse}
+.banda table thead th,.tabla-usuarios thead th,.tabla-historial th{background:#20252d;color:#d9c17d;text-align:left;font-size:10px;letter-spacing:.07em;text-transform:uppercase;padding:13px 15px;border-bottom:1px solid #424750}
+.banda table tbody td,.tabla-usuarios tbody td,.tabla-historial td{padding:14px 15px;border-bottom:1px solid #292f38;font-size:12px;line-height:1.55}
+.banda table tbody tr:hover,.tabla-usuarios tbody tr:hover{background:#20252d}
+.banda table tbody tr:last-child td,.tabla-usuarios tbody tr:last-child td{border-bottom:0}
+.banda .jc-detail-people{border:1px solid #303740;border-radius:12px;padding:12px 16px;background:#171b22}
+.banda .jc-detail-people summary{font-weight:650;cursor:pointer;padding:6px 0}
+.banda #ba-manual-management{margin:0!important;padding:23px}
+#ba-manual-management > .row.between{align-items:flex-start;gap:17px;margin-bottom:20px}
+#ba-manual-management > .row.between > div{flex:1 1 270px}
+#ba-manual-management h2{font-size:19px;letter-spacing:-.03em}
+#ba-manual-management .muted{max-width:610px;font-size:12px;line-height:1.65}
+#ba-manual-management .table-scroll{margin-top:16px}
+#ba-manual-members button{min-height:37px;padding:7px 11px;font-size:11px}
+.banda .jc-member-shortcut{border:1px solid #353d46;padding:20px;border-radius:13px;background:#161c23}
+.banda .jc-member-shortcut p{margin:0 0 13px;color:#b4bec8;font-size:12px}
+.banda .jc-member-shortcut button{background:#252b34;border:1px solid #4a5059}
+.banda .jc-operations-tabs button span{font-size:16px;vertical-align:middle}
+.admin-view .admin-view-header + .row.between{margin:0 0 22px;gap:9px}
+.admin-view button:focus-visible,.admin-view a:focus-visible,.admin-sidebar button:focus-visible{outline:2px solid #e1be69;outline-offset:3px}
+@media(max-width:1150px){.admin-shell{grid-template-columns:205px minmax(0,1fr)}.admin-content{padding:25px 20px}.admin-sidebar{padding:18px 10px}.admin-nav-button{padding:11px 9px}.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:820px){body{padding-top:70px}.main-header{height:70px!important}.admin-shell{display:block}.admin-sidebar{position:relative;top:auto;width:100%;height:auto;overflow:visible;border-right:0;border-bottom:1px solid #323740;padding:9px 13px;background:#11151b}.admin-profile,.admin-sidebar-link{display:none}.admin-nav{flex-direction:row;gap:7px;overflow-x:auto;padding:4px 0 6px;scrollbar-width:thin}.admin-nav-button{flex:0 0 auto;width:auto;padding:10px 13px;min-height:42px;font-size:11px}.admin-content{padding:22px 15px 55px}.admin-view-header{align-items:flex-start}.admin-view-header p{max-width:240px}}
+@media(max-width:620px){.header-center h2{font-size:10px!important}.header-center span{font-size:8px}.logo-side img{height:36px!important}.admin-view-header{display:block}.admin-view-header p{text-align:left;margin-top:10px;max-width:none}.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.dashboard-kpi{padding:14px;min-height:112px}.dashboard-kpi strong{font-size:21px}.dashboard-actions{grid-template-columns:1fr}.banda .panel{padding:16px}.banda .jc-operations-tabs button{flex:0 0 auto}.banda .jc-admin-quick-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#ba-manual-management > .row.between{display:flex;flex-direction:column}#ba-manual-management > .row.between button{width:100%}#ba-manual-management{padding:16px!important}.admin-view .card-admin{padding:16px}.main-header{padding:0 12px!important}}
+@media(prefers-reduced-motion:reduce){.dashboard-action,.admin-nav-button,.banda button{transition:none!important}}
