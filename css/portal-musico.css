@@ -155,3 +155,7 @@ body.portal { --portal-line:#2a2c30; --portal-panel:#121418; --portal-muted:#a9a
  .portal .portal-secondary{padding:13px!important}
  .portal [data-portal-panel="confirmaciones"] .events{grid-template-columns:1fr}
 }
+
+/* Navegación móvil: evitar desbordamiento y mantener controles táctiles. */
+@media(max-width:680px){.portal .portal-main-nav{display:flex;flex-wrap:wrap;gap:4px 8px;justify-content:center}.portal .portal-main-nav a{min-height:44px;display:inline-flex;align-items:center;padding:0 6px}.portal .portal-tools button:focus-visible,.portal a:focus-visible{outline:2px solid #d4af37;outline-offset:2px}.portal .portal-main{min-width:0}.portal .portal-header-actions{flex-wrap:wrap}}
+@media(max-width:360px){.portal .portal-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.portal .portal-tools button:nth-child(n+5){grid-column:auto}}
