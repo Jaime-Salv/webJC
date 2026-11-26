@@ -19,8 +19,8 @@
     el('rec-status').textContent='Temporada cerrada · Archivo disponible';
     const start=anio+'-01-01',end=(anio+1)+'-01-01';
     const [proc,conc,rep]=await Promise.all([
-      db.from('maestro_procesiones').select('id_procesion,concierto_id,tipo,fecha,hermandad,localidad,estado,hora,fin_hora,url_foto').gte('fecha',start).lt('fecha',end).eq('estado','Finalizada').order('fecha',{ascending:true}),
-      db.from('conciertos').select('id_concierto,titulo,fecha,localidad,estado').gte('fecha',start).lt('fecha',end).eq('estado','Publicado').order('fecha',{ascending:true}),
+      db.from('maestro_procesiones').select('id_procesion,concierto_id,tipo,fecha,hermandad,localidad,estado,hora,fin_hora,url_foto').gte('fecha',start).lt('fecha',end) .eq('estado','Finalizada').neq('tipo','Concierto').order('fecha',{ascending:true}),
+      db.from('conciertos').select('id_concierto,titulo,fecha,localidad,estado').gte('fecha',start).lt('fecha',end) .eq('estado','Publicado').eq('archivado',true).order('fecha',{ascending:true}),
       db.from('repertorios_temporada').select('id_repertorio,temporada').eq('temporada',anio).maybeSingle()
     ]);
     for(const r of [proc,conc,rep])if(r.error)throw r.error;

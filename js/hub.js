@@ -166,7 +166,7 @@ async function verificarTelemetriaDirecto() {
         const { data, error } = await clienteSupabase
             .from('maestro_procesiones')
             .select('id_procesion, hermandad, localidad')
-            .eq('estado', 'Activa')
+            .eq('estado', 'Activa').neq('tipo','Concierto')
             .limit(1);
 
         if (error) {
@@ -241,7 +241,15 @@ async function cargarUltimaActuacion() {
         }
 
         const aniosAbiertos = await obtenerAniosActividadAbiertos();
-        const actuacion = (data || []).find(p => aniosAbiertos.has(Number(p.fecha?.slice(0,4))));
+        const procesion = (data || []).find(p => p.tipo!=='Concierto' && aniosAbiertos.has(Number(p.fecha?.slice(0,4))));
+        const {data: conciertos,error: errorConciertos}=await clienteSupabase.from('conciertos').select('*').eq('estado','Publicado').eq('archivado',true).order('fecha',{ascending:false}).order('hora',{ascending:false});
+        if(errorConciertos)throw errorConciertos;
+        const concierto=(conciertos||[]).find(c=>aniosAbiertos.has(Number(c.fecha?.slice(0,4))));
+        if(concierto&&(!procesion||String(concierto.fecha+(concierto.hora||'')).localeCompare(String(procesion.fecha+(procesion.hora||'')))>=0)){
+          contenedor.innerHTML=`<article class="latest-card"><div class="latest-image" style="background-image:url('${escaparAtributo(concierto.cartel_url||'img/foto-dashboard.jpg')}')"></div><div class="latest-content"><div class="latest-meta">${escaparHTML(formatearFecha(concierto.fecha))} · Concierto</div><h3>${escaparHTML(concierto.titulo)}</h3><p>${escaparHTML([concierto.lugar,concierto.localidad].filter(Boolean).join(' · '))}</p><div class="hero-actions"><a class="btn-primary" href="templates/concierto.html?id=${encodeURIComponent(concierto.id_concierto)}">Ver programa</a><a class="btn-secondary" href="#actuaciones">Más actuaciones</a></div></div></article>`;
+          return;
+        }
+        const actuacion=procesion;
         if (!actuacion) {
             contenedor.innerHTML = '<div class="empty-state">Sin actuaciones finalizadas en las temporadas abiertas. Consulta «Recuerda» para temporadas anteriores.</div>';
             return;
@@ -408,20 +416,14 @@ async function cargarConciertosHome() {
             throw error;
         }
 
-        const hoy = new Intl.DateTimeFormat('sv-SE', {timeZone:'Europe/Madrid'}).format(new Date());
-        const {data: directos,error: errorDirectos} = await clienteSupabase.from('maestro_procesiones').select('id_procesion,concierto_id,estado').eq('tipo','Concierto');
-        if(errorDirectos) throw errorDirectos;
-        const anteriores = (conciertos || []).filter(c => (directos||[]).some(d=>String(d.concierto_id)===String(c.id_concierto)&&['Activa','Finalizada'].includes(d.estado)) || ((!c.fecha || c.fecha < hoy)&&!(directos||[]).some(d=>String(d.concierto_id)===String(c.id_concierto)&&d.estado==='Activa')));
+        const anteriores = (conciertos || []).filter(c => c.archivado);
         if (anteriores.length === 0) {
             gridConciertos.innerHTML = `<div class="empty-state">Todavía no hay conciertos anteriores publicados.</div>`;
             return;
         }
 
         const aniosAbiertos = await obtenerAniosActividadAbiertos();
-        const conciertosActuales = anteriores.filter(c => aniosAbiertos.has(Number(c.fecha?.slice(0,4)))).map(c => {
-            const directo = (directos || []).find(d => String(d.concierto_id) === String(c.id_concierto) && ['Activa','Finalizada'].includes(d.estado));
-            return {...c, directo_id: directo?.id_procesion, directo_estado: directo?.estado};
-        });
+        const conciertosActuales = anteriores.filter(c => aniosAbiertos.has(Number(c.fecha?.slice(0,4))));
         if (!conciertosActuales.length) {
             gridConciertos.innerHTML = '<div class="empty-state">Conciertos anteriores disponibles en «Recuerda».</div>';
             return;
@@ -461,10 +463,8 @@ function activarImagenesDiferidas(contenedor) {
 }
 
 function crearTarjetaConcierto(concierto) {
-    const urlTarjeta = concierto.directo_estado === 'Activa' && concierto.directo_id
-        ? `templates/live.html?id=${encodeURIComponent(concierto.directo_id)}`
-        : `templates/concierto.html?id=${encodeURIComponent(concierto.id_concierto)}`;
-    const etiquetaTarjeta = concierto.directo_estado === 'Activa' ? 'Seguir en directo' : 'Ver programa';
+    const urlTarjeta = `templates/concierto.html?id=${encodeURIComponent(concierto.id_concierto)}`;
+    const etiquetaTarjeta = 'Ver programa';
     const foto = concierto.cartel_url || 'img/foto-dashboard.jpg';
     const fecha = formatearFecha(concierto.fecha);
 
@@ -575,12 +575,12 @@ async function cargarProximasActuaciones() {
  try {
   const hoy=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Madrid'}).format(new Date());
   const [c,p,live]=await Promise.all([
-   clienteSupabase.from('conciertos').select('id_concierto,titulo,fecha,hora,fin_hora,lugar,localidad,cartel_url').eq('estado','Publicado').gte('fecha',hoy).order('fecha'),
+   clienteSupabase.from('conciertos').select('id_concierto,titulo,fecha,hora,fin_hora,lugar,localidad,cartel_url,archivado').eq('estado','Publicado').gte('fecha',hoy).order('fecha'),
    clienteSupabase.from('maestro_procesiones').select('id_procesion,hermandad,fecha,hora,fin_hora,lugar,localidad,descripcion,url_foto').eq('estado','Programada').gte('fecha',hoy).order('fecha'),
    clienteSupabase.from('maestro_procesiones').select('concierto_id,estado').eq('tipo','Concierto')
   ]);
   if(c.error&&p.error)throw c.error; if(c.error||p.error||live.error)console.warn('Carga parcial de próximas actuaciones',c.error,p.error,live.error);
-  const conciertos=(c.data||[]).filter(e=>!(live.data||[]).some(l=>String(l.concierto_id)===String(e.id_concierto)&&['Activa','Finalizada'].includes(l.estado)));
+  const conciertos=(c.data||[]).filter(e=>!e.archivado);
   const ids=conciertos.map(e=>e.id_concierto);
   const programas=ids.length?await clienteSupabase.from('concierto_obras').select('id_concierto').in('id_concierto',ids):{data:[],error:null};
   if(programas.error)console.warn('Programas no disponibles',programas.error);

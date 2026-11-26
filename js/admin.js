@@ -332,7 +332,7 @@ async function comprobarEstadoSistema() {
     const { data, error } = await clienteSupabase
         .from('maestro_procesiones')
         .select('*')
-        .eq('estado', 'Activa')
+        .eq('estado', 'Activa').neq('tipo','Concierto')
         .maybeSingle();
 
     if (error) {
@@ -1685,7 +1685,7 @@ async function cargarConciertosAdmin() {
             option.value = concierto.id_concierto;
 
             const fecha = concierto.fecha || 'Sin fecha';
-            const estado = concierto.estado || 'Sin estado';
+            const estado = concierto.archivado ? 'Archivado' : (concierto.estado || 'Sin estado');
 
             option.textContent = `${concierto.titulo} · ${fecha} · ${estado}`;
             selector.appendChild(option);

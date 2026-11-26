@@ -11,7 +11,10 @@
  }
  let starting=false;
  async function startLive(eventId,button){
-  if(starting)return;if(!eventId)throw Error('Publica primero la actuación con fecha, horario y lugar.');
+  if(starting)return;
+  const concierto=events.find(ev=>String(ev.id)===String(eventId))?.concierto_id;
+  if(concierto)return archiveConcert(concierto,button);
+  if(!eventId)throw Error('Publica primero la actuación con fecha, horario y lugar.');
   if(!confirm('¿Empezar ahora el directo de esta actuación?'))return;
   starting=true;if(button)button.disabled=true;
   try{
@@ -20,6 +23,21 @@
    document.querySelector('[data-admin-target="directo"]').click();
    if(!data.ya_activo)await enviarAvisoInicioDirecto(data.directo);
    document.dispatchEvent(new Event('agenda:refresh'));
+  }finally{starting=false;if(button?.isConnected)button.disabled=false;}
+ }
+ async function archiveConcert(id,button){
+  if(!id)throw Error('Selecciona primero un concierto publicado.');
+  if(starting)return;
+  if(!confirm('¿Pasar este concierto al historial? El programa y el fichaje se conservan.'))return;
+  starting=true;if(button)button.disabled=true;
+  try{
+   const {data,error}=await clienteSupabase.from('conciertos').update({archivado:true}).eq('id_concierto',id).eq('estado','Publicado').select().single();
+   if(error)throw error;
+   if(String(conciertoAdminActual?.id_concierto)===String(id))conciertoAdminActual=data;
+   await cargarConciertosAdmin();
+   if(String(conciertoAdminActual?.id_concierto)===String(id)){ $('select-concierto-admin').value=id; pintarConciertoAdmin(data); }
+   document.dispatchEvent(new Event('agenda:refresh'));
+   B.notice('Concierto trasladado al historial. El fichaje permanece independiente.');
   }finally{starting=false;if(button?.isConnected)button.disabled=false;}
  }
  document.addEventListener('agenda:start-live',e=>run(()=>startLive(e.detail.evento_id,e.detail.button)));
@@ -70,7 +88,7 @@
   document.addEventListener('agenda:edit-procession',e=>run(async()=>{const p=(await B.query('maestro_procesiones',q=>q.eq('id_procesion',e.detail)))[0];if(!p)throw Error('La publicación ya no existe. Su historial permanece en la convocatoria.');openProcession(p);}));
   $('agenda-procession').onsubmit=e=>{e.preventDefault();run(async()=>{const b=e.submitter;b.disabled=true;try{await uploadPhoto(e.target);const data=Object.fromEntries(new FormData(e.target)),id=data.id_procesion;delete data.id_procesion;delete data.foto_archivo;data.estado=data.estado||'Programada';data.url_foto=data.url_foto||null;let q=clienteSupabase.from('maestro_procesiones');q=id?q.update(data).eq('id_procesion',Number(id)):q.insert(data);const r=await q.select().single();if(r.error)throw r.error;e.target.hidden=true;document.dispatchEvent(new Event('agenda:refresh'));B.notice('Publicación y convocatoria musical sincronizadas.');}finally{b.disabled=false;}});};
   $('agenda-live-start').onclick=e=>run(()=>startLive(events.find(ev=>String(ev.procesion_id)===$('agenda-live-select').value)?.id,e.currentTarget));
-  $('concierto-empezar-directo').onclick=e=>run(()=>startLive(events.find(ev=>String(ev.concierto_id)===String(conciertoAdminActual?.id_concierto))?.id,e.currentTarget));
+  $('concierto-empezar-directo').onclick=e=>run(()=>archiveConcert(conciertoAdminActual?.id_concierto,e.currentTarget));
 
   document.addEventListener('agenda:refresh',()=>run(refresh));await refresh();
  }));
